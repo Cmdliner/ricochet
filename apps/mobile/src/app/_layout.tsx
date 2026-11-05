@@ -56,7 +56,7 @@ function Root() {
 
 export default function RootLayout() {
   return (
-    <KeyboardProvider>
+    <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
       <ThemeProvider>
         <Root />
       </ThemeProvider>
