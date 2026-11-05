@@ -21,9 +21,9 @@ export default function OpengraphImage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <svg width="80" height="80" viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="9" fill="#fafafa" />
-            <path d="M7.5 9 14 23 22 12" fill="none" stroke="#000" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="25" cy="8.5" r="2.4" fill="#000" />
+            <rect width="32" height="32" rx="9" fill="#ccff44" />
+            <path d="M7.5 9 14 23 22 12" fill="none" stroke="#0a0f00" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="25" cy="8.5" r="2.4" fill="#0a0f00" />
           </svg>
           <div style={{ display: "flex", fontSize: 56, fontWeight: 600 }}>ricochet</div>
         </div>

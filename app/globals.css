@@ -8,6 +8,9 @@
   --line: #242424;
   --ink: #fafafa;
   --muted: #a1a1a1;
+  /* Brand accent. Change these two values to re-theme the whole site. */
+  --accent: #ccff44;
+  --accent-ink: #0a0f00;
 }
 
 @theme inline {
@@ -17,6 +20,8 @@
   --color-line: var(--line);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-inter-tight), system-ui, sans-serif;
 }
@@ -33,17 +38,50 @@ body {
 }
 
 ::selection {
-  background: #fafafa;
-  color: #000;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: 6px;
 }
 
+/* A light reflection that periodically sweeps across a button. */
+.sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: -20% auto -20% 0;
+    width: 40%;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.85),
+      transparent
+    );
+    transform: translateX(-160%) skewX(-20deg);
+    animation: sheen 3.4s ease-in-out infinite;
+  }
+
+  @keyframes sheen {
+    0%,
+    45% {
+      transform: translateX(-160%) skewX(-20deg);
+    }
+    100% {
+      transform: translateX(380%) skewX(-20deg);
+    }
+  }
+
   @keyframes typing-dot {
     0%,
     60%,
