@@ -34,7 +34,7 @@ function Root() {
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
           {/* Each group is only reachable in its own state. Expo Router redirects when the state changes. */}
           <Stack.Protected guard={signedIn && profileComplete}>
-            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(main)" />
           </Stack.Protected>
           <Stack.Protected guard={signedIn && !profileComplete}>
             <Stack.Screen name="profile-setup" />
