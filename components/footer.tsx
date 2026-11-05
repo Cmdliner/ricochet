@@ -1,49 +1,56 @@
 import Link from "next/link";
+import { Container } from "@/components/container";
 import { Logo } from "@/components/logo";
-import { FOOTER_COLUMNS, SITE } from "@/lib/constants";
+import { FOOTER_COLUMNS, SITE, STORES } from "@/lib/constants";
 
 export function Footer() {
   return (
-    <footer className="mt-auto overflow-hidden border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-col justify-between gap-12 px-5 pt-16 pb-12 sm:px-8 md:flex-row">
-        <div className="max-w-xs">
-          <Link href="/" aria-label="Ricochet home">
+    <footer className="mt-auto border-t border-line">
+      <Container className="grid gap-12 py-16 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:gap-8">
+        <div className="max-w-sm">
+          <Link href="/" aria-label="Ricochet home" className="inline-block">
             <Logo />
           </Link>
-          <p className="mt-4 text-sm leading-relaxed text-muted">
-            Real-time messaging for communities and close friends.
+          <p className="mt-5 leading-relaxed text-muted">
+            Real-time messaging with hubs for your communities and private chats for
+            everyone else.
           </p>
+          <ul className="mt-6 flex flex-wrap gap-2.5">
+            {STORES.map((store) => (
+              <li
+                key={store.id}
+                className="inline-flex items-center gap-2 rounded-full border border-line px-3.5 py-1.5 text-xs text-muted"
+              >
+                {store.store}
+                <span className="text-accent">Soon</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="flex gap-16 sm:gap-28">
-          {FOOTER_COLUMNS.map((column) => (
-            <nav key={column.title} aria-label={column.title}>
-              <h2 className="mb-5 text-sm text-muted">{column.title}</h2>
-              <ul className="flex flex-col gap-3.5 text-sm">
-                {column.links.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className="transition-colors hover:text-muted">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
-        </div>
-      </div>
+        {FOOTER_COLUMNS.map((column) => (
+          <nav key={column.title} aria-label={column.title}>
+            <h2 className="text-sm font-medium">{column.title}</h2>
+            <ul className="mt-5 flex flex-col gap-3.5 text-sm text-muted">
+              {column.links.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="transition-colors hover:text-ink">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
+      </Container>
 
-      <p className="px-5 pb-6 text-center text-sm text-muted">
-        © {SITE.year} {SITE.name}. All rights reserved.
-      </p>
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none h-[13vw] max-h-[190px] overflow-hidden text-center select-none"
-      >
-        <p className="font-display text-[21vw] leading-[0.82] font-semibold tracking-tighter text-raised sm:text-[19vw] lg:text-[17.5rem]">
-          ricochet
-        </p>
+      <div className="border-t border-line">
+        <Container className="flex flex-col gap-2 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {SITE.year} {SITE.name}. All rights reserved.
+          </p>
+          <p>Made for people who talk a lot.</p>
+        </Container>
       </div>
     </footer>
   );

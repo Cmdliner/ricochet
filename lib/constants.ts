@@ -24,7 +24,14 @@ export const FOOTER_COLUMNS = [
       { href: "/#features", label: "Features" },
       { href: "/#hubs", label: "Hubs and pods" },
       { href: "/#voice-video", label: "Voice and video" },
-      { href: "/download", label: "Download" },
+      { href: "/#how-it-works", label: "How it works" },
+    ],
+  },
+  {
+    title: "Get the app",
+    links: [
+      { href: "/download", label: "iOS" },
+      { href: "/download", label: "Android" },
       { href: "/#waitlist", label: "Join the waitlist" },
     ],
   },
