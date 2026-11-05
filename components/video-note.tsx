@@ -10,7 +10,7 @@ export function VideoNote({ duration, size = 112 }: VideoNoteProps) {
   return (
     <div
       aria-hidden="true"
-      className="relative shrink-0 overflow-hidden rounded-full border-2 border-white/80 bg-[#1d1d1d]"
+      className="relative shrink-0 overflow-hidden rounded-full border-2 border-accent bg-[#1d1d1d]"
       style={{ width: size, height: size }}
     >
       <span

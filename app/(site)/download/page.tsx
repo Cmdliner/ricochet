@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Container } from "@/components/container";
 import { StoreCard } from "@/components/store-card";
 import { STORES } from "@/lib/constants";
 import { buttonClass } from "@/lib/utils";
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function Download() {
   return (
-    <section className="mx-auto max-w-4xl px-5 py-20 text-center sm:px-8 sm:py-28">
+    <Container className="max-w-4xl py-20 text-center sm:py-28">
       <h1 className="font-display text-5xl font-semibold tracking-[-0.04em] text-balance sm:text-6xl">
         Get Ricochet on your phone.
       </h1>
@@ -29,6 +30,6 @@ export default function Download() {
       <Link href="/#waitlist" className={`${buttonClass({ size: "lg" })} mt-12`}>
         Join the waitlist
       </Link>
-    </section>
+    </Container>
   );
 }

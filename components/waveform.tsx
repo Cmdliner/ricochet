@@ -31,7 +31,7 @@ export function Waveform({
         className={animated ? "playhead absolute inset-0" : "absolute inset-0"}
         style={animated ? undefined : { clipPath: `inset(0 ${100 - progress}% 0 0)` }}
       >
-        <Bars className="bg-ink" count={count} />
+        <Bars className="bg-accent" count={count} />
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export function LegalDocument({ content }: { content: LegalContent }) {
             <div className="mt-4 space-y-4 leading-relaxed text-muted">
               {section.paragraphs?.map((text) => <p key={text}>{text}</p>)}
               {section.list && (
-                <ul className="list-disc space-y-2 pl-5 marker:text-line">
+                <ul className="list-disc space-y-2 pl-5 marker:text-accent">
                   {section.list.map((item) => <li key={item}>{item}</li>)}
                 </ul>
               )}

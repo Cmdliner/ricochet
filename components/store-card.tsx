@@ -12,14 +12,14 @@ export function StoreCard({ platform, store, description }: StoreCardProps) {
       <div className="flex items-start justify-between">
         <span
           aria-hidden="true"
-          className="grid size-12 place-items-center rounded-2xl border border-line bg-raised"
+          className="grid size-12 place-items-center rounded-2xl border border-line bg-raised text-accent"
         >
           <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
             <path d="M11 18.5h2" />
           </svg>
         </span>
-        <span className="rounded-full border border-line px-3 py-1 text-xs text-muted">
+        <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-ink">
           Coming soon
         </span>
       </div>

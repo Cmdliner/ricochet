@@ -27,7 +27,7 @@ function Bubble({ mine = false, children }: { mine?: boolean; children: React.Re
     <div
       className={cn(
         "max-w-[210px] rounded-2xl px-3.5 py-2.5 text-[0.82rem] leading-snug",
-        mine ? "rounded-br-md bg-ink font-medium text-black" : "rounded-bl-md bg-raised",
+        mine ? "rounded-br-md bg-accent font-medium text-accent-ink" : "rounded-bl-md bg-raised",
       )}
     >
       {children}
@@ -46,7 +46,7 @@ function VoiceBubble({ duration, mine = false }: { duration: string; mine?: bool
       <span
         className={cn(
           "grid size-8 place-items-center rounded-full",
-          mine ? "bg-black text-ink" : "bg-ink text-black",
+          mine ? "bg-black text-ink" : "bg-accent text-accent-ink",
         )}
       >
         <PlayIcon className="size-3.5 translate-x-px" />
@@ -77,7 +77,7 @@ function Composer({ placeholder }: { placeholder: string }) {
       <div className="flex-1 rounded-full bg-raised px-4 py-2.5 text-[0.78rem] text-muted">
         {placeholder}
       </div>
-      <span className="grid size-10 place-items-center rounded-full bg-ink text-black">
+      <span className="grid size-10 place-items-center rounded-full bg-accent text-accent-ink">
         <MicIcon className="size-[18px]" />
       </span>
     </div>
@@ -118,7 +118,7 @@ function HubsScreen() {
               <p className="text-xs text-muted">{hub.meta}</p>
             </div>
             {hub.unread > 0 && (
-              <span className="rounded-full bg-ink px-2 py-0.5 text-[0.65rem] font-semibold text-black">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-semibold text-accent-ink">
                 {hub.unread}
               </span>
             )}
@@ -135,7 +135,7 @@ function HubsScreen() {
               <span className="mr-2 text-muted">#</span>
               {pod.name}
             </span>
-            {pod.unread > 0 && <span className="size-1.5 rounded-full bg-ink" />}
+            {pod.unread > 0 && <span className="size-1.5 rounded-full bg-accent" />}
           </li>
         ))}
       </ul>
@@ -150,7 +150,7 @@ function PodScreen() {
       <div className="border-b border-line px-5 pt-11 pb-3">
         <p className="font-display text-lg font-semibold tracking-tight"># launch</p>
         <p className="flex items-center gap-1.5 text-xs text-muted">
-          <span className="size-1.5 rounded-full bg-[#4ade80]" />
+          <span className="size-1.5 rounded-full bg-accent" />
           Ship It · 128 online
         </p>
       </div>
@@ -165,7 +165,7 @@ function PodScreen() {
         </div>
         <div className="ml-[42px] flex gap-2">
           <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs">🔥 4</span>
-          <span className="rounded-full border border-white/60 px-2.5 py-1 text-xs">👀 2</span>
+          <span className="rounded-full border border-accent px-2.5 py-1 text-xs">👀 2</span>
         </div>
         <div className="flex items-end gap-2.5">
           <Avatar letter="D" color={AVATAR_COLORS.amber} />
