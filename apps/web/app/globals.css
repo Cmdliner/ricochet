@@ -82,14 +82,6 @@ summary {
   background-size: 300px;
 }
 
-/* Illustrated hero backdrop (flat shapes, no gradients). */
-.bg-hero-scene {
-  background-color: var(--canvas);
-  background-image: url("/backgrounds/hero-scene.svg?v=3");
-  background-size: cover;
-  background-position: center bottom;
-}
-
 /* A light reflection that periodically sweeps across a button. */
 .sheen {
   position: relative;
