@@ -21,7 +21,7 @@ export function StoreBadge({ store, size = "md", className }: StoreBadgeProps) {
       role="img"
       aria-label={`${name}, coming soon`}
       className={cn(
-        "inline-flex items-center rounded-xl border border-white/20 bg-black text-white",
+        "inline-flex items-center rounded-xl border border-white/20 bg-black text-white transition duration-200 hover:-translate-y-0.5 hover:border-white/40",
         size === "lg" ? "h-16 gap-3.5 px-6" : "h-12 gap-2.5 px-4",
         className,
       )}

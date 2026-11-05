@@ -22,7 +22,7 @@ const variants = {
 
 export function buttonClass({ variant = "primary", size = "md" }: ButtonOptions = {}) {
   return cn(
-    "inline-flex shrink-0 items-center justify-center rounded-full font-semibold transition",
+    "inline-flex shrink-0 items-center justify-center rounded-full font-semibold transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
     size === "md" ? "h-10 px-5 text-sm" : "h-12 px-7 text-[0.95rem]",
     variants[variant],
   );

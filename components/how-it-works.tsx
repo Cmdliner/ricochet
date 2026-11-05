@@ -1,6 +1,7 @@
 import { Avatar } from "@/components/avatar";
 import { Container } from "@/components/container";
 import { PlusIcon } from "@/components/icons";
+import { Reveal } from "@/components/reveal";
 import { Waveform } from "@/components/waveform";
 import { AVATAR_COLORS } from "@/lib/constants";
 
@@ -104,7 +105,7 @@ export function HowItWorks() {
       className="pattern-dark relative z-20 -mt-12 rounded-t-[3rem] bg-canvas pt-24 pb-32 text-ink sm:pt-32 sm:pb-40"
     >
       <Container>
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold text-accent">How it works</p>
           <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-balance sm:text-5xl">
             From first hub to private chat.
@@ -112,7 +113,7 @@ export function HowItWorks() {
           <p className="mt-5 text-lg leading-relaxed text-muted">
             Three steps, and a conversation that keeps bouncing along.
           </p>
-        </div>
+        </Reveal>
 
         <div className="relative mt-16 sm:mt-20">
           {/* The bounce: a dashed path that ricochets between the step badges. */}
@@ -123,6 +124,7 @@ export function HowItWorks() {
             className="absolute inset-x-0 top-6 hidden h-24 w-full md:block"
           >
             <polyline
+              className="dash-march"
               points="16.67,0 50,96 83.33,0"
               fill="none"
               stroke="#e9714e"
@@ -136,7 +138,8 @@ export function HowItWorks() {
 
           <ol className="relative grid gap-12 md:grid-cols-3 md:gap-8">
             {steps.map((step, index) => (
-              <li key={step.title} className={`text-center ${index === 1 ? "md:mt-24" : ""}`}>
+              <li key={step.title} className={index === 1 ? "md:mt-24" : ""}>
+                <Reveal delay={index * 140} className="text-center">
                 <span className="relative mx-auto grid size-12 place-items-center rounded-full bg-accent font-display text-lg font-semibold text-accent-ink ring-8 ring-canvas">
                   {index + 1}
                 </span>
@@ -147,6 +150,7 @@ export function HowItWorks() {
                   {step.title}
                 </h3>
                 <p className="mx-auto mt-2 max-w-xs leading-relaxed text-muted">{step.body}</p>
+                </Reveal>
               </li>
             ))}
           </ol>

@@ -99,7 +99,7 @@ const pods = [
 
 function HubsScreen() {
   return (
-    <PhoneFrame className="mt-16 hidden lg:block">
+    <PhoneFrame className="float mt-16 hidden [animation-delay:-3s] lg:block">
       <div className="flex items-center justify-between px-5 pt-12 pb-4">
         <p className="font-display text-2xl font-semibold tracking-tight">Hubs</p>
         <span className="grid size-8 place-items-center rounded-full bg-raised">
@@ -146,7 +146,7 @@ function HubsScreen() {
 
 function PodScreen() {
   return (
-    <PhoneFrame className="relative z-10">
+    <PhoneFrame className="float relative z-10">
       <div className="border-b border-line px-5 pt-11 pb-3">
         <p className="font-display text-lg font-semibold tracking-tight"># launch</p>
         <p className="flex items-center gap-1.5 text-xs text-muted">
@@ -182,7 +182,7 @@ function PodScreen() {
 
 function PrivateScreen() {
   return (
-    <PhoneFrame className="mt-16 hidden lg:block">
+    <PhoneFrame className="float mt-16 hidden [animation-delay:-1.5s] lg:block">
       <div className="flex items-center gap-3 border-b border-line px-5 pt-11 pb-3">
         <Avatar letter="M" color={AVATAR_COLORS.coral} size="md" />
         <div>

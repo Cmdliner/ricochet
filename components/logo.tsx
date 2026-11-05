@@ -20,8 +20,8 @@ export function LogoMark({ className, inverse = false }: { className?: string; i
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <LogoMark className="size-8" />
+    <span className={cn("group/logo inline-flex items-center gap-2.5", className)}>
+      <LogoMark className="size-8 transition-transform duration-300 group-hover/logo:-rotate-6 group-hover/logo:scale-110" />
       <span className="font-display text-[1.4rem] leading-none font-semibold tracking-tight">
         ricochet
       </span>

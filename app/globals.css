@@ -167,6 +167,45 @@ summary {
     }
   }
 
+
+  @keyframes float {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 0 -10px;
+    }
+  }
+
+  @keyframes dash-march {
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
+
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .dash-march {
+    animation: dash-march 1.4s linear infinite;
+  }
+
+  /* Scroll reveal: hidden until Reveal marks it visible. Shown by default for reduced motion. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.7s ease-out,
+      transform 0.7s ease-out;
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
   .typing-dot {
     animation: typing-dot 1.2s ease-in-out infinite;
   }
