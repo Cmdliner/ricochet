@@ -5,8 +5,9 @@ import { Container } from "@/components/container";
 import { LogoMark } from "@/components/logo";
 import { Reveal } from "@/components/reveal";
 import { VoiceSticker } from "@/components/voice-sticker";
+import { waitlistSchema } from "@ricochet/shared";
 import { buttonClass } from "@/lib/utils";
-import { waitlistSchema } from "@/lib/validations/waitlist";
+
 
 export function Waitlist() {
   const [error, setError] = useState<string | null>(null);
