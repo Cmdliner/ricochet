@@ -12,6 +12,9 @@ async function bootstrap() {
   adapter.connectToRedis(config.get("REDIS_URL", { infer: true }));
   app.useWebSocketAdapter(adapter);
 
+  // Browsers (the app's web build, used in development) need CORS. Phones do not.
+  if (config.get("NODE_ENV", { infer: true }) !== "production") app.enableCors();
+
   app.enableShutdownHooks();
   await app.listen(config.get("PORT", { infer: true }));
 }
