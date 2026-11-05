@@ -1,6 +1,8 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo } from "react";
-import { FlatList, KeyboardAvoidingView, Platform, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { Text } from "@/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotFound } from "@/components/ui/not-found";
@@ -19,9 +21,9 @@ function PodIntro({ name, description }: { name: string; description: string }) 
   return (
     <View className="items-center gap-2 px-8 py-10">
       <View className="size-16 items-center justify-center rounded-3xl bg-raised">
-        <Text className="text-3xl font-semibold text-muted">#</Text>
+        <Text className="text-3xl font-sans-semibold text-muted">#</Text>
       </View>
-      <Text className="text-xl font-bold text-ink">Welcome to #{name}</Text>
+      <Text className="font-display text-xl text-ink">Welcome to #{name}</Text>
       <Text className="text-center text-muted">{description}</Text>
       <Text className="text-center text-sm text-muted">This is the start of the pod.</Text>
     </View>
@@ -59,7 +61,7 @@ export default function PodScreen() {
     item.type === "day" ? <DaySeparator label={item.label} /> : <MessageItem item={item} />;
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-canvas">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
       <ScreenHeader
         title={`# ${pod.name}`}
         subtitle={`${hub.name} · ${stats.online} online`}
@@ -81,7 +83,7 @@ export default function PodScreen() {
         }
       />
 
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         {/* Inverted: the newest message sits at the bottom, and the header slot is the bottom edge. */}
         <FlatList
           inverted

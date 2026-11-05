@@ -16,6 +16,18 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      // Custom fonts have one file per weight, so every weight is its own family.
+      // Use font-sans for body text, font-sans-medium/semibold/bold for emphasis,
+      // and font-display for headings.
+      fontFamily: {
+        sans: ["Inter_400Regular"],
+        "sans-medium": ["Inter_500Medium"],
+        "sans-semibold": ["Inter_600SemiBold"],
+        "sans-bold": ["Inter_700Bold"],
+        display: ["InterTight_700Bold"],
+        "display-semibold": ["InterTight_600SemiBold"],
+        "display-black": ["InterTight_800ExtraBold"],
+      },
       colors: {
         ...themed,
         // The brand colours are the same in both themes.

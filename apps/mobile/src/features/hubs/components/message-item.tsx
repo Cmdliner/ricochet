@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
-import { Text, View, type ViewStyle } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { View, type ViewStyle } from "react-native";
+import { Text } from "@/components/ui/text";
 import { Avatar } from "@/components/ui/avatar";
 import { useTheme } from "@/theme/theme-provider";
 import { formatClock } from "../format";
@@ -16,7 +18,11 @@ const BIG = 20;
 const SMALL = 6;
 
 /** Corners follow the run of messages: inner corners tighten, the last bubble gets a tail. */
-function bubbleShape({ mine, startsGroup, endsGroup }: Pick<MessageRow, "mine" | "startsGroup" | "endsGroup">): ViewStyle {
+function bubbleShape({
+  mine,
+  startsGroup,
+  endsGroup,
+}: Pick<MessageRow, "mine" | "startsGroup" | "endsGroup">): ViewStyle {
   const inner = mine ? "Right" : "Left";
   return {
     borderRadius: BIG,
@@ -40,40 +46,47 @@ export const MessageItem = memo(function MessageItem({ item }: { item: MessageRo
 
   const isVideo = message.kind === "video";
   const shape = bubbleShape(item);
+  const isNew = Date.now() - message.sentAt < 4000;
 
   return (
-    <View className={`flex-row items-end gap-2 px-3 ${mine ? "justify-end" : ""} ${endsGroup ? "mb-3" : "mb-0.5"}`}>
-      {/* People you are talking to show their picture beside the last message of a run. */}
-      {!mine ? (
-        <View className="w-8">{endsGroup && author ? <Avatar name={author.name} color={author.color} size={32} /> : null}</View>
-      ) : null}
-
-      <View className={`max-w-[80%] ${mine ? "items-end" : "items-start"}`}>
-        {!mine && startsGroup && author ? (
-          <Text className="mb-1 ml-3 text-xs font-semibold text-muted">{author.name}</Text>
-        ) : null}
-
-        {isVideo ? (
-          <VideoNoteCircle durationMs={message.durationMs} fresh={!mine} />
-        ) : (
-          <View style={shape} className={`px-3.5 py-2.5 ${mine ? "bg-accent" : "bg-raised"}`}>
-            {message.kind === "text" ? (
-              <Text className={`text-[16px] leading-[22px] ${mine ? "text-accent-ink" : "text-ink"}`}>{message.text}</Text>
-            ) : (
-              <VoiceContent durationMs={message.durationMs} waveform={message.waveform} mine={mine} />
-            )}
-          </View>
-        )}
-
-        <ReactionRow podId={message.podId} messageId={message.id} reactions={message.reactions} mine={mine} />
-
-        {endsGroup ? (
-          <View className={`mt-1 flex-row items-center gap-1 ${mine ? "mr-1" : "ml-3"}`}>
-            <Text className="text-[11px] text-muted">{formatClock(message.sentAt)}</Text>
-            {mine ? <Ionicons name="checkmark-done" size={14} color={colors.accentText} /> : null}
+    <Animated.View entering={isNew ? FadeInDown.duration(260) : undefined}>
+      <View className={`flex-row items-end gap-2 px-3 ${mine ? "justify-end" : ""} ${endsGroup ? "mb-3" : "mb-0.5"}`}>
+        {/* People you are talking to show their picture beside the last message of a run. */}
+        {!mine ? (
+          <View className="w-8">
+            {endsGroup && author ? <Avatar name={author.name} color={author.color} size={32} /> : null}
           </View>
         ) : null}
+
+        <View className={`max-w-[80%] ${mine ? "items-end" : "items-start"}`}>
+          {!mine && startsGroup && author ? (
+            <Text className="mb-1 ml-3 text-xs font-sans-semibold text-muted">{author.name}</Text>
+          ) : null}
+
+          {isVideo ? (
+            <VideoNoteCircle durationMs={message.durationMs} fresh={!mine} />
+          ) : (
+            <View style={shape} className={`px-3.5 py-2.5 ${mine ? "bg-accent" : "bg-raised"}`}>
+              {message.kind === "text" ? (
+                <Text className={`text-[16px] leading-[22px] ${mine ? "text-accent-ink" : "text-ink"}`}>
+                  {message.text}
+                </Text>
+              ) : (
+                <VoiceContent durationMs={message.durationMs} waveform={message.waveform} mine={mine} />
+              )}
+            </View>
+          )}
+
+          <ReactionRow podId={message.podId} messageId={message.id} reactions={message.reactions} mine={mine} />
+
+          {endsGroup ? (
+            <View className={`mt-1 flex-row items-center gap-1 ${mine ? "mr-1" : "ml-3"}`}>
+              <Text className="text-[11px] text-muted">{formatClock(message.sentAt)}</Text>
+              {mine ? <Ionicons name="checkmark-done" size={14} color={colors.accentText} /> : null}
+            </View>
+          ) : null}
+        </View>
       </View>
-    </View>
+    </Animated.View>
   );
 });

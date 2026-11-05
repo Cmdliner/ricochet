@@ -1,11 +1,14 @@
-import { ActivityIndicator, Pressable, Text, type PressableProps } from "react-native";
+import { ActivityIndicator, type PressableProps } from "react-native";
 import { useTheme } from "@/theme/theme-provider";
+import { PressableScale } from "./pressable-scale";
+import { Text } from "./text";
 
 type ButtonProps = Omit<PressableProps, "children"> & {
   label: string;
   /** Primary is the coral call to action. Ghost is a quiet text button. */
   variant?: "primary" | "ghost";
   loading?: boolean;
+  className?: string;
 };
 
 export function Button({ label, variant = "primary", loading = false, disabled, className, ...rest }: ButtonProps) {
@@ -14,12 +17,13 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
   const primary = variant === "primary";
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
+      scaleTo={0.97}
       className={[
-        "h-14 items-center justify-center rounded-full active:opacity-80",
+        "h-14 items-center justify-center rounded-full",
         primary ? "bg-accent" : "bg-transparent",
         inactive ? "opacity-50" : "",
         className ?? "",
@@ -29,8 +33,8 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
       {loading ? (
         <ActivityIndicator color={primary ? colors.accentInk : colors.ink} />
       ) : (
-        <Text className={`text-base font-semibold ${primary ? "text-accent-ink" : "text-ink"}`}>{label}</Text>
+        <Text className={`text-base font-sans-semibold ${primary ? "text-accent-ink" : "text-ink"}`}>{label}</Text>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }

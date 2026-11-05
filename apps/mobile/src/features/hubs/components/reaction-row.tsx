@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { useHubsStore } from "../store";
 import { ME_ID, type Reaction } from "../types";
 
@@ -29,7 +30,7 @@ export function ReactionRow({ podId, messageId, reactions, mine }: ReactionRowPr
             }`}
           >
             <Text className="text-[13px]">{reaction.emoji}</Text>
-            <Text className={`text-xs font-semibold ${reacted ? "text-accent-text" : "text-muted"}`}>{reaction.userIds.length}</Text>
+            <Text className={`text-xs font-sans-semibold ${reacted ? "text-accent-text" : "text-muted"}`}>{reaction.userIds.length}</Text>
           </Pressable>
         );
       })}

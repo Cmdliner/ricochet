@@ -1,7 +1,7 @@
 import { authResponseSchema, LIMITS, verifyLoginCodeSchema } from "@ricochet/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Text } from "react-native";
+import { Text } from "@/components/ui/text";
 import { AuthScreen } from "@/components/auth-screen";
 import { MailArt } from "@/components/illustrations/mail-art";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ export default function Verify() {
         autoComplete="one-time-code"
         textContentType="oneTimeCode"
         maxLength={LIMITS.loginCodeLength}
-        className="text-center text-2xl font-semibold tracking-[8px]"
+        className="text-center text-2xl font-sans-semibold tracking-[8px]"
       />
       {notice ? <Text className="text-sm text-muted">{notice}</Text> : null}
       <Button label="Verify" onPress={() => submit(code)} loading={busy} />

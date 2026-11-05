@@ -82,14 +82,6 @@ summary {
   background-size: 300px;
 }
 
-/* Illustrated hero backdrop (flat shapes, no gradients). */
-.bg-hero-scene {
-  background-color: var(--canvas);
-  background-image: url("/backgrounds/hero-scene.svg?v=3");
-  background-size: cover;
-  background-position: center bottom;
-}
-
 /* A light reflection that periodically sweeps across a button. */
 .sheen {
   position: relative;
@@ -203,6 +195,26 @@ summary {
   .reveal.is-visible {
     opacity: 1;
     transform: none;
+  }
+
+
+  @keyframes wordmark-bounce {
+    0% {
+      transform: translateY(0) scale(1, 1);
+    }
+    35% {
+      transform: translateY(-0.34em) scale(0.92, 1.1);
+    }
+    70% {
+      transform: translateY(0.02em) scale(1.3, 0.72);
+    }
+    100% {
+      transform: translateY(0) scale(1, 1);
+    }
+  }
+
+  .wordmark:hover .wordmark-ball {
+    animation: wordmark-bounce 0.65s cubic-bezier(0.3, 0, 0.3, 1);
   }
 
   .typing-dot {

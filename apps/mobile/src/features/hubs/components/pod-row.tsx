@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/theme/theme-provider";
 import { formatListTime } from "../format";
@@ -22,19 +23,19 @@ export function PodRow({ pod }: { pod: Pod }) {
       accessibilityRole="button"
       accessibilityLabel={`${pod.name}${pod.muted ? ", muted" : ""}${hasUnread ? `, ${unread} unread` : ""}`}
       onPress={() => router.push(`/pod/${pod.id}`)}
-      className="flex-row items-center gap-3 px-4 py-3.5 active:bg-raised"
+      className="flex-row items-center gap-3.5 px-4 py-4 active:bg-raised"
     >
-      <View className="size-11 items-center justify-center rounded-2xl bg-raised">
+      <View className="size-11 items-center justify-center rounded-[14px] bg-raised">
         {pod.isPrivate ? (
           <Ionicons name="lock-closed" size={18} color={colors.muted} />
         ) : (
-          <Text className="text-xl font-semibold text-muted">#</Text>
+          <Text className="text-xl font-sans-semibold text-muted">#</Text>
         )}
       </View>
 
       <View className="flex-1 gap-0.5">
         <View className="flex-row items-center gap-1.5">
-          <Text className={`shrink text-[16px] text-ink ${hasUnread ? "font-bold" : "font-semibold"}`} numberOfLines={1}>
+          <Text className={`shrink text-[16px] text-ink ${hasUnread ? "font-sans-bold" : "font-sans-semibold"}`} numberOfLines={1}>
             {pod.name}
           </Text>
           {pod.muted ? <Ionicons name="notifications-off-outline" size={14} color={colors.muted} /> : null}

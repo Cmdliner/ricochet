@@ -1,5 +1,6 @@
 import { colors, type HubColor } from "@ricochet/shared";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
 
 type AvatarProps = {
   name: string;
@@ -24,7 +25,7 @@ export function Avatar({ name, color, size = 40, square = false }: AvatarProps) 
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontSize: size * 0.4, fontWeight: "700", color: "#1f0c05" }}>{letter}</Text>
+      <Text style={{ fontSize: size * 0.4, fontFamily: "Inter_700Bold", color: "#1f0c05" }}>{letter}</Text>
     </View>
   );
 }

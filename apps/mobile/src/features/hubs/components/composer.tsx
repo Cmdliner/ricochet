@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { LIMITS } from "@ricochet/shared";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PanResponder, Pressable, Text, TextInput, View } from "react-native";
+import { PanResponder, Pressable, TextInput, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -13,6 +14,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useKeyboardState } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 import { formatDuration } from "../format";
@@ -114,7 +117,7 @@ function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: 
         </Svg>
         <View className="absolute top-4 flex-row items-center gap-1.5 self-center rounded-full bg-black/55 px-2.5 py-1">
           <RecordingDot />
-          <Text className="text-xs font-semibold text-white">REC</Text>
+          <Text className="text-xs font-sans-semibold text-white">REC</Text>
         </View>
       </View>
     </View>
@@ -123,6 +126,8 @@ function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: 
 
 export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: ComposerProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const keyboardOpen = useKeyboardState((s) => s.isVisible);
   const [text, setText] = useState("");
   const [mode, setMode] = useState<Kind>("voice");
   const [recording, setRecording] = useState<Recording | null>(null);
@@ -227,30 +232,30 @@ export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: Comp
   }
 
   return (
-    <View className="border-t border-line bg-canvas px-3 pt-2 pb-2">
+    <View className="border-t border-line bg-canvas px-3 pt-2" style={{ paddingBottom: keyboardOpen ? 10 : Math.max(insets.bottom, 10) }}>
       {hint ? (
         <View pointerEvents="none" className="absolute right-0 bottom-full left-0 items-center pb-2">
-          <Text className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-canvas">{hint}</Text>
+          <Text className="rounded-full bg-ink px-4 py-2 text-sm font-sans-medium text-canvas">{hint}</Text>
         </View>
       ) : null}
       {recording?.kind === "video" ? <Viewfinder elapsedMs={recording.elapsedMs} cancelling={cancelling} /> : null}
 
       <View className="flex-row items-end gap-2">
         {recording ? (
-          <View className="h-12 flex-1 flex-row items-center gap-3 rounded-full border border-line bg-surface px-4">
+          <View className="h-12 flex-1 flex-row items-center gap-3 rounded-full bg-raised px-4">
             <RecordingDot />
-            <Text className="w-11 text-base font-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
+            <Text className="w-11 text-base font-sans-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
               {formatDuration(recording.elapsedMs)}
             </Text>
             <View className="flex-1 flex-row items-center justify-end gap-1" style={{ transform: [{ translateX: Math.min(0, recording.dx * 0.35) }] }}>
               <Ionicons name="chevron-back" size={16} color={cancelling ? colors.danger : colors.muted} />
-              <Text className={`text-sm ${cancelling ? "font-semibold text-danger" : "text-muted"}`}>
+              <Text className={`text-sm ${cancelling ? "font-sans-semibold text-danger" : "text-muted"}`}>
                 {cancelling ? "Release to cancel" : "Slide to cancel"}
               </Text>
             </View>
           </View>
         ) : (
-          <View className="min-h-12 flex-1 flex-row items-end rounded-3xl border border-line bg-surface pr-1.5 pl-4">
+          <View className="min-h-12 flex-1 flex-row items-end rounded-3xl bg-raised pr-1.5 pl-4">
             <TextInput
               accessibilityLabel={`Message ${podName}`}
               value={text}
@@ -259,8 +264,9 @@ export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: Comp
               placeholderTextColor={colors.muted}
               selectionColor={colors.accent}
               multiline
+              numberOfLines={1}
               maxLength={LIMITS.messageBodyMax}
-              className="max-h-32 min-h-12 flex-1 py-3 text-base text-ink"
+              className="max-h-32 min-h-12 flex-1 py-3 font-sans text-base text-ink"
             />
             {!hasText ? (
               <Pressable

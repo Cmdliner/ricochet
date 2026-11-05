@@ -1,8 +1,11 @@
 import { SplashScreen, Stack } from "expo-router";
+import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatedSplash } from "@/components/animated-splash";
 import { useAuthStore } from "@/stores/auth-store";
+import { FONT_ASSETS } from "@/theme/fonts";
 import { ThemeProvider, useTheme } from "@/theme/theme-provider";
 import { useThemeStore } from "@/theme/theme-store";
 import "../global.css";
@@ -15,6 +18,8 @@ function Root() {
   const status = useAuthStore((s) => s.status);
   const profileComplete = useAuthStore((s) => s.user?.profileComplete ?? false);
   const themeLoaded = useThemeStore((s) => s.loaded);
+  // A font that fails to load must not block the app: text falls back to the system font.
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
   const [splashDone, setSplashDone] = useState(false);
   const finishSplash = useCallback(() => setSplashDone(true), []);
 
@@ -23,7 +28,7 @@ function Root() {
     void useAuthStore.getState().restore();
   }, []);
 
-  const ready = status !== "loading" && themeLoaded;
+  const ready = status !== "loading" && themeLoaded && (fontsLoaded || !!fontError);
   const signedIn = status === "signedIn";
 
   return (
@@ -51,8 +56,10 @@ function Root() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <Root />
-    </ThemeProvider>
+    <KeyboardProvider>
+      <ThemeProvider>
+        <Root />
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { ArrowRightIcon, CloseIcon } from "@/components/icons";
-import { Logo } from "@/components/logo";
+import { Wordmark } from "@/components/logo";
 import { StoreBadge } from "@/components/store-badge";
 import { NAV_LINKS } from "@/lib/constants";
 import { buttonClass } from "@/lib/utils";
@@ -31,7 +31,7 @@ export function MobileMenu({ onClose }: { onClose: () => void }) {
     >
       <div className="flex h-16 shrink-0 items-center justify-between px-5 sm:px-8">
         <Link href="/" aria-label="Ricochet home" onClick={onClose}>
-          <Logo />
+          <Wordmark className="text-[1.7rem]" />
         </Link>
         <button
           type="button"

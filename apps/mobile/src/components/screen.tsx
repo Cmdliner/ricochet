@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ScreenProps = {
@@ -18,13 +19,13 @@ export function Screen({ title, art, emptyTitle, emptyBody, children }: ScreenPr
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
       {/* Padding lives on this inner view: SafeAreaView manages its own padding and would override it. */}
       <View className="flex-1 px-4">
-        <Text className="pt-4 pb-6 text-[28px] font-bold tracking-tight text-ink">{title}</Text>
+        <Text className="pt-4 pb-6 font-display text-[28px] tracking-tight text-ink">{title}</Text>
         {children ?? (
           <View className="flex-1 items-center justify-center gap-2 pb-24">
             <View className="mb-3 size-16 items-center justify-center rounded-full bg-raised">
               <View className="size-3 rounded-full bg-accent" />
             </View>
-            <Text className="text-lg font-semibold text-ink">{emptyTitle}</Text>
+            <Text className="text-lg font-sans-semibold text-ink">{emptyTitle}</Text>
             <Text className="max-w-[260px] text-center text-muted">{emptyBody}</Text>
           </View>
         )}

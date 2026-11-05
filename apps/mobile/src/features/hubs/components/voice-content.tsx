@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { useTheme } from "@/theme/theme-provider";
 import { formatDuration } from "../format";
 import { WaveformBars } from "./waveform-bars";

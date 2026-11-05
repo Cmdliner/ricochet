@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import type { ReactNode } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { IconButton } from "./icon-button";
 
 type ScreenHeaderProps = {
@@ -26,7 +27,7 @@ export function ScreenHeader({ title, subtitle, leading, actions, closeStyle = f
       />
       {leading}
       <View className="flex-1">
-        <Text className="text-[17px] font-semibold text-ink" numberOfLines={1}>
+        <Text className="text-[17px] font-sans-semibold text-ink" numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? (
