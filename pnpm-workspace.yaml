@@ -22,3 +22,6 @@ allowBuilds:
 # pnpm holds back versions published very recently. bullmq 6.7.0 was approved explicitly.
 minimumReleaseAgeExclude:
   - bullmq@6.7.0
+
+patchedDependencies:
+  react-native-css-interop@0.2.7: patches/react-native-css-interop@0.2.7.patch
