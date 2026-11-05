@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Text } from "@/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "./logo-mark";
@@ -18,8 +19,8 @@ type AuthScreenProps = {
 export function AuthScreen({ art, title, subtitle, children, footer }: AuthScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-canvas">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView
+        <KeyboardAwareScrollView
+          bottomOffset={64}
           contentContainerClassName="flex-grow px-6 pt-10 pb-6"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -34,8 +35,7 @@ export function AuthScreen({ art, title, subtitle, children, footer }: AuthScree
           </View>
           <View className="gap-5">{children}</View>
           {footer ? <View className="mt-auto items-center gap-2 pt-8">{footer}</View> : null}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

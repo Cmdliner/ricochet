@@ -43,6 +43,8 @@ export default function Hubs() {
           </Animated.View>
         )}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
         contentContainerClassName="pb-10"
         ListHeaderComponent={
           <View>

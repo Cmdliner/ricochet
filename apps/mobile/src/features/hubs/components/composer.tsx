@@ -14,6 +14,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useKeyboardState } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 import { formatDuration } from "../format";
@@ -124,6 +126,8 @@ function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: 
 
 export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: ComposerProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const keyboardOpen = useKeyboardState((s) => s.isVisible);
   const [text, setText] = useState("");
   const [mode, setMode] = useState<Kind>("voice");
   const [recording, setRecording] = useState<Recording | null>(null);
@@ -228,7 +232,7 @@ export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: Comp
   }
 
   return (
-    <View className="border-t border-line bg-canvas px-3 pt-2 pb-2">
+    <View className="border-t border-line bg-canvas px-3 pt-2" style={{ paddingBottom: keyboardOpen ? 10 : Math.max(insets.bottom, 10) }}>
       {hint ? (
         <View pointerEvents="none" className="absolute right-0 bottom-full left-0 items-center pb-2">
           <Text className="rounded-full bg-ink px-4 py-2 text-sm font-sans-medium text-canvas">{hint}</Text>

@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, type ReactNode } from "react";
-import { KeyboardAvoidingView, PanResponder, Platform, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { PanResponder, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
@@ -92,7 +93,7 @@ export function Sheet({ title, children, scroll = true }: SheetProps) {
       <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "#000" }, backdropStyle]} />
       <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={close} style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} />
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} pointerEvents="box-none">
+      <KeyboardAvoidingView behavior="padding" pointerEvents="box-none">
         <Animated.View
           style={[
             {

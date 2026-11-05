@@ -1,6 +1,7 @@
 import { SplashScreen, Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatedSplash } from "@/components/animated-splash";
 import { useAuthStore } from "@/stores/auth-store";
@@ -55,8 +56,10 @@ function Root() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <Root />
-    </ThemeProvider>
+    <KeyboardProvider>
+      <ThemeProvider>
+        <Root />
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }
