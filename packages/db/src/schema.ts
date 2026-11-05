@@ -31,6 +31,8 @@ export const users = pgTable("users", {
   handle: text("handle").notNull().unique(),
   displayName: text("display_name").notNull(),
   avatarKey: text("avatar_key"),
+  /** Set once the person has chosen a name and handle. Empty means they still need to finish setup. */
+  profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
   createdAt: createdAt(),
 });
 
