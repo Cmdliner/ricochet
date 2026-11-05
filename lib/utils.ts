@@ -4,10 +4,6 @@ export function cn(...values: ClassValue[]) {
   return values.filter(Boolean).join(" ");
 }
 
-export function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
 type ButtonOptions = {
   variant?: "primary" | "secondary" | "secondary-light" | "dark";
   size?: "md" | "lg";

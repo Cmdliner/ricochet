@@ -5,20 +5,23 @@ import { Container } from "@/components/container";
 import { LogoMark } from "@/components/logo";
 import { Reveal } from "@/components/reveal";
 import { VoiceSticker } from "@/components/voice-sticker";
-import { buttonClass, isValidEmail } from "@/lib/utils";
+import { buttonClass } from "@/lib/utils";
+import { waitlistSchema } from "@/lib/validations/waitlist";
 
 export function Waitlist() {
-  const [status, setStatus] = useState<"idle" | "invalid" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const email = String(new FormData(e.currentTarget).get("email") ?? "");
-    if (!isValidEmail(email)) {
-      setStatus("invalid");
+    const result = waitlistSchema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Enter a valid email address.");
       return;
     }
-    // TODO: send `email` to the waitlist backend once one exists.
-    setStatus("done");
+    setError(null);
+    // TODO: send `result.data.email` to the waitlist backend once one exists.
+    setDone(true);
   }
 
   return (
@@ -37,47 +40,53 @@ export function Waitlist() {
 
       <Container className="relative">
         <Reveal>
-        <LogoMark inverse className="mx-auto size-14" />
-        <h2 className="mx-auto mt-8 max-w-2xl font-display text-4xl font-semibold tracking-[-0.03em] text-balance sm:text-6xl">
-          Be first through the door.
-        </h2>
-        <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-accent-ink/80">
-          Leave your email and we will let you know the moment Ricochet is ready.
-        </p>
+          <LogoMark inverse className="mx-auto size-14" />
+          <h2 className="mx-auto mt-8 max-w-2xl font-display text-4xl font-semibold tracking-[-0.03em] text-balance sm:text-6xl">
+            Be first through the door.
+          </h2>
+          <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-accent-ink/80">
+            Leave your email and we will let you know the moment Ricochet is ready.
+          </p>
 
-        {status === "done" ? (
-          <p role="status" className="fade-up mx-auto mt-10 max-w-md rounded-2xl bg-accent-ink px-5 py-4 text-ink">
-            You are on the list. Talk soon.
-          </p>
-        ) : (
-          <form
-            onSubmit={onSubmit}
-            noValidate
-            className="mx-auto mt-10 flex w-full max-w-md flex-col gap-3 sm:flex-row"
-          >
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              aria-invalid={status === "invalid"}
-              aria-describedby={status === "invalid" ? "email-error" : undefined}
-              className="h-12 w-full rounded-full bg-cream-card px-5 text-base text-cream-ink sm:flex-1 placeholder:text-cream-muted/70 focus:outline-2 focus:outline-accent-ink aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-[#8f1d1d]"
-            />
-            <button type="submit" className={`${buttonClass({ variant: "dark", size: "lg" })} sheen w-full cursor-pointer sm:w-auto`}>
-              Notify me
-            </button>
-          </form>
-        )}
-        {status === "invalid" && (
-          <p id="email-error" role="alert" className="mt-3 text-sm font-medium text-[#6e1313]">
-            That email does not look right. Mind checking it?
-          </p>
-        )}
+          {done ? (
+            <p
+              role="status"
+              className="fade-up mx-auto mt-10 max-w-md rounded-2xl bg-accent-ink px-5 py-4 text-ink"
+            >
+              You are on the list. Talk soon.
+            </p>
+          ) : (
+            <form
+              onSubmit={onSubmit}
+              noValidate
+              className="mx-auto mt-10 flex w-full max-w-md flex-col gap-3 sm:flex-row"
+            >
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                aria-invalid={error !== null}
+                aria-describedby={error ? "email-error" : undefined}
+                className="h-12 w-full rounded-full bg-cream-card px-5 text-base text-cream-ink placeholder:text-cream-muted/70 focus:outline-2 focus:outline-accent-ink aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-[#8f1d1d] sm:flex-1"
+              />
+              <button
+                type="submit"
+                className={`${buttonClass({ variant: "dark", size: "lg" })} sheen w-full cursor-pointer sm:w-auto`}
+              >
+                Notify me
+              </button>
+            </form>
+          )}
+          {error && (
+            <p id="email-error" role="alert" className="mt-3 text-sm font-medium text-[#6e1313]">
+              {error}
+            </p>
+          )}
         </Reveal>
       </Container>
     </section>
