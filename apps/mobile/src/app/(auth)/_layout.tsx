@@ -1,6 +1,7 @@
-import { colors } from "@ricochet/shared";
 import { Stack } from "expo-router";
+import { useTheme } from "@/theme/theme-provider";
 
 export default function AuthLayout() {
-  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.dark.canvas } }} />;
+  const { colors } = useTheme();
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />;
 }
