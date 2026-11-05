@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SITE, THEME_COLOR } from "@/lib/constants";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,6 +18,7 @@ const interTight = Inter_Tight({
 const title = `${SITE.name} - ${SITE.tagline}`;
 
 export const metadata: Metadata = {
+  metadataBase: getSiteUrl(),
   title: {
     default: title,
     template: `%s | ${SITE.name}`,
