@@ -1,15 +1,25 @@
-import { colors } from "@ricochet/shared";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/segmented";
 import { useAuthStore } from "@/stores/auth-store";
+import { useTheme } from "@/theme/theme-provider";
+import type { Preference } from "@/theme/themes";
+
+const APPEARANCE: { value: Preference; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
 
 export default function You() {
   const user = useAuthStore((s) => s.user);
+  const { colors, preference, setPreference } = useTheme();
   const initial = (user?.displayName ?? "?").trim().charAt(0).toUpperCase();
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
+      {/* Padding lives on this inner view: SafeAreaView manages its own padding and would override it. */}
       <View className="flex-1 px-4">
         <Text className="pt-4 pb-6 text-[28px] font-bold tracking-tight text-ink">You</Text>
 
@@ -31,6 +41,11 @@ export default function You() {
               {user?.email}
             </Text>
           </View>
+        </View>
+
+        <View className="mt-6 gap-3">
+          <Text className="text-sm font-medium text-muted">Appearance</Text>
+          <Segmented label="Appearance" options={APPEARANCE} value={preference} onChange={setPreference} />
         </View>
 
         <View className="mt-auto pb-6">

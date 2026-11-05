@@ -1,4 +1,5 @@
 import { ActivityIndicator, Pressable, Text, type PressableProps } from "react-native";
+import { useTheme } from "@/theme/theme-provider";
 
 type ButtonProps = Omit<PressableProps, "children"> & {
   label: string;
@@ -8,6 +9,7 @@ type ButtonProps = Omit<PressableProps, "children"> & {
 };
 
 export function Button({ label, variant = "primary", loading = false, disabled, className, ...rest }: ButtonProps) {
+  const { colors } = useTheme();
   const inactive = disabled || loading;
   const primary = variant === "primary";
 
@@ -25,7 +27,7 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={primary ? "#1f0c05" : "#f6f1ea"} />
+        <ActivityIndicator color={primary ? colors.accentInk : colors.ink} />
       ) : (
         <Text className={`text-base font-semibold ${primary ? "text-accent-ink" : "text-ink"}`}>{label}</Text>
       )}

@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Text } from "react-native";
 import { AuthScreen } from "@/components/auth-screen";
+import { MailArt } from "@/components/illustrations/mail-art";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { api, errorMessage } from "@/lib/api";
@@ -77,6 +78,7 @@ export default function Verify() {
 
   return (
     <AuthScreen
+      art={<MailArt />}
       title="Check your email"
       subtitle={`We sent a ${LIMITS.loginCodeLength} digit code to ${email}. Enter it below, or tap the link in the email.`}
       footer={

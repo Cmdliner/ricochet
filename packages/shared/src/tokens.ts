@@ -10,6 +10,9 @@ export const colors = {
     line: "#322c28",
     ink: "#f6f1ea",
     muted: "#aaa196",
+    /** The accent as small text on this background. */
+    accentText: "#f2906f",
+    danger: "#f87171",
   },
   light: {
     canvas: "#f3ede3",
@@ -18,6 +21,8 @@ export const colors = {
     line: "#e1d7c7",
     ink: "#1b1613",
     muted: "#6b6157",
+    accentText: "#b8431f",
+    danger: "#b91c1c",
   },
   accent: "#e9714e",
   accentInk: "#1f0c05",

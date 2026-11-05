@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ricochet",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#100e0d",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#e9714e",
     "ios": {
       "bundleIdentifier": "app.ricochet.mobile",
       "supportsTablet": false
@@ -15,7 +15,7 @@
     "android": {
       "package": "app.ricochet.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#100e0d",
+        "backgroundColor": "#e9714e",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -31,9 +31,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#100e0d",
+          "backgroundColor": "#e9714e",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 1
         }
       ],
       "expo-secure-store"
