@@ -74,10 +74,10 @@ export default function PodScreen() {
               onPress={() => togglePodMute(pod.id)}
             />
             <IconButton
-              icon="people-outline"
-              label="See members"
+              icon="information-circle-outline"
+              label="Pod settings"
               variant="plain"
-              onPress={() => router.push(`/hub/${hub.id}/members`)}
+              onPress={() => router.push({ pathname: "/pod/[podId]/settings", params: { podId: pod.id } })}
             />
           </>
         }

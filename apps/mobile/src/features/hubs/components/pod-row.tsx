@@ -23,6 +23,8 @@ export function PodRow({ pod }: { pod: Pod }) {
       accessibilityRole="button"
       accessibilityLabel={`${pod.name}${pod.muted ? ", muted" : ""}${hasUnread ? `, ${unread} unread` : ""}`}
       onPress={() => router.push(`/pod/${pod.id}`)}
+      onLongPress={() => router.push({ pathname: "/pod/[podId]/settings", params: { podId: pod.id } })}
+      delayLongPress={350}
       className="flex-row items-center gap-3.5 px-4 py-4 active:bg-raised"
     >
       <View className="size-11 items-center justify-center rounded-[14px] bg-raised">
