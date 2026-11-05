@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { toPodName } from "@ricochet/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";
@@ -16,11 +17,6 @@ import { pluralize } from "@/features/hubs/format";
 import { useMyRole, usePodStats } from "@/features/hubs/hooks";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
 import { useTheme } from "@/theme/theme-provider";
-
-/** "Design Crits!" becomes "design-crits": pod names are lowercase words joined by hyphens. */
-function toPodName(value: string): string {
-  return value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-").slice(0, 32);
-}
 
 function Stat({ icon, value, label }: { icon: keyof typeof Ionicons.glyphMap; value: number; label: string }) {
   const { colors } = useTheme();

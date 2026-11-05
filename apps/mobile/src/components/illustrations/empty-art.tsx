@@ -90,3 +90,20 @@ export function SearchArt({ width = 200 }: ArtProps) {
     </Frame>
   );
 }
+
+/** A hub with no pods yet: empty room tiles waiting to be filled. */
+export function PodsArt({ width = 220 }: ArtProps) {
+  const { colors: c } = useTheme();
+  return (
+    <Frame width={width} label="No pods">
+      <Circle cx={110} cy={74} r={62} fill={c.raised} />
+      <Rect x={52} y={44} width={116} height={24} rx={12} fill={c.surface} stroke={c.line} strokeWidth={1.5} />
+      <Rect x={52} y={76} width={116} height={24} rx={12} fill={c.surface} stroke={c.line} strokeWidth={1.5} strokeDasharray="5 5" />
+      <Path d="M68 56 h12 M74 50 v12" stroke={c.muted} strokeWidth={3} strokeLinecap="round" />
+      <Circle cx={128} cy={110} r={20} fill={c.accent} stroke={c.canvas} strokeWidth={4} />
+      <Path d="M121 110 h14 M128 103 v14" stroke={c.accentInk} strokeWidth={3.5} strokeLinecap="round" />
+      <Path d="M170 38 h10 M175 33 v10" stroke={c.muted} strokeWidth={3} strokeLinecap="round" />
+      <Circle cx={36} cy={96} r={3} fill={c.muted} />
+    </Frame>
+  );
+}
