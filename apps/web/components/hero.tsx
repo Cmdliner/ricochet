@@ -57,6 +57,29 @@ export function Hero() {
           </div>
         </Tile>
 
+        {/* On a phone the tiles sit in a row above the headline rather than floating around it. */}
+        <div aria-hidden="true" className="mb-6 flex items-center justify-center gap-3 md:hidden">
+          <div className="-rotate-[8deg] rounded-2xl bg-raised p-1.5 shadow-xl shadow-black/50">
+            <Avatar letter="M" color="#f3a5a5" size="md" square />
+          </div>
+          <div className="flex rotate-[3deg] items-center gap-2 rounded-full bg-accent py-1.5 pr-3.5 pl-1.5 shadow-xl shadow-black/50">
+            <span className="grid size-6 place-items-center rounded-full bg-accent-ink text-ink">
+              <svg viewBox="0 0 12 12" className="size-2.5 fill-current">
+                <path d="M3 1.5v9l7.5-4.5z" />
+              </svg>
+            </span>
+            <span className="flex h-3.5 items-center gap-[3px]">
+              {[5, 10, 7, 12, 8, 4, 10].map((h, i) => (
+                <span key={i} className="w-[3px] rounded-full bg-accent-ink/70" style={{ height: h }} />
+              ))}
+            </span>
+            <span className="text-xs font-semibold text-accent-ink">0:14</span>
+          </div>
+          <div className="rotate-[7deg] rounded-2xl bg-raised p-1.5 shadow-xl shadow-black/50">
+            <Avatar letter="J" color="#8fe0bd" size="md" square />
+          </div>
+        </div>
+
         <h1 className="relative font-display text-[3.5rem] leading-[0.95] font-semibold tracking-[-0.045em] sm:text-[6rem] lg:text-[8rem]">
           Chat that
           <br />
@@ -72,6 +95,8 @@ export function Hero() {
             Get the app
           </Link>
         </div>
+
+        <p className="mt-6 text-sm text-muted lg:hidden">Hubs, pods, voice and video notes.</p>
 
         <p
           aria-hidden="true"

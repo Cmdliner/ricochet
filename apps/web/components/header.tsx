@@ -2,31 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MenuIcon } from "@/components/icons";
 import { Wordmark } from "@/components/logo";
 import { MobileMenu } from "@/components/mobile-menu";
 import { NAV_LINKS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-type Phase = "top" | "hidden" | "shown";
-
 export function Header() {
   const [open, setOpen] = useState(false);
-  const [phase, setPhase] = useState<Phase>("top");
-  const lastY = useRef(0);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Desktop only: the header steps out of the way as you read down, and returns when you scroll
-  // back up. On a phone it stays pinned and looks the same at every scroll position, with no background.
+  // Always pinned. Once you leave the top, desktop gains a frosted background so the page
+  // reads cleanly underneath it.
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < 24) setPhase("top");
-      else if (y > lastY.current + 4) setPhase("hidden");
-      else if (y < lastY.current - 4) setPhase("shown");
-      lastY.current = y;
-    };
+    const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -36,10 +27,8 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 md:transition-[transform,background-color,border-color] md:duration-500 md:ease-out",
-          "border-b border-transparent",
-          phase === "hidden" && "md:-translate-y-full",
-          phase === "shown" && "md:border-white/10 md:bg-canvas/75 md:backdrop-blur-xl",
+          "sticky top-0 z-40 border-b border-transparent md:transition-[background-color,border-color] md:duration-300",
+          scrolled && "md:border-white/10 md:bg-canvas/75 md:backdrop-blur-xl",
         )}
       >
         <div className="mx-auto flex h-20 max-w-[88rem] items-center justify-between px-6 md:h-[4.5rem] md:px-10">
