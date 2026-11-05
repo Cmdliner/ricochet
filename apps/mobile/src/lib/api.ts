@@ -31,17 +31,26 @@ type ApiOptions<S extends z.ZodType> = {
   schema?: S;
 };
 
+/** Without a limit, an unreachable server can leave a request hanging for minutes. */
+const REQUEST_TIMEOUT_MS = 12_000;
+
 async function send(path: string, method: string, body: unknown, token: string | null) {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (token) headers.authorization = `Bearer ${token}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     return await fetch(`${API_URL}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
     });
   } catch {
     throw new ApiError(0, "Could not reach Ricochet. Check your connection and try again.");
+  } finally {
+    clearTimeout(timer);
   }
 }
 
