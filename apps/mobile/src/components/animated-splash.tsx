@@ -196,7 +196,7 @@ export function AnimatedSplash({ ready, onFinish }: AnimatedSplashProps) {
             textAlign: "center",
             color: INK,
             fontSize: 44,
-            fontWeight: "800",
+            fontFamily: "InterTight_800ExtraBold",
             letterSpacing: -1.5,
           },
         ]}
