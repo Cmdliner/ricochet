@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { FlatList, Pressable, TextInput, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { HubsArt } from "@/components/illustrations/empty-art";
+import { HubsArt, SearchArt } from "@/components/illustrations/empty-art";
+import { EmptyState } from "@/components/ui/empty-state";
 import { IconButton } from "@/components/ui/icon-button";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -81,23 +82,25 @@ export default function Hubs() {
           </View>
         }
         ListEmptyComponent={
-          <View className="items-center gap-2 px-8 pt-10">
-            {searching ? (
-              <>
-                <Text className="text-lg font-sans-semibold text-ink">No matches</Text>
-                <Text className="text-center text-muted">Nothing called “{query.trim()}” in your hubs or pods.</Text>
-              </>
-            ) : (
-              <>
-                <HubsArt />
-                <Text className="text-lg font-sans-semibold text-ink">No hubs yet</Text>
-                <Text className="text-center text-muted">Create a hub for your community, or join one with an invite code.</Text>
-              </>
-            )}
-          </View>
+          searching ? (
+            <EmptyState
+              art={<SearchArt />}
+              title="No matches"
+              body={`Nothing called “${query.trim()}” in your hubs or pods. Check the spelling or try a shorter word.`}
+              secondary={{ label: "Clear search", onPress: () => setQuery("") }}
+            />
+          ) : (
+            <EmptyState
+              art={<HubsArt width={240} />}
+              title="Start with a hub"
+              body="A hub is a home for a community, split into pods for each topic. Make your own, or join one you were invited to."
+              action={{ label: "Create a hub", onPress: () => router.push("/hubs/new") }}
+              secondary={{ label: "Join with an invite code", onPress: () => router.push("/hubs/join") }}
+            />
+          )
         }
         ListFooterComponent={
-          searching ? undefined : (
+          searching || hubs.length === 0 ? undefined : (
             <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Join a hub with an invite code"

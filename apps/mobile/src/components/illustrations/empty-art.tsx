@@ -72,3 +72,21 @@ export function ActivityArt({ width = 220 }: ArtProps) {
     </Frame>
   );
 }
+
+/** No search results: a magnifying glass over a few faded rows. */
+export function SearchArt({ width = 200 }: ArtProps) {
+  const { colors: c } = useTheme();
+  return (
+    <Frame width={width} label="No matches">
+      <Circle cx={110} cy={74} r={62} fill={c.raised} />
+      <Rect x={58} y={44} width={78} height={14} rx={7} fill={c.surface} stroke={c.line} strokeWidth={1.5} />
+      <Rect x={58} y={66} width={56} height={14} rx={7} fill={c.surface} stroke={c.line} strokeWidth={1.5} />
+      <Rect x={58} y={88} width={68} height={14} rx={7} fill={c.surface} stroke={c.line} strokeWidth={1.5} />
+      <Circle cx={128} cy={78} r={26} fill={c.canvas} stroke={c.accent} strokeWidth={6} />
+      <Path d="M147 97 l20 20" stroke={c.accent} strokeWidth={8} strokeLinecap="round" />
+      <Path d="M120 72 l16 12 M136 72 l-16 12" stroke={c.muted} strokeWidth={3.5} strokeLinecap="round" />
+      <Path d="M40 36 h10 M45 31 v10" stroke={c.muted} strokeWidth={3} strokeLinecap="round" />
+      <Circle cx={186} cy={50} r={3} fill={c.muted} />
+    </Frame>
+  );
+}
