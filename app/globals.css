@@ -69,7 +69,6 @@ summary {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 6px;
 }
 
 /* Chat-doodle wallpaper tiles (see /public/patterns). */
