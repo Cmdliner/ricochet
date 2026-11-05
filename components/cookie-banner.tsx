@@ -48,22 +48,24 @@ export function CookieBanner() {
     <div
       role="region"
       aria-label="Cookie notice"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-[600px] flex-col gap-3 rounded-3xl border border-line bg-[#0f0f0f] p-4 shadow-2xl shadow-black sm:flex-row sm:items-center sm:gap-5 sm:rounded-full sm:py-2.5 sm:pr-2.5 sm:pl-6"
+      className="pointer-events-none fixed inset-x-0 bottom-4 z-50 px-4"
     >
-      <p className="text-sm text-muted">
-        By using this website you agree to our{" "}
-        <Link href="/cookies" className="text-ink underline underline-offset-4">
-          cookie policy
-        </Link>
-        .
-      </p>
-      <button
-        type="button"
-        onClick={dismiss}
-        className="h-10 shrink-0 rounded-full bg-raised px-5 text-sm font-medium transition-colors hover:bg-line"
-      >
-        Dismiss
-      </button>
+      <div className="pointer-events-auto mx-auto flex w-full max-w-xl flex-col gap-4 rounded-2xl border border-line bg-[#0e0e0e]/95 p-4 shadow-2xl shadow-black backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-3 sm:pr-3 sm:pl-6">
+        <p className="text-sm leading-relaxed text-muted">
+          By using this website you agree to our{" "}
+          <Link href="/cookies" className="text-ink underline underline-offset-4">
+            cookie policy
+          </Link>
+          .
+        </p>
+        <button
+          type="button"
+          onClick={dismiss}
+          className="sheen h-11 shrink-0 rounded-full bg-accent px-7 text-sm font-semibold text-accent-ink transition hover:brightness-110"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
