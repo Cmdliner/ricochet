@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { colors as tokens, createHubSchema, HUB_COLORS, STARTER_PODS, type HubColor, type StarterPod } from "@ricochet/shared";
+import { colors as tokens, createHubSchema, STARTER_PODS, type HubColor, type StarterPod } from "@ricochet/shared";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Sheet } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -68,24 +69,7 @@ export default function CreateHub() {
 
         <View className="gap-3">
           <Text className="text-sm font-sans-medium text-muted">Colour</Text>
-          <View className="flex-row gap-3">
-            {HUB_COLORS.map((option) => {
-              const selected = option === color;
-              return (
-                <Pressable
-                  key={option}
-                  accessibilityRole="radio"
-                  accessibilityLabel={option}
-                  accessibilityState={{ selected }}
-                  onPress={() => setColor(option)}
-                  style={{ backgroundColor: tokens.avatar[option], borderColor: selected ? colors.ink : "transparent" }}
-                  className="size-12 items-center justify-center rounded-full border-[3px]"
-                >
-                  {selected ? <Ionicons name="checkmark" size={22} color={tokens.accentInk} /> : null}
-                </Pressable>
-              );
-            })}
-          </View>
+          <ColorPicker value={color} onChange={setColor} />
         </View>
 
         <View className="gap-3">

@@ -6,6 +6,8 @@ import { Alert, ScrollView, Share, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PodsArt } from "@/components/illustrations/empty-art";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotFound } from "@/components/ui/not-found";
 import { PressableScale } from "@/components/ui/pressable-scale";
@@ -66,6 +68,7 @@ export default function HubScreen() {
     ]);
   }
 
+  const canManage = role === "owner" || role === "admin";
   const tint = tokens.avatar[hub.color];
   // The first few faces, with the owner and admins leading, so the hub looks lived in.
   const faces = hub.members
@@ -84,7 +87,17 @@ export default function HubScreen() {
           variant="plain"
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
         />
-        <IconButton icon="share-outline" label="Share invite" variant="plain" onPress={invite} />
+        <View className="flex-row items-center">
+          <IconButton icon="share-outline" label="Share invite" variant="plain" onPress={invite} />
+          {canManage ? (
+            <IconButton
+              icon="settings-outline"
+              label="Hub settings"
+              variant="plain"
+              onPress={() => router.push({ pathname: "/hub/[hubId]/settings", params: { hubId: hub.id } })}
+            />
+          ) : null}
+        </View>
       </View>
 
       <ScrollView contentContainerClassName="pb-12" showsVerticalScrollIndicator={false}>
@@ -168,7 +181,34 @@ export default function HubScreen() {
             </View>
           </Animated.View>
         ))}
-        <Text className="px-7 pt-3 text-[13px] text-muted">Press and hold a pod for its settings.</Text>
+        {groups.length === 0 ? (
+          <EmptyState
+            art={<PodsArt width={220} />}
+            title="No pods yet"
+            body="Pods are the rooms inside a hub, one for each topic. Make the first one."
+            action={canManage ? { label: "Create a pod", onPress: () => router.push({ pathname: "/hub/[hubId]/new-pod", params: { hubId: hub.id } }) } : undefined}
+          />
+        ) : (
+          <>
+            {canManage ? (
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel="Create a new pod"
+                onPress={() => router.push({ pathname: "/hub/[hubId]/new-pod", params: { hubId: hub.id } })}
+                className="mx-5 mt-4 flex-row items-center gap-4 rounded-3xl border border-dashed border-line p-4"
+              >
+                <View className="size-11 items-center justify-center rounded-2xl bg-raised">
+                  <Ionicons name="add" size={22} color={colors.ink} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[16px] font-sans-semibold text-ink">New pod</Text>
+                  <Text className="text-sm text-muted">Add a room for a new topic.</Text>
+                </View>
+              </PressableScale>
+            ) : null}
+            <Text className="px-7 pt-3 text-[13px] text-muted">Press and hold a pod for its settings.</Text>
+          </>
+        )}
 
         <View className="px-5">
           <SectionLabel>Invite code</SectionLabel>

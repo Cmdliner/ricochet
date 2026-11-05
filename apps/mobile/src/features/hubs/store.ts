@@ -1,8 +1,8 @@
-import { HUB_COLORS, type CreateHubInput, type HubColor } from "@ricochet/shared";
+import { HUB_COLORS, type CreateHubInput, type CreatePodInput, type HubColor, type UpdateHubInput } from "@ricochet/shared";
 import { create } from "zustand";
 import { DISCOVERABLE_HUBS, HUBS, INITIAL_UNREAD, MEMBERS, MESSAGES, PODS } from "./mock-data";
 import { CHATS, CHAT_MESSAGES, CHAT_UNREAD } from "./mock-chats";
-import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod } from "./types";
+import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
 
 /**
  * Everything the hubs screens read, held in memory with mock data.
@@ -29,6 +29,14 @@ type HubsState = {
   /** Changes the editable parts of a pod. */
   updatePod: (podId: string, patch: Partial<Pick<Pod, "name" | "description" | "isPrivate" | "mentionsOnly" | "muted">>) => void;
   deletePod: (podId: string) => void;
+  /** Adds a pod to a hub and returns its id. */
+  createPod: (hubId: string, input: CreatePodInput) => string;
+  updateHub: (hubId: string, input: UpdateHubInput) => void;
+  /** Replaces the invite code, so the old one stops working. Returns the new code. */
+  regenerateInviteCode: (hubId: string) => string;
+  deleteHub: (hubId: string) => void;
+  setMemberRole: (hubId: string, memberId: string, role: Role) => void;
+  removeMember: (hubId: string, memberId: string) => void;
   /** Removes the hub and everything in it from this person's lists. */
   leaveHub: (hubId: string) => void;
   toggleChatMute: (chatId: string) => void;
@@ -73,6 +81,68 @@ export const useHubsStore = create<HubsState>((set, get) => ({
       const { [podId]: _unread, ...unread } = state.unread;
       return { pods: state.pods.filter((pod) => pod.id !== podId), messages, unread };
     });
+  },
+
+  createPod(hubId, input) {
+    const podId = `${hubId}-${input.name}-${newId("p")}`;
+    const pod: Pod = {
+      id: podId,
+      hubId,
+      name: input.name,
+      category: input.category,
+      description: input.description,
+      muted: false,
+      isPrivate: input.isPrivate,
+    };
+    const welcome: Message = { id: newId("m"), podId, kind: "system", sentAt: Date.now(), text: `You created the pod #${input.name}`, reactions: [] };
+    set((state) => ({
+      pods: [...state.pods, pod],
+      messages: { ...state.messages, [podId]: [welcome] },
+    }));
+    return podId;
+  },
+
+  updateHub(hubId, input) {
+    set((state) => ({ hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, ...input } : hub)) }));
+  },
+
+  regenerateInviteCode(hubId) {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const code = Array.from({ length: 7 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+    set((state) => ({ hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, inviteCode: code } : hub)) }));
+    return code;
+  },
+
+  deleteHub(hubId) {
+    set((state) => {
+      const podIds = state.pods.filter((pod) => pod.hubId === hubId).map((pod) => pod.id);
+      const messages = { ...state.messages };
+      const unread = { ...state.unread };
+      for (const id of podIds) {
+        delete messages[id];
+        delete unread[id];
+      }
+      return {
+        hubs: state.hubs.filter((hub) => hub.id !== hubId),
+        pods: state.pods.filter((pod) => pod.hubId !== hubId),
+        messages,
+        unread,
+      };
+    });
+  },
+
+  setMemberRole(hubId, memberId, role) {
+    set((state) => ({
+      hubs: state.hubs.map((hub) =>
+        hub.id === hubId ? { ...hub, members: hub.members.map((m) => (m.id === memberId ? { ...m, role } : m)) } : hub,
+      ),
+    }));
+  },
+
+  removeMember(hubId, memberId) {
+    set((state) => ({
+      hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, members: hub.members.filter((m) => m.id !== memberId) } : hub)),
+    }));
   },
 
   leaveHub(hubId) {

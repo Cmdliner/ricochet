@@ -18,6 +18,7 @@ export default function MainLayout() {
       <Stack.Screen name="hubs/new" options={sheet} />
       <Stack.Screen name="hubs/join" options={sheet} />
       <Stack.Screen name="hub/[hubId]/members" options={sheet} />
+      <Stack.Screen name="hub/[hubId]/new-pod" options={sheet} />
     </Stack>
   );
 }
