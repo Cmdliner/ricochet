@@ -1,6 +1,7 @@
 import { authUserSchema, completeProfileSchema } from "@ricochet/shared";
 import { useState } from "react";
 import { AuthScreen } from "@/components/auth-screen";
+import { ProfileArt } from "@/components/illustrations/profile-art";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { api, ApiError, errorMessage } from "@/lib/api";
@@ -42,6 +43,7 @@ export default function ProfileSetup() {
 
   return (
     <AuthScreen
+      art={<ProfileArt />}
       title="Set up your profile"
       subtitle="Choose how people see you. You can change this later."
       footer={

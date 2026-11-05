@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Text } from "react-native";
 import { AuthScreen } from "@/components/auth-screen";
+import { WelcomeArt } from "@/components/illustrations/welcome-art";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { api, errorMessage } from "@/lib/api";
@@ -32,6 +33,7 @@ export default function SignIn() {
 
   return (
     <AuthScreen
+      art={<WelcomeArt />}
       title="Welcome to Ricochet"
       subtitle="Enter your email and we will send you a code to sign in. No password needed."
       footer={<Text className="text-center text-sm text-muted">By continuing you agree to our terms and privacy policy.</Text>}

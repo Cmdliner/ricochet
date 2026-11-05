@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type ScreenProps = {
   title: string;
+  /** An illustration for the empty state. */
+  art: ReactNode;
   /** Short line shown under the empty state title. */
   emptyTitle: string;
   emptyBody: string;
@@ -11,7 +13,7 @@ type ScreenProps = {
 };
 
 /** Shared frame for the tab screens: a big title and an empty state, in the Ricochet look. */
-export function Screen({ title, emptyTitle, emptyBody, children }: ScreenProps) {
+export function Screen({ title, art, emptyTitle, emptyBody, children }: ScreenProps) {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
       {/* Padding lives on this inner view: SafeAreaView manages its own padding and would override it. */}

@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "./logo-mark";
 
 type AuthScreenProps = {
+  /** An illustration shown under the logo. */
+  art?: ReactNode;
   title: string;
   subtitle: string;
   children: ReactNode;
@@ -12,7 +14,7 @@ type AuthScreenProps = {
 };
 
 /** The frame shared by every step of sign in: logo, heading, then the form. */
-export function AuthScreen({ title, subtitle, children, footer }: AuthScreenProps) {
+export function AuthScreen({ art, title, subtitle, children, footer }: AuthScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -21,8 +23,9 @@ export function AuthScreen({ title, subtitle, children, footer }: AuthScreenProp
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="mb-10 gap-5">
-            <LogoMark />
+          <View className="mb-8 gap-3">
+            <LogoMark size={44} />
+            {art ? <View className="items-center py-2">{art}</View> : null}
             <View className="gap-2">
               <Text className="text-[32px] leading-[38px] font-bold tracking-tight text-ink">{title}</Text>
               <Text className="text-base leading-6 text-muted">{subtitle}</Text>
