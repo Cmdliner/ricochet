@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { Logo } from "@/components/logo";
-import { FOOTER_COLUMNS, SITE, STORES } from "@/lib/constants";
+import { StoreBadge } from "@/components/store-badge";
+import { FOOTER_COLUMNS, SITE } from "@/lib/constants";
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-line">
-      <Container className="grid gap-12 py-16 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:gap-8">
+    <footer className="pattern-dark relative z-40 -mt-12 rounded-t-[3rem] bg-canvas">
+      <Container className="grid gap-12 pt-20 pb-14 lg:grid-cols-[1.6fr_1fr_1fr] lg:gap-10">
         <div className="max-w-sm">
           <Link href="/" aria-label="Ricochet home" className="inline-block">
             <Logo />
@@ -15,26 +16,19 @@ export function Footer() {
             Real-time messaging with hubs for your communities and private chats for
             everyone else.
           </p>
-          <ul className="mt-6 flex flex-wrap gap-2.5">
-            {STORES.map((store) => (
-              <li
-                key={store.id}
-                className="inline-flex items-center gap-2 rounded-full border border-line px-3.5 py-1.5 text-xs text-muted"
-              >
-                {store.store}
-                <span className="text-accent">Soon</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <StoreBadge store="ios" />
+            <StoreBadge store="android" />
+          </div>
         </div>
 
         {FOOTER_COLUMNS.map((column) => (
           <nav key={column.title} aria-label={column.title}>
-            <h2 className="text-sm font-medium">{column.title}</h2>
+            <h2 className="text-sm font-semibold">{column.title}</h2>
             <ul className="mt-5 flex flex-col gap-3.5 text-sm text-muted">
               {column.links.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="transition-colors hover:text-ink">
+                  <Link href={link.href} className="transition-colors hover:text-accent">
                     {link.label}
                   </Link>
                 </li>
@@ -44,7 +38,7 @@ export function Footer() {
         ))}
       </Container>
 
-      <div className="border-t border-line">
+      <div className="border-t border-white/10">
         <Container className="flex flex-col gap-2 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {SITE.year} {SITE.name}. All rights reserved.

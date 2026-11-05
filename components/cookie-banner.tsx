@@ -50,7 +50,7 @@ export function CookieBanner() {
       aria-label="Cookie notice"
       className="pointer-events-none fixed inset-x-0 bottom-4 z-50 px-4"
     >
-      <div className="pointer-events-auto mx-auto flex w-full max-w-xl flex-col gap-4 rounded-2xl border border-line bg-[#0e0e0e]/95 p-4 shadow-2xl shadow-black backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-3 sm:pr-3 sm:pl-6">
+      <div className="pointer-events-auto mx-auto flex w-full max-w-xl flex-col gap-4 rounded-2xl border border-line bg-surface/95 p-4 shadow-2xl shadow-black backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-3 sm:pr-3 sm:pl-6">
         <p className="text-sm leading-relaxed text-muted">
           By using this website you agree to our{" "}
           <Link href="/cookies" className="text-ink underline underline-offset-4">

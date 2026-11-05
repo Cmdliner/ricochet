@@ -2,7 +2,7 @@ import type { LegalContent } from "@/lib/legal/types";
 
 export function LegalDocument({ content }: { content: LegalContent }) {
   return (
-    <article className="mx-auto w-full max-w-3xl px-5 py-20 sm:px-8 sm:py-28">
+    <article className="mx-auto w-full max-w-3xl px-5 pt-20 pb-36 sm:px-8 sm:pt-28 sm:pb-44">
       <h1 className="font-display text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">
         {content.title}
       </h1>
