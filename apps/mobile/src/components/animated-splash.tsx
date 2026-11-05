@@ -124,6 +124,9 @@ export function AnimatedSplash({ ready, onFinish }: AnimatedSplashProps) {
     exit.value = withTiming(1, { duration: 320, easing: Easing.in(Easing.quad) }, (finished) => {
       if (finished) scheduleOnRN(onFinish);
     });
+    // Safety net: if the animation callback never fires on some device, still remove the overlay.
+    const fallback = setTimeout(onFinish, 1500);
+    return () => clearTimeout(fallback);
   }, [played, ready, exit, onFinish]);
 
   const { start, fractionToA } = scene;
