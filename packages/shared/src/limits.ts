@@ -13,4 +13,12 @@ export const LIMITS = {
   loginCodeLength: 6,
   loginCodeTtlMs: 10 * 60 * 1000,
   loginCodeMaxAttempts: 5,
+  /** At most this many codes per email per hour, and a short gap between them. */
+  loginCodesPerHour: 5,
+  loginCodeResendGapMs: 30 * 1000,
+  /** Sign in sessions stay alive this long after last use. */
+  refreshTokenTtlDays: 30,
+  displayNameMax: 40,
+  handleMin: 3,
+  handleMax: 20,
 } as const;
