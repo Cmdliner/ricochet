@@ -8,7 +8,7 @@ import { ME_ID, type Hub, type Member, type Message, type Pod, type Reaction } f
 
 const MINUTE = 60_000;
 const now = Date.now();
-const ago = (minutes: number) => now - minutes * MINUTE;
+export const ago = (minutes: number) => now - minutes * MINUTE;
 
 // ---------------------------------------------------------------- people
 export const MEMBERS: Record<string, Member> = {
@@ -150,22 +150,22 @@ const wave = (seed: number, count = 28): number[] => {
 
 let counter = 0;
 const id = () => `m${++counter}`;
-const react = (emoji: string, ...userIds: string[]): Reaction => ({ emoji, userIds });
+export const react = (emoji: string, ...userIds: string[]): Reaction => ({ emoji, userIds });
 
-const text = (podId: string, authorId: string, minutesAgo: number, body: string, reactions: Reaction[] = []): Message => ({
+export const text = (podId: string, authorId: string, minutesAgo: number, body: string, reactions: Reaction[] = []): Message => ({
   id: id(), podId, kind: "text", authorId, sentAt: ago(minutesAgo), text: body, reactions,
 });
-const voice = (podId: string, authorId: string, minutesAgo: number, seconds: number, reactions: Reaction[] = []): Message => ({
+export const voice = (podId: string, authorId: string, minutesAgo: number, seconds: number, reactions: Reaction[] = []): Message => ({
   id: id(), podId, kind: "voice", authorId, sentAt: ago(minutesAgo), durationMs: seconds * 1000, waveform: wave(seconds * 7 + minutesAgo), reactions,
 });
-const video = (podId: string, authorId: string, minutesAgo: number, seconds: number, reactions: Reaction[] = []): Message => ({
+export const video = (podId: string, authorId: string, minutesAgo: number, seconds: number, reactions: Reaction[] = []): Message => ({
   id: id(), podId, kind: "video", authorId, sentAt: ago(minutesAgo), durationMs: seconds * 1000, reactions,
 });
-const system = (podId: string, minutesAgo: number, body: string): Message => ({
+export const system = (podId: string, minutesAgo: number, body: string): Message => ({
   id: id(), podId, kind: "system", sentAt: ago(minutesAgo), text: body, reactions: [],
 });
 
-const day = 24 * 60;
+export const day = 24 * 60;
 
 export const MESSAGES: Record<string, Message[]> = {
   "ship-launch": [

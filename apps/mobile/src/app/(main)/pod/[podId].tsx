@@ -101,7 +101,7 @@ export default function PodScreen() {
         />
 
         <Composer
-          podName={pod.name}
+          placeholder={`Message #${pod.name}`}
           onSendText={(text) => sendMessage(pod.id, { kind: "text", text })}
           onSendVoice={(note) => sendMessage(pod.id, { kind: "voice", ...note })}
           onSendVideo={(note) => sendMessage(pod.id, { kind: "video", ...note })}

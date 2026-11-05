@@ -28,7 +28,8 @@ const CANCEL_DISTANCE = 90;
 const BAR_COUNT = 28;
 
 type ComposerProps = {
-  podName: string;
+  /** What the box says while empty, for example "Message #launch". */
+  placeholder: string;
   onSendText: (text: string) => void;
   onSendVoice: (note: { durationMs: number; waveform: number[] }) => void;
   onSendVideo: (note: { durationMs: number }) => void;
@@ -124,7 +125,7 @@ function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: 
   );
 }
 
-export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: ComposerProps) {
+export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo }: ComposerProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const keyboardOpen = useKeyboardState((s) => s.isVisible);
@@ -257,10 +258,10 @@ export function Composer({ podName, onSendText, onSendVoice, onSendVideo }: Comp
         ) : (
           <View className="min-h-12 flex-1 flex-row items-end rounded-3xl bg-raised pr-1.5 pl-4">
             <TextInput
-              accessibilityLabel={`Message ${podName}`}
+              accessibilityLabel={placeholder}
               value={text}
               onChangeText={setText}
-              placeholder={`Message #${podName}`}
+              placeholder={placeholder}
               placeholderTextColor={colors.muted}
               selectionColor={colors.accent}
               multiline
