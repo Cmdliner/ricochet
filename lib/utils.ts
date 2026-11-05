@@ -9,14 +9,15 @@ export function isValidEmail(value: string) {
 }
 
 type ButtonOptions = {
-  variant?: "primary" | "secondary" | "dark";
+  variant?: "primary" | "secondary" | "secondary-light" | "dark";
   size?: "md" | "lg";
 };
 
 const variants = {
   primary: "bg-accent text-accent-ink hover:brightness-110",
-  secondary: "border border-line text-ink hover:bg-raised",
-  dark: "bg-black text-ink hover:bg-black/80",
+  secondary: "border border-white/20 text-ink hover:bg-white/10",
+  "secondary-light": "border border-cream-ink/20 text-cream-ink hover:bg-white",
+  dark: "bg-accent-ink text-ink hover:brightness-150",
 } as const;
 
 export function buttonClass({ variant = "primary", size = "md" }: ButtonOptions = {}) {

@@ -8,13 +8,12 @@ export const SITE = {
   contactEmail: "support@ricochet.app",
 } as const;
 
-export const THEME_COLOR = "#000000";
+export const THEME_COLOR = "#100e0d";
 
 export const NAV_LINKS = [
-  { href: "/#features", label: "Features" },
-  { href: "/#hubs", label: "Hubs" },
-  { href: "/#voice-video", label: "Voice and video" },
-  { href: "/download", label: "Download" },
+  { href: "/#features", label: "Features", description: "What is inside Ricochet" },
+  { href: "/#how-it-works", label: "How it works", description: "From first hub to private chat" },
+  { href: "/download", label: "Download", description: "iOS and Android, coming soon" },
 ] as const;
 
 export const FOOTER_COLUMNS = [
@@ -22,16 +21,8 @@ export const FOOTER_COLUMNS = [
     title: "Product",
     links: [
       { href: "/#features", label: "Features" },
-      { href: "/#hubs", label: "Hubs and pods" },
-      { href: "/#voice-video", label: "Voice and video" },
       { href: "/#how-it-works", label: "How it works" },
-    ],
-  },
-  {
-    title: "Get the app",
-    links: [
-      { href: "/download", label: "iOS" },
-      { href: "/download", label: "Android" },
+      { href: "/download", label: "Download" },
       { href: "/#waitlist", label: "Join the waitlist" },
     ],
   },
@@ -59,19 +50,4 @@ export const AVATAR_COLORS = {
 /** Bar heights (px) for the voice message waveform. */
 export const WAVEFORM_BARS = [
   8, 14, 10, 20, 26, 16, 10, 22, 28, 18, 12, 24, 16, 9, 20, 14, 8, 12, 18, 10, 22, 14,
-] as const;
-
-export const STORES = [
-  {
-    id: "ios",
-    platform: "iOS",
-    store: "App Store",
-    description: "For iPhone and iPad.",
-  },
-  {
-    id: "android",
-    platform: "Android",
-    store: "Google Play",
-    description: "For Android phones and tablets.",
-  },
 ] as const;

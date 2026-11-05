@@ -2,15 +2,31 @@
 
 :root {
   color-scheme: dark;
-  --canvas: #000000;
-  --surface: #0b0b0b;
-  --raised: #161616;
-  --line: #242424;
-  --ink: #fafafa;
-  --muted: #a1a1a1;
+
+  /* Dark surfaces (warm charcoal rather than pure black) */
+  --canvas: #100e0d;
+  --surface: #181513;
+  --raised: #221e1b;
+  --line: #322c28;
+  --ink: #f6f1ea;
+  --muted: #aaa196;
+
+  /* Light sections */
+  --cream: #f3ede3;
+  --cream-card: #fffaf2;
+  --cream-ink: #1b1613;
+  --cream-muted: #6b6157;
+  --cream-line: #e1d7c7;
+
+  /* Deep teal: the complement to the coral accent */
+  --teal: #123b38;
+  --teal-raised: #1a4d49;
+  --teal-line: #2b625d;
+
   /* Brand accent. Change these two values to re-theme the whole site. */
-  --accent: #ccff44;
-  --accent-ink: #0a0f00;
+  --accent: #e9714e;
+  --accent-ink: #1f0c05;
+  --accent-deep: #b8431f; /* accent for small text on cream */
 }
 
 @theme inline {
@@ -20,8 +36,17 @@
   --color-line: var(--line);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-cream: var(--cream);
+  --color-cream-card: var(--cream-card);
+  --color-cream-ink: var(--cream-ink);
+  --color-cream-muted: var(--cream-muted);
+  --color-cream-line: var(--cream-line);
+  --color-teal-deep: var(--teal);
+  --color-teal-raised: var(--teal-raised);
+  --color-teal-line: var(--teal-line);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-deep: var(--accent-deep);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-inter-tight), system-ui, sans-serif;
 }
@@ -48,6 +73,17 @@ body {
   border-radius: 6px;
 }
 
+/* Chat-doodle wallpaper tiles (see /public/patterns). */
+.pattern-light {
+  background-image: url("/patterns/doodle-light.svg");
+  background-size: 300px;
+}
+
+.pattern-dark {
+  background-image: url("/patterns/doodle-dark.svg");
+  background-size: 300px;
+}
+
 /* A light reflection that periodically sweeps across a button. */
 .sheen {
   position: relative;
@@ -65,7 +101,7 @@ body {
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.85),
+      rgba(255, 255, 255, 0.8),
       transparent
     );
     transform: translateX(-160%) skewX(-20deg);
@@ -104,11 +140,39 @@ body {
     }
   }
 
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   .typing-dot {
     animation: typing-dot 1.2s ease-in-out infinite;
   }
 
   .playhead {
     animation: playhead 7s linear infinite;
+  }
+
+  .fade-up {
+    animation: fade-up 0.45s ease-out both;
+  }
+
+  .menu-in {
+    animation: menu-in 0.25s ease-out both;
   }
 }
