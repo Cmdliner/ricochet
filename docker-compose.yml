@@ -1,0 +1,39 @@
+# Local services for development. Start with `pnpm infra:up`.
+# Host ports are 5442 and 6380 on purpose, so they never clash with a Postgres or Redis you
+# already have on the default ports. Override with POSTGRES_PORT and REDIS_PORT in .env.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ricochet
+      POSTGRES_PASSWORD: ricochet
+      POSTGRES_DB: ricochet
+    ports:
+      - "${POSTGRES_PORT:-5442}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ricochet"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Catches every email the API sends in development. Open http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres-data:

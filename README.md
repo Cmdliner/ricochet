@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ricochet
 
-## Getting Started
+Real-time messaging with hubs, pods and private chats, voice notes and video notes.
 
-First, run the development server:
+This is a pnpm workspace. One repo, several packages that install together and import each other.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+ricochet/
+├─ apps/
+│  ├─ web/       Next.js website (@ricochet/web)
+│  ├─ mobile/    Expo app with NativeWind (@ricochet/mobile)
+│  └─ api/       NestJS: REST, Socket.IO gateway, background worker (@ricochet/api)
+└─ packages/
+   ├─ shared/    Zod schemas, limits, event names, design tokens (@ricochet/shared)
+   └─ db/        Drizzle schema and migrations (@ricochet/db)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+pnpm build:packages         # builds shared and db, which the apps import
+cp .env.example .env
+pnpm infra:up               # Postgres, Redis and a local mail catcher in Docker
+pnpm db:migrate             # create the tables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+pnpm dev:api                # http://localhost:3001/health
+pnpm dev:web                # http://localhost:3000
+pnpm dev:mobile             # Expo dev server
+```
 
-## Learn More
+While you edit `packages/*`, keep `pnpm dev:packages` running so the apps see changes.
 
-To learn more about Next.js, take a look at the following resources:
+## How the workspace fits together
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `pnpm-workspace.yaml` lists which folders are packages and holds shared version pins (the `catalog`).
+- A package depends on another with `"@ricochet/shared": "workspace:*"`. pnpm links the folder instead of downloading it.
+- `shared` and `db` are built with tsup to both ESM and CommonJS, so Next, Metro and NestJS can all import them.
+- Run a command in one package with `pnpm --filter @ricochet/api <script>`, or in all with `pnpm -r <script>`.
+- Add a dependency to one package: `pnpm --filter @ricochet/web add some-lib`.
+- Mobile dependencies that must match the Expo SDK: use `pnpm --filter @ricochet/mobile exec expo install <package>`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Decisions
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Hubs, pods and chats. Email code or link sign in. No end-to-end encryption in version 1.
+Voice notes up to 10 minutes, video notes up to 60 seconds, groups up to 40 people. No calls in version 1.

@@ -1,3 +1,24 @@
+# Every folder matching these globs is a workspace package.
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Shared version pins. A package opts in with "zod": "catalog:" in its package.json,
+# so one upgrade here moves the whole repo together.
+catalog:
+  zod: ^4.6.7
+  typescript: ^5.9.0
+  tsup: ^8.5.0
+  "@types/node": ^24.0.0
+  drizzle-orm: ^0.45.0
+
+# Packages whose install scripts are allowed to run (pnpm blocks them by default).
 allowBuilds:
+  esbuild: false # binary ships in a separate package, the script only verifies it
+  msgpackr-extract: false # optional native speed-up, a JS fallback exists
   sharp: false
   unrs-resolver: false
+
+# pnpm holds back versions published very recently. bullmq 6.7.0 was approved explicitly.
+minimumReleaseAgeExclude:
+  - bullmq@6.7.0
