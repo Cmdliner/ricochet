@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { Button } from "./button";
 import { router } from "expo-router";
 
@@ -6,7 +7,7 @@ import { router } from "expo-router";
 export function NotFound({ what }: { what: string }) {
   return (
     <View className="flex-1 items-center justify-center gap-3 px-8">
-      <Text className="text-xl font-semibold text-ink">{what} not found</Text>
+      <Text className="text-xl font-sans-semibold text-ink">{what} not found</Text>
       <Text className="text-center text-muted">It may have been deleted, or you may no longer have access.</Text>
       <Button label="Go home" className="mt-3 px-8" onPress={() => router.replace("/")} />
     </View>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "./logo-mark";
 
@@ -27,7 +28,7 @@ export function AuthScreen({ art, title, subtitle, children, footer }: AuthScree
             <LogoMark size={44} />
             {art ? <View className="items-center py-2">{art}</View> : null}
             <View className="gap-2">
-              <Text className="text-[32px] leading-[38px] font-bold tracking-tight text-ink">{title}</Text>
+              <Text className="font-display text-[32px] leading-[38px] tracking-tight text-ink">{title}</Text>
               <Text className="text-base leading-6 text-muted">{subtitle}</Text>
             </View>
           </View>

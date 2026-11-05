@@ -1,7 +1,7 @@
 import { requestLoginCodeSchema } from "@ricochet/shared";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Text } from "react-native";
+import { Text } from "@/components/ui/text";
 import { AuthScreen } from "@/components/auth-screen";
 import { WelcomeArt } from "@/components/illustrations/welcome-art";
 import { Button } from "@/components/ui/button";

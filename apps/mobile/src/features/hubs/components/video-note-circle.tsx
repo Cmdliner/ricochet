@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import Svg, { Circle } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 import { formatDuration } from "../format";
@@ -102,7 +103,7 @@ export function VideoNoteCircle({ durationMs, size = 176, fresh = true }: VideoN
       </Svg>
 
       <View className="absolute bottom-3 self-center rounded-full bg-black/60 px-2.5 py-1">
-        <Text className="text-xs font-semibold text-white" style={{ fontVariant: ["tabular-nums"] }}>
+        <Text className="text-xs font-sans-semibold text-white" style={{ fontVariant: ["tabular-nums"] }}>
           {formatDuration(playing || elapsed > 0 ? durationMs - elapsed : durationMs)}
         </Text>
       </View>

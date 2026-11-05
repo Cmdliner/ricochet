@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -23,7 +24,7 @@ export function Segmented<T extends string>({ label, options, value, onChange }:
             onPress={() => onChange(option.value)}
             className={`h-11 flex-1 items-center justify-center rounded-full ${selected ? "bg-accent" : ""}`}
           >
-            <Text className={`text-sm font-semibold ${selected ? "text-accent-ink" : "text-muted"}`}>{option.label}</Text>
+            <Text className={`text-sm font-sans-semibold ${selected ? "text-accent-ink" : "text-muted"}`}>{option.label}</Text>
           </Pressable>
         );
       })}

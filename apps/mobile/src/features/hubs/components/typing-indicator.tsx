@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -44,7 +45,7 @@ export function TypingIndicator({ member }: { member: Member }) {
     <View accessibilityLabel={`${member.name} is typing`} accessibilityLiveRegion="polite" className="mb-3 flex-row items-end gap-2 px-3">
       <Avatar name={member.name} color={member.color} size={32} />
       <View className="gap-1">
-        <Text className="ml-3 text-xs font-semibold text-muted">{member.name.split(" ")[0]} is typing</Text>
+        <Text className="ml-3 text-xs font-sans-semibold text-muted">{member.name.split(" ")[0]} is typing</Text>
         <View className="h-10 flex-row items-center gap-1.5 self-start rounded-[20px] rounded-bl-md bg-raised px-4">
           <Dot delay={0} />
           <Dot delay={140} />
