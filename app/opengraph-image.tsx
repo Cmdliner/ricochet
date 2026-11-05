@@ -14,23 +14,23 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#000000",
-          color: "#fafafa",
+          background: "#100e0d",
+          color: "#f6f1ea",
           padding: 80,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <svg width="80" height="80" viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="9" fill="#ccff44" />
-            <path d="M7.5 9 14 23 22 12" fill="none" stroke="#0a0f00" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="25" cy="8.5" r="2.4" fill="#0a0f00" />
+            <rect width="32" height="32" rx="9" fill="#e9714e" />
+            <path d="M7.5 9 14 23 22 12" fill="none" stroke="#1f0c05" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="25" cy="8.5" r="2.4" fill="#1f0c05" />
           </svg>
           <div style={{ display: "flex", fontSize: 56, fontWeight: 600 }}>ricochet</div>
         </div>
         <div style={{ display: "flex", fontSize: 92, fontWeight: 600, lineHeight: 1.05, maxWidth: 900 }}>
           Conversations that bounce right back.
         </div>
-        <div style={{ display: "flex", fontSize: 32, color: "#a1a1a1" }}>
+        <div style={{ display: "flex", fontSize: 32, color: "#aaa196" }}>
           Hubs, private chats, voice messages and video notes.
         </div>
       </div>

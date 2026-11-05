@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 
 export function LogoMark({ className, inverse = false }: { className?: string; inverse?: boolean }) {
-  const mark = inverse ? "#ccff44" : "#0a0f00";
+  const mark = inverse ? "#e9714e" : "#1f0c05";
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" focusable="false">
-      <rect width="32" height="32" rx="9" fill={inverse ? "#0a0f00" : "#ccff44"} />
+      <rect width="32" height="32" rx="9" fill={inverse ? "#1f0c05" : "#e9714e"} />
       <path
         d="M7.5 9 14 23 22 12"
         fill="none"
