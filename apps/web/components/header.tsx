@@ -18,7 +18,7 @@ export function Header() {
   const pathname = usePathname();
 
   // Desktop only: the header steps out of the way as you read down, and returns when you scroll
-  // back up. On a phone it is a plain, static row that scrolls away with the page.
+  // back up. On a phone it stays pinned and looks the same at every scroll position, with no background.
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
@@ -36,7 +36,7 @@ export function Header() {
     <>
       <header
         className={cn(
-          "relative z-40 md:sticky md:top-0 md:transition-[transform,background-color,border-color] md:duration-500 md:ease-out",
+          "sticky top-0 z-40 md:transition-[transform,background-color,border-color] md:duration-500 md:ease-out",
           "border-b border-transparent",
           phase === "hidden" && "md:-translate-y-full",
           phase === "shown" && "md:border-white/10 md:bg-canvas/75 md:backdrop-blur-xl",
