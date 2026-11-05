@@ -5,7 +5,7 @@ import { buttonClass } from "@/lib/utils";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-line">
+    <section className="pattern-dark relative z-0 overflow-hidden bg-canvas">
       <div className="mx-auto max-w-4xl px-5 pt-16 text-center sm:px-8 sm:pt-24">
         <Link
           href="/#waitlist"
@@ -28,7 +28,7 @@ export function Hero() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/#waitlist" className={buttonClass({ size: "lg" })}>
+          <Link href="/#waitlist" className={`${buttonClass({ size: "lg" })} sheen`}>
             Join the waitlist
           </Link>
           <Link href="/download" className={buttonClass({ variant: "secondary", size: "lg" })}>

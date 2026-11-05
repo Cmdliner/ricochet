@@ -214,6 +214,9 @@ function PrivateScreen() {
   );
 }
 
+/** A single phone, for pages that need one screen rather than the trio. */
+export const ChatPhone = PodScreen;
+
 export function PhoneMockups() {
   return (
     <div className="flex h-[500px] items-start justify-center gap-6 overflow-hidden px-5 sm:h-[580px] lg:gap-8">
