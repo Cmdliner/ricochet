@@ -51,3 +51,18 @@ export const AVATAR_COLORS = {
 export const WAVEFORM_BARS = [
   8, 14, 10, 20, 26, 16, 10, 22, 28, 18, 12, 24, 16, 9, 20, 14, 8, 12, 18, 10, 22, 14,
 ] as const;
+
+/**
+ * Footer credit card. Add the real URLs (and a photo at /public/adeyemi.jpg) here;
+ * links with an empty href render as plain text until then.
+ */
+export const CREDIT = {
+  name: "Adeyemi",
+  role: "Software Engineer",
+  initial: "A",
+  links: [
+    { label: "LinkedIn", href: "" },
+    { label: "WhatsApp", href: "" },
+    { label: "Email", href: "" },
+  ],
+} as const;

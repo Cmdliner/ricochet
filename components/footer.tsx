@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/container";
+import { Credit } from "@/components/credit";
 import { Logo } from "@/components/logo";
 import { StoreBadge } from "@/components/store-badge";
 import { FOOTER_COLUMNS, SITE } from "@/lib/constants";
@@ -43,7 +44,7 @@ export function Footer() {
           <p>
             © {SITE.year} {SITE.name}. All rights reserved.
           </p>
-          <p>Made for people who talk a lot.</p>
+          <Credit />
         </Container>
       </div>
     </footer>
