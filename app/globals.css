@@ -18,11 +18,6 @@
   --cream-muted: #6b6157;
   --cream-line: #e1d7c7;
 
-  /* Deep teal: the complement to the coral accent */
-  --teal: #123b38;
-  --teal-raised: #1a4d49;
-  --teal-line: #2b625d;
-
   /* Brand accent. Change these two values to re-theme the whole site. */
   --accent: #e9714e;
   --accent-ink: #1f0c05;
@@ -41,9 +36,6 @@
   --color-cream-ink: var(--cream-ink);
   --color-cream-muted: var(--cream-muted);
   --color-cream-line: var(--cream-line);
-  --color-teal-deep: var(--teal);
-  --color-teal-raised: var(--teal-raised);
-  --color-teal-line: var(--teal-line);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-deep: var(--accent-deep);
@@ -60,6 +52,13 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Tailwind v4 resets buttons to the default cursor; restore the pointer. */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+summary {
+  cursor: pointer;
 }
 
 ::selection {
@@ -82,6 +81,14 @@ body {
 .pattern-dark {
   background-image: url("/patterns/doodle-dark.svg");
   background-size: 300px;
+}
+
+/* Illustrated hero backdrop (flat shapes, no gradients). */
+.bg-hero-scene {
+  background-color: var(--canvas);
+  background-image: url("/backgrounds/hero-scene.svg?v=3");
+  background-size: cover;
+  background-position: center bottom;
 }
 
 /* A light reflection that periodically sweeps across a button. */
