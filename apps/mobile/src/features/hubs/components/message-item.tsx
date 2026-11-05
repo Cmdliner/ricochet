@@ -31,7 +31,8 @@ function bubbleShape({
   } as ViewStyle;
 }
 
-export const MessageItem = memo(function MessageItem({ item }: { item: MessageRow }) {
+/** `direct` is a one-to-one chat: no avatar or name beside the bubbles, since it is obvious who is talking. */
+export const MessageItem = memo(function MessageItem({ item, direct = false }: { item: MessageRow; direct?: boolean }) {
   const { colors } = useTheme();
   const { message, mine, startsGroup, endsGroup } = item;
   const author = useHubsStore((s) => (message.kind === "system" ? undefined : s.members[message.authorId]));
@@ -52,14 +53,14 @@ export const MessageItem = memo(function MessageItem({ item }: { item: MessageRo
     <Animated.View entering={isNew ? FadeInDown.duration(260) : undefined}>
       <View className={`flex-row items-end gap-2 px-3 ${mine ? "justify-end" : ""} ${endsGroup ? "mb-3" : "mb-0.5"}`}>
         {/* People you are talking to show their picture beside the last message of a run. */}
-        {!mine ? (
+        {!mine && !direct ? (
           <View className="w-8">
             {endsGroup && author ? <Avatar name={author.name} color={author.color} size={32} /> : null}
           </View>
         ) : null}
 
-        <View className={`max-w-[80%] ${mine ? "items-end" : "items-start"}`}>
-          {!mine && startsGroup && author ? (
+        <View className={`${direct ? "max-w-[82%]" : "max-w-[80%]"} ${mine ? "items-end" : "items-start"}`}>
+          {!mine && !direct && startsGroup && author ? (
             <Text className="mb-1 ml-3 text-xs font-sans-semibold text-muted">{author.name}</Text>
           ) : null}
 
@@ -80,7 +81,7 @@ export const MessageItem = memo(function MessageItem({ item }: { item: MessageRo
           <ReactionRow podId={message.podId} messageId={message.id} reactions={message.reactions} mine={mine} />
 
           {endsGroup ? (
-            <View className={`mt-1 flex-row items-center gap-1 ${mine ? "mr-1" : "ml-3"}`}>
+            <View className={`mt-1 flex-row items-center gap-1 ${mine ? "mr-1" : direct ? "ml-1" : "ml-3"}`}>
               <Text className="text-[11px] text-muted">{formatClock(message.sentAt)}</Text>
               {mine ? <Ionicons name="checkmark-done" size={14} color={colors.accentText} /> : null}
             </View>

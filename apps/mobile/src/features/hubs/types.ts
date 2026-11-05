@@ -34,6 +34,14 @@ export type Pod = {
   isPrivate: boolean;
 };
 
+/** A private one-to-one conversation. Its id is used wherever a pod id would be, for messages and unread counts. */
+export type Chat = {
+  id: string;
+  personId: string;
+  pinned: boolean;
+  muted: boolean;
+};
+
 export type Reaction = { emoji: string; userIds: string[] };
 
 type MessageBase = {

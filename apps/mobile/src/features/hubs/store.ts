@@ -1,7 +1,8 @@
 import { HUB_COLORS, type CreateHubInput, type HubColor } from "@ricochet/shared";
 import { create } from "zustand";
 import { DISCOVERABLE_HUBS, HUBS, INITIAL_UNREAD, MEMBERS, MESSAGES, PODS } from "./mock-data";
-import { ME_ID, type Hub, type Member, type Message, type Pod } from "./types";
+import { CHATS, CHAT_MESSAGES, CHAT_UNREAD } from "./mock-chats";
+import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod } from "./types";
 
 /**
  * Everything the hubs screens read, held in memory with mock data.
@@ -16,6 +17,7 @@ type SendPayload =
 type HubsState = {
   hubs: Hub[];
   pods: Pod[];
+  chats: Chat[];
   members: Record<string, Member>;
   messages: Record<string, Message[]>;
   unread: Record<string, number>;
@@ -24,6 +26,8 @@ type HubsState = {
 
   markPodRead: (podId: string) => void;
   togglePodMute: (podId: string) => void;
+  toggleChatMute: (chatId: string) => void;
+  togglePin: (chatId: string) => void;
   sendMessage: (podId: string, payload: SendPayload) => void;
   toggleReaction: (podId: string, messageId: string, emoji: string) => void;
   createHub: (input: CreateHubInput) => string;
@@ -39,9 +43,10 @@ const REPLIES = ["Got it, thanks.", "Nice, looking good.", "On it.", "Ha, same."
 export const useHubsStore = create<HubsState>((set, get) => ({
   hubs: HUBS,
   pods: PODS,
+  chats: CHATS,
   members: MEMBERS,
-  messages: MESSAGES,
-  unread: INITIAL_UNREAD,
+  messages: { ...MESSAGES, ...CHAT_MESSAGES },
+  unread: { ...INITIAL_UNREAD, ...CHAT_UNREAD },
   typing: {},
 
   markPodRead(podId) {
@@ -53,14 +58,23 @@ export const useHubsStore = create<HubsState>((set, get) => ({
     set((state) => ({ pods: state.pods.map((pod) => (pod.id === podId ? { ...pod, muted: !pod.muted } : pod)) }));
   },
 
+  toggleChatMute(chatId) {
+    set((state) => ({ chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, muted: !chat.muted } : chat)) }));
+  },
+
+  togglePin(chatId) {
+    set((state) => ({ chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, pinned: !chat.pinned } : chat)) }));
+  },
+
   sendMessage(podId, payload) {
     const base = { id: newId("m"), podId, authorId: ME_ID, sentAt: Date.now(), reactions: [] };
     const message: Message = { ...base, ...payload } as Message;
     set((state) => ({ messages: { ...state.messages, [podId]: [...(state.messages[podId] ?? []), message] } }));
 
     // Pretend someone is on the other end, so the screen feels alive.
+    const chat = get().chats.find((c) => c.id === podId);
     const hub = get().hubs.find((h) => h.id === get().pods.find((p) => p.id === podId)?.hubId);
-    const others = hub?.members.filter((m) => m.id !== ME_ID) ?? [];
+    const others = chat ? [{ id: chat.personId }] : (hub?.members.filter((m) => m.id !== ME_ID) ?? []);
     const replier = others[Math.floor(Math.random() * others.length)];
     if (!replier) return;
     setTimeout(() => set((state) => ({ typing: { ...state.typing, [podId]: replier.id } })), 600);
