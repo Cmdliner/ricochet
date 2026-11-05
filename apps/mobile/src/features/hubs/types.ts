@@ -31,6 +31,8 @@ export type Pod = {
   category: string;
   description: string;
   muted: boolean;
+  /** Only notify me when someone mentions me. */
+  mentionsOnly?: boolean;
   isPrivate: boolean;
 };
 

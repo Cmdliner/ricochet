@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { formatDuration } from "./format";
 import { useHubsStore } from "./store";
-import type { Message, Pod } from "./types";
+import { ME_ID, type Message, type Pod, type Role } from "./types";
 
 /** Pods of one hub, in the order they were defined. */
 export function useHubPods(hubId: string | undefined): Pod[] {
@@ -46,4 +46,22 @@ export function describeMessage(message: Message, authorName?: string): string {
     case "system":
       return message.text;
   }
+}
+
+/** What the signed-in person is in a hub. Owners and admins can change settings. */
+export function useMyRole(hubId: string | undefined): Role | undefined {
+  return useHubsStore((s) => s.hubs.find((h) => h.id === hubId)?.members.find((m) => m.id === ME_ID)?.role);
+}
+
+/** Message counts for a pod, shown on its settings screen. */
+export function usePodStats(podId: string | undefined) {
+  const messages = useHubsStore((s) => s.messages[podId ?? ""]);
+  return useMemo(() => {
+    const list = messages ?? [];
+    return {
+      messages: list.filter((m) => m.kind === "text").length,
+      voice: list.filter((m) => m.kind === "voice").length,
+      video: list.filter((m) => m.kind === "video").length,
+    };
+  }, [messages]);
 }

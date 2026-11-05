@@ -26,6 +26,11 @@ type HubsState = {
 
   markPodRead: (podId: string) => void;
   togglePodMute: (podId: string) => void;
+  /** Changes the editable parts of a pod. */
+  updatePod: (podId: string, patch: Partial<Pick<Pod, "name" | "description" | "isPrivate" | "mentionsOnly" | "muted">>) => void;
+  deletePod: (podId: string) => void;
+  /** Removes the hub and everything in it from this person's lists. */
+  leaveHub: (hubId: string) => void;
   toggleChatMute: (chatId: string) => void;
   togglePin: (chatId: string) => void;
   sendMessage: (podId: string, payload: SendPayload) => void;
@@ -56,6 +61,25 @@ export const useHubsStore = create<HubsState>((set, get) => ({
 
   togglePodMute(podId) {
     set((state) => ({ pods: state.pods.map((pod) => (pod.id === podId ? { ...pod, muted: !pod.muted } : pod)) }));
+  },
+
+  updatePod(podId, patch) {
+    set((state) => ({ pods: state.pods.map((pod) => (pod.id === podId ? { ...pod, ...patch } : pod)) }));
+  },
+
+  deletePod(podId) {
+    set((state) => {
+      const { [podId]: _messages, ...messages } = state.messages;
+      const { [podId]: _unread, ...unread } = state.unread;
+      return { pods: state.pods.filter((pod) => pod.id !== podId), messages, unread };
+    });
+  },
+
+  leaveHub(hubId) {
+    set((state) => ({
+      hubs: state.hubs.filter((hub) => hub.id !== hubId),
+      pods: state.pods.filter((pod) => pod.hubId !== hubId),
+    }));
   },
 
   toggleChatMute(chatId) {
