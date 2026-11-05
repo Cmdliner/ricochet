@@ -52,17 +52,14 @@ export const WAVEFORM_BARS = [
   8, 14, 10, 20, 26, 16, 10, 22, 28, 18, 12, 24, 16, 9, 20, 14, 8, 12, 18, 10, 22, 14,
 ] as const;
 
-/**
- * Footer credit card. Add the real URLs (and a photo at /public/adeyemi.jpg) here;
- * links with an empty href render as plain text until then.
- */
+/** Footer credit card: who designed and built the site. */
 export const CREDIT = {
   name: "Adeyemi",
   role: "Software Engineer",
-  initial: "A",
+  photo: "/adeyemi.jpg",
   links: [
-    { label: "LinkedIn", href: "" },
-    { label: "WhatsApp", href: "" },
-    { label: "Email", href: "" },
+    { id: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/in/Commandliner" },
+    { id: "x", label: "X", href: "https://x.com/yemiTheDev" },
+    { id: "whatsapp", label: "WhatsApp", href: "https://wa.me/2349011974957" },
   ],
 } as const;
