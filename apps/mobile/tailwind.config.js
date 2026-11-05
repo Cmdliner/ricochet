@@ -2,6 +2,8 @@ const { colors } = require("@ricochet/shared/tokens");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // The app is dark only for now and sets its own colour scheme, so NativeWind must not follow the system.
+  darkMode: "class",
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
