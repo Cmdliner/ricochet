@@ -48,3 +48,12 @@ export function ArrowRightIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function PauseIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <rect x="6" y="4.5" width="4.2" height="15" rx="1.2" />
+      <rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2" />
+    </svg>
+  );
+}
