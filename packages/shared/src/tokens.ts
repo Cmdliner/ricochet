@@ -13,6 +13,8 @@ export const colors = {
     /** The accent as small text on this background. */
     accentText: "#f2906f",
     danger: "#f87171",
+    /** The green presence dot. */
+    online: "#3fb97b",
   },
   light: {
     canvas: "#f3ede3",
@@ -23,6 +25,7 @@ export const colors = {
     muted: "#6b6157",
     accentText: "#b8431f",
     danger: "#b91c1c",
+    online: "#2f9e68",
   },
   accent: "#e9714e",
   accentInk: "#1f0c05",
