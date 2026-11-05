@@ -43,7 +43,7 @@ export function Header() {
         )}
       >
         <div className="mx-auto flex h-20 max-w-[88rem] items-center justify-between px-6 md:h-[4.5rem] md:px-10">
-          <Link href="/" aria-label="Ricochet home" className="shrink-0">
+          <Link href="/" aria-label="Ricochet home" className="shrink-0 rounded-full border border-white/10 bg-canvas/60 px-4 py-1.5 backdrop-blur-md md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none">
             <Wordmark className="text-[1.9rem] md:text-[1.8rem]" />
           </Link>
 
@@ -84,7 +84,7 @@ export function Header() {
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={() => setOpen(true)}
-            className="-mr-2 grid size-12 place-items-center md:hidden"
+            className="grid size-11 place-items-center rounded-full border border-white/10 bg-canvas/60 backdrop-blur-md md:hidden"
           >
             <MenuIcon className="size-6" />
           </button>
