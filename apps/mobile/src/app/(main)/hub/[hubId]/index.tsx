@@ -6,6 +6,7 @@ import { Alert, ScrollView, Share, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
+import { HubAvatar } from "@/components/ui/hub-avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PodsArt } from "@/components/illustrations/empty-art";
 import { IconButton } from "@/components/ui/icon-button";
@@ -104,7 +105,7 @@ export default function HubScreen() {
         {/* The hub's own colour behind its name, so every hub feels like a place of its own. */}
         <Animated.View entering={FadeInDown.duration(380)} style={{ marginHorizontal: 20 }}>
           <View style={{ backgroundColor: `${tint}2e` }} className="items-center gap-3 rounded-[32px] px-6 pt-8 pb-6">
-            <Avatar name={hub.name} color={hub.color} size={84} square />
+            <HubAvatar name={hub.name} color={hub.color} icon={hub.icon} size={84} />
             <View className="items-center gap-2">
               <Text className="text-center font-display text-[28px] tracking-tight text-ink" numberOfLines={2}>
                 {hub.name}

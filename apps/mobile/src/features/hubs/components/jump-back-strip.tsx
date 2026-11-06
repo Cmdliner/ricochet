@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useMemo } from "react";
 import { FlatList, View } from "react-native";
 import { Avatar } from "@/components/ui/avatar";
+import { HubAvatar } from "@/components/ui/hub-avatar";
 import { Badge } from "@/components/ui/badge";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -25,7 +26,7 @@ function JumpCard({ pod }: { pod: Pod }) {
       className="w-40 gap-5 rounded-3xl p-3.5"
     >
       <View className="flex-row items-center justify-between">
-        <Avatar name={hub.name} color={hub.color} size={34} square />
+        <HubAvatar name={hub.name} color={hub.color} icon={hub.icon} size={34} />
         <Badge count={pod.muted ? 0 : unread} />
       </View>
       <View className="gap-0.5">

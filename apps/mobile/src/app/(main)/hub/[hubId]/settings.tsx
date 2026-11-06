@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { updateHubSchema, type HubColor } from "@ricochet/shared";
+import { updateHubSchema, type HubColor, type HubIcon } from "@ricochet/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Share, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
+import { HubAvatar } from "@/components/ui/hub-avatar";
+import { HubIconPicker } from "@/components/ui/hub-icon-picker";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { NotFound } from "@/components/ui/not-found";
@@ -37,6 +39,7 @@ export default function HubSettings() {
   const [name, setName] = useState(hub?.name ?? "");
   const [description, setDescription] = useState(hub?.description ?? "");
   const [color, setColor] = useState<HubColor>(hub?.color ?? "coral");
+  const [icon, setIcon] = useState<HubIcon>(hub?.icon ?? "rocket");
   const [errors, setErrors] = useState<{ name?: string; description?: string }>({});
 
   const rows = useMemo(
@@ -72,11 +75,11 @@ export default function HubSettings() {
   }
 
   const isOwner = role === "owner";
-  const dirty = name.trim() !== hub.name || description.trim() !== hub.description || color !== hub.color;
+  const dirty = name.trim() !== hub.name || description.trim() !== hub.description || color !== hub.color || icon !== hub.icon;
 
   function save() {
     if (!hub) return;
-    const parsed = updateHubSchema.safeParse({ name, description, color });
+    const parsed = updateHubSchema.safeParse({ name, description, color, icon });
     if (!parsed.success) {
       const next: typeof errors = {};
       for (const issue of parsed.error.issues) {
@@ -167,7 +170,7 @@ export default function HubSettings() {
           <SectionLabel>Identity</SectionLabel>
           <View className="gap-5 rounded-3xl border border-line bg-surface p-4">
             <View className="flex-row items-center gap-4">
-              <Avatar name={name || "?"} color={color} size={64} square />
+              <HubAvatar name={name || "?"} color={color} icon={icon} size={64} />
               <View className="flex-1">
                 <TextField
                   label="Hub name"
@@ -198,6 +201,10 @@ export default function HubSettings() {
             <View className="gap-3">
               <Text className="text-[13px] font-sans-semibold tracking-wide text-muted">Colour</Text>
               <ColorPicker value={color} onChange={setColor} />
+            </View>
+            <View className="gap-3">
+              <Text className="text-[13px] font-sans-semibold tracking-wide text-muted">Picture</Text>
+              <HubIconPicker value={icon} onChange={setIcon} color={color} name={name || "?"} />
             </View>
             {dirty ? <Button label="Save changes" onPress={save} /> : null}
           </View>

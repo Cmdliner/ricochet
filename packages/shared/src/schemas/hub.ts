@@ -5,6 +5,38 @@ export const HUB_COLORS = ["coral", "sky", "mint", "amber"] as const;
 export const hubColorSchema = z.enum(HUB_COLORS);
 export type HubColor = z.infer<typeof hubColorSchema>;
 
+/**
+ * The pictures a hub can wear instead of a letter. Each is the name of an Ionicons glyph, so the
+ * app draws them and the server only has to store a short word.
+ */
+export const HUB_ICONS = [
+  "rocket",
+  "color-palette",
+  "book",
+  "game-controller",
+  "flash",
+  "planet",
+  "leaf",
+  "musical-notes",
+  "cafe",
+  "flame",
+  "camera",
+  "bicycle",
+  "code-slash",
+  "paw",
+  "trophy",
+  "heart",
+] as const;
+export const hubIconSchema = z.enum(HUB_ICONS);
+export type HubIcon = z.infer<typeof hubIconSchema>;
+
+/** A stable icon for a hub that has not picked one: the same name always gets the same picture. */
+export function defaultHubIcon(name: string): HubIcon {
+  let hash = 0;
+  for (const char of name.trim().toLowerCase()) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return HUB_ICONS[hash % HUB_ICONS.length] ?? "rocket";
+}
+
 /** Pods offered when someone creates a hub. */
 export const STARTER_PODS = ["general", "announcements", "off-topic"] as const;
 export const starterPodSchema = z.enum(STARTER_PODS);
@@ -19,6 +51,7 @@ export const hubNameSchema = z
 export const createHubSchema = z.object({
   name: hubNameSchema,
   color: hubColorSchema,
+  icon: hubIconSchema.optional(),
   starterPods: z.array(starterPodSchema).min(1, "Pick at least one pod to start with."),
 });
 export type CreateHubInput = z.infer<typeof createHubSchema>;
@@ -39,6 +72,7 @@ export const updateHubSchema = z.object({
   name: hubNameSchema,
   description: hubDescriptionSchema,
   color: hubColorSchema,
+  icon: hubIconSchema,
 });
 export type UpdateHubInput = z.infer<typeof updateHubSchema>;
 
