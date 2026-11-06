@@ -1,3 +1,4 @@
+import { useActivityStore } from "@/features/activity/store";
 import { realtime } from "@/lib/realtime";
 import { useHubsStore } from "./store";
 
@@ -14,6 +15,7 @@ export function startRealtime() {
         return;
       }
       void store().load();
+      void useActivityStore.getState().load();
       void store().catchUp(openConversations);
     },
     messageNew: (message) => store().receiveMessage(message),
@@ -21,6 +23,8 @@ export function startRealtime() {
     typing: (notice, on) => store().receiveTyping(notice, on),
     presence: (update) => store().receivePresence(update),
     chatUpdated: (update) => store().receiveChatUpdate(update),
+    activityNew: (event) => useActivityStore.getState().receiveNew(event),
+    activityUnread: ({ unread }) => useActivityStore.getState().receiveUnread(unread),
   });
 }
 
