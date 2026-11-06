@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -7,6 +8,7 @@ import { Text } from "@/components/ui/text";
 import { Avatar } from "@/components/ui/avatar";
 import { useTheme } from "@/theme/theme-provider";
 import { formatClock } from "../format";
+import { useMessageMenu } from "../message-menu";
 import { useHubsStore } from "../store";
 import type { ChatItem } from "../types";
 import { ReactionRow } from "./reaction-row";
@@ -46,6 +48,12 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
   }
 
   const isVideo = message.kind === "video";
+  // Holding a saved message opens reactions and Copy. A message still sending has nothing to react to yet.
+  const openMenu = () => {
+    if (message.status) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    useMessageMenu.getState().open(message.podId, message.id);
+  };
   const shape = bubbleShape(item);
   const isNew = Date.now() - message.sentAt < 4000;
 
@@ -64,17 +72,23 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
           ) : null}
 
           {isVideo ? (
-            <VideoNoteCircle message={message} fresh={!mine} />
+            <VideoNoteCircle message={message} fresh={!mine} onLongPress={openMenu} />
           ) : (
-            <View style={shape} className={`px-3.5 py-2.5 ${mine ? "bg-accent" : "bg-raised"}`}>
+            <Pressable
+              accessibilityHint={message.status ? undefined : "Hold for reactions"}
+              onLongPress={openMenu}
+              delayLongPress={350}
+              style={shape}
+              className={`px-3.5 py-2.5 ${mine ? "bg-accent" : "bg-raised"}`}
+            >
               {message.kind === "text" ? (
                 <Text className={`text-[16px] leading-[22px] ${mine ? "text-accent-ink" : "text-ink"}`}>
                   {message.text}
                 </Text>
               ) : (
-                <VoiceContent message={message} mine={mine} />
+                <VoiceContent message={message} mine={mine} onLongPress={openMenu} />
               )}
-            </View>
+            </Pressable>
           )}
 
           <ReactionRow podId={message.podId} messageId={message.id} reactions={message.reactions} mine={mine} />

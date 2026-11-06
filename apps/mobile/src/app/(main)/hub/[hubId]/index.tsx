@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors as tokens } from "@ricochet/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { Fragment, useMemo } from "react";
-import { Alert, ScrollView, Share, View } from "react-native";
+import { ScrollView, Share, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -22,6 +22,7 @@ import { useHub, useHubsStore } from "@/features/hubs/store";
 import { showError } from "@/lib/notify";
 import { ME_ID, type Pod } from "@/features/hubs/types";
 import { useTheme } from "@/theme/theme-provider";
+import { showDialog } from "@/lib/dialog";
 
 const ROLE_LINE = { owner: "You are the owner", admin: "You are an admin", member: "You are a member" } as const;
 
@@ -57,7 +58,7 @@ export default function HubScreen() {
 
   function confirmLeave() {
     if (!hub) return;
-    Alert.alert(`Leave ${hub.name}?`, "You will lose access to its pods. You can join again with an invite code.", [
+    showDialog(`Leave ${hub.name}?`, "You will lose access to its pods. You can join again with an invite code.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Leave hub",

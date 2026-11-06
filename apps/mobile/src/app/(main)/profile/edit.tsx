@@ -13,7 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router, useNavigation, usePreventRemove } from "expo-router";
 import { useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Alert, Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -29,6 +29,7 @@ import { api, ApiError, errorMessage } from "@/lib/api";
 import { localFileSize, mediaUrl, uploadLocalFile } from "@/lib/media";
 import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
+import { showDialog } from "@/lib/dialog";
 
 const EMOJIS = ["🎧", "💻", "🌙", "☕", "🚀", "🎯", "🎮", "📚", "🏃", "🌴", "🎨", "🙂"];
 
@@ -73,7 +74,7 @@ export default function EditProfile() {
       navigation.dispatch(data.action);
       return;
     }
-    Alert.alert("Discard changes?", "You have edits that have not been saved.", [
+    showDialog("Discard changes?", "You have edits that have not been saved.", [
       { text: "Keep editing", style: "cancel" },
       { text: "Discard", style: "destructive", onPress: () => navigation.dispatch(data.action) },
     ]);
@@ -162,7 +163,7 @@ export default function EditProfile() {
   }
 
   function photoMenu() {
-    Alert.alert("Profile photo", undefined, [
+    showDialog("Profile photo", undefined, [
       { text: "Choose a photo", onPress: () => void pickPhoto() },
       ...(user?.avatarUrl ? [{ text: "Remove photo", style: "destructive" as const, onPress: () => void removePhoto() }] : []),
       { text: "Cancel", style: "cancel" as const },

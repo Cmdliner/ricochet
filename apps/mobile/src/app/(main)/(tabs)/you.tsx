@@ -2,7 +2,7 @@ import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { router } from "expo-router";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandBar } from "@/components/brand-bar";
@@ -20,6 +20,7 @@ import { registerForPush, unregisterPush, usePushStore } from "@/lib/push";
 import { useAuthStore } from "@/stores/auth-store";
 import { useTheme } from "@/theme/theme-provider";
 import type { Preference } from "@/theme/themes";
+import { showDialog } from "@/lib/dialog";
 
 const APPEARANCE: { value: Preference; label: string }[] = [
   { value: "system", label: "System" },
@@ -37,7 +38,7 @@ function Stat({ value, label }: { value: string | number; label: string }) {
 }
 
 function soon(feature: string) {
-  Alert.alert(feature, "This is coming soon.");
+  showDialog(feature, "This is coming soon.");
 }
 
 async function changePush(on: boolean) {
@@ -46,8 +47,8 @@ async function changePush(on: boolean) {
     return;
   }
   const result = await registerForPush().catch(() => "unsupported" as const);
-  if (result === "denied") Alert.alert("Notifications are off", "Allow notifications for Ricochet in your phone's Settings, then try again.");
-  if (result === "unsupported") Alert.alert("Not available here", "Notifications work on a real phone with the Ricochet app installed.");
+  if (result === "denied") showDialog("Notifications are off", "Allow notifications for Ricochet in your phone's Settings, then try again.");
+  if (result === "unsupported") showDialog("Not available here", "Notifications work on a real phone with the Ricochet app installed.");
 }
 
 /** The phone stops being notified before the session ends, otherwise the next person to sign in here would get this person's messages. */

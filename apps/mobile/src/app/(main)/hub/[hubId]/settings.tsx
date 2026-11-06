@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { updateHubSchema, type HubColor, type HubIcon } from "@ricochet/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Share, View } from "react-native";
+import { Share, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,6 +21,7 @@ import { useHub, useHubsStore } from "@/features/hubs/store";
 import { showError } from "@/lib/notify";
 import { ME_ID, type Role } from "@/features/hubs/types";
 import { useTheme } from "@/theme/theme-provider";
+import { showDialog } from "@/lib/dialog";
 
 const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, member: 2 };
 
@@ -107,7 +108,7 @@ export default function HubSettings() {
 
   function confirmNewCode() {
     if (!hub) return;
-    Alert.alert("Generate a new code?", "The current code will stop working. People already in the hub stay in it.", [
+    showDialog("Generate a new code?", "The current code will stop working. People already in the hub stay in it.", [
       { text: "Cancel", style: "cancel" },
       { text: "Generate", onPress: () => attempt(() => regenerateInviteCode(hub.id)) },
     ]);
@@ -128,19 +129,19 @@ export default function HubSettings() {
         text: "Remove from hub",
         style: "destructive",
         onPress: () =>
-          Alert.alert(`Remove ${memberName}?`, `${memberName} will lose access to ${hub.name}.`, [
+          showDialog(`Remove ${memberName}?`, `${memberName} will lose access to ${hub.name}.`, [
             { text: "Cancel", style: "cancel" },
             { text: "Remove", style: "destructive", onPress: () => attempt(() => removeMember(hub.id, memberId)) },
           ]),
       });
     }
     if (actions.length === 0) return;
-    Alert.alert(memberName, undefined, [...actions, { text: "Cancel", style: "cancel", onPress: () => undefined }]);
+    showDialog(memberName, undefined, [...actions, { text: "Cancel", style: "cancel", onPress: () => undefined }]);
   }
 
   function confirmDelete() {
     if (!hub) return;
-    Alert.alert(`Delete ${hub.name}?`, "Every pod and message in this hub will be removed for everyone. This cannot be undone.", [
+    showDialog(`Delete ${hub.name}?`, "Every pod and message in this hub will be removed for everyone. This cannot be undone.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete hub",
@@ -156,7 +157,7 @@ export default function HubSettings() {
 
   function confirmLeave() {
     if (!hub) return;
-    Alert.alert(`Leave ${hub.name}?`, "You will lose access to its pods. You can join again with an invite code.", [
+    showDialog(`Leave ${hub.name}?`, "You will lose access to its pods. You can join again with an invite code.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Leave hub",

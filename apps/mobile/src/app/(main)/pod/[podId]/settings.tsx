@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { toPodName } from "@ricochet/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { useMyRole, usePodStats } from "@/features/hubs/hooks";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
 import { showError } from "@/lib/notify";
 import { useTheme } from "@/theme/theme-provider";
+import { showDialog } from "@/lib/dialog";
 
 function Stat({ icon, value, label }: { icon: keyof typeof Ionicons.glyphMap; value: number; label: string }) {
   const { colors } = useTheme();
@@ -70,7 +71,7 @@ export default function PodSettings() {
 
   function confirmDelete() {
     if (!pod) return;
-    Alert.alert(`Delete #${pod.name}?`, "Every message, voice note and video note in it will be removed for everyone. This cannot be undone.", [
+    showDialog(`Delete #${pod.name}?`, "Every message, voice note and video note in it will be removed for everyone. This cannot be undone.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete pod",

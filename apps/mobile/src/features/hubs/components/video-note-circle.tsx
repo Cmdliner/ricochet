@@ -16,9 +16,10 @@ type VideoNoteCircleProps = {
   message: VideoMessage;
   size?: number;
   fresh?: boolean;
+  onLongPress?: () => void;
 };
 
-export function VideoNoteCircle({ message, size = 176, fresh = true }: VideoNoteCircleProps) {
+export function VideoNoteCircle({ message, size = 176, fresh = true, onLongPress }: VideoNoteCircleProps) {
   const { colors } = useTheme();
   const refreshMedia = useHubsStore((s) => s.refreshMedia);
   const durationMs = message.durationMs;
@@ -81,6 +82,8 @@ export function VideoNoteCircle({ message, size = 176, fresh = true }: VideoNote
       accessibilityRole="button"
       accessibilityLabel={failed ? "Video note unavailable" : processing ? "Video note is processing" : isPlaying ? "Pause video note" : "Play video note"}
       onPress={() => void toggle()}
+      onLongPress={onLongPress}
+      delayLongPress={350}
       style={{ width: size, height: size }}
       className="active:opacity-90"
     >
