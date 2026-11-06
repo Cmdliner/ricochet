@@ -13,6 +13,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { isUniqueViolation } from "../common/db-errors.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
+import { MediaService } from "../media/media.service.js";
 import { generateInviteCode } from "./invite-code.js";
 import { canChangeRoles, canDeleteHub, canEditHub, canRemoveMember } from "./permissions.js";
 
@@ -31,6 +32,7 @@ export class HubsService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly bus: RealtimeBus,
+    private readonly media: MediaService,
   ) {}
 
   private readonly viewColumns = {
@@ -200,6 +202,7 @@ export class HubsService {
         displayName: users.displayName,
         handle: users.handle,
         avatarColor: users.avatarColor,
+        avatarKey: users.avatarKey,
         role: hubMembers.role,
         joinedAt: hubMembers.joinedAt,
       })
@@ -208,7 +211,7 @@ export class HubsService {
       .where(eq(hubMembers.hubId, hubId));
 
     return rows
-      .map((row) => ({ ...row, joinedAt: row.joinedAt.toISOString() }))
+      .map(({ avatarKey, ...row }) => ({ ...row, avatarUrl: this.media.publicUrl(avatarKey), joinedAt: row.joinedAt.toISOString() }))
       .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || a.displayName.localeCompare(b.displayName));
   }
 

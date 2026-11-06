@@ -7,6 +7,7 @@ import { ChatsModule } from "./chats/chats.module.js";
 import { DbModule } from "./db/db.module.js";
 import { HealthController } from "./health/health.controller.js";
 import { HubsModule } from "./hubs/hubs.module.js";
+import { MediaModule } from "./media/media.module.js";
 import { MessagesModule } from "./messages/messages.module.js";
 import { PodsModule } from "./pods/pods.module.js";
 import { JobsModule } from "./jobs/jobs.module.js";
@@ -17,6 +18,7 @@ import { UsersModule } from "./users/users.module.js";
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv, envFilePath: ["../../.env", ".env"] }),
     DbModule,
+    MediaModule,
     AuthModule,
     UsersModule,
     ActivityModule,

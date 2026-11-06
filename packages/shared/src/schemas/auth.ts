@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hubColorSchema } from "./hub";
 import { LIMITS } from "../limits";
 
 const email = z
@@ -42,9 +43,28 @@ export const handleSchema = z
 export const completeProfileSchema = z.object({ displayName: displayNameSchema, handle: handleSchema });
 export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
 
+export const BIO_MAX = 120;
+export const STATUS_TEXT_MAX = 40;
+
+export const bioSchema = z.string().trim().max(BIO_MAX, `Keep your bio under ${BIO_MAX} characters.`);
+
+export const profileStatusSchema = z.object({
+  emoji: z.string().trim().min(1, "Pick an emoji.").max(8),
+  text: z.string().trim().max(STATUS_TEXT_MAX, `Keep your status under ${STATUS_TEXT_MAX} characters.`),
+});
+export type ProfileStatus = z.infer<typeof profileStatusSchema>;
+
 export const updateProfileSchema = z
-  .object({ displayName: displayNameSchema.optional(), handle: handleSchema.optional() })
-  .refine((value) => value.displayName !== undefined || value.handle !== undefined, {
+  .object({
+    displayName: displayNameSchema,
+    handle: handleSchema,
+    bio: bioSchema,
+    /** `null` clears the status. */
+    status: profileStatusSchema.nullable(),
+    avatarColor: hubColorSchema,
+  })
+  .partial()
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
     message: "Nothing to update.",
   });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
@@ -54,7 +74,11 @@ export const authUserSchema = z.object({
   email: z.string(),
   handle: z.string(),
   displayName: z.string(),
-  avatarKey: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  avatarColor: hubColorSchema,
+  bio: z.string(),
+  status: profileStatusSchema.nullable(),
+  joinedAt: z.string(),
   profileComplete: z.boolean(),
 });
 export type AuthUser = z.infer<typeof authUserSchema>;
@@ -65,6 +89,28 @@ export const authResponseSchema = z.object({
   user: authUserSchema,
 });
 export type AuthResponse = z.infer<typeof authResponseSchema>;
+
+export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const AVATAR_MAX_BYTES = 5_000_000;
+
+export const avatarUploadRequestSchema = z.object({
+  contentType: z.enum(AVATAR_TYPES),
+  size: z.number().int().positive().max(AVATAR_MAX_BYTES, "Pick a smaller photo."),
+});
+export type AvatarUploadRequest = z.infer<typeof avatarUploadRequestSchema>;
+
+export const uploadTargetSchema = z.object({
+  url: z.string(),
+  method: z.literal("PUT"),
+  headers: z.record(z.string(), z.string()),
+});
+export type UploadTarget = z.infer<typeof uploadTargetSchema>;
+
+export const avatarUploadSchema = z.object({ key: z.string(), upload: uploadTargetSchema });
+export type AvatarUpload = z.infer<typeof avatarUploadSchema>;
+
+export const confirmAvatarSchema = z.object({ key: z.string().min(1).max(200) });
+export type ConfirmAvatarInput = z.infer<typeof confirmAvatarSchema>;
 
 export const apiErrorSchema = z.object({
   message: z.union([z.string(), z.array(z.string())]).optional(),

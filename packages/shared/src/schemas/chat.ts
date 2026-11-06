@@ -7,6 +7,7 @@ export const personSchema = z.object({
   displayName: z.string(),
   handle: z.string(),
   avatarColor: hubColorSchema,
+  avatarUrl: z.string().nullable(),
 });
 export type Person = z.infer<typeof personSchema>;
 

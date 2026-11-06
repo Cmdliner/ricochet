@@ -7,6 +7,7 @@ import { HubsService } from "../hubs/hubs.service.js";
 import { canEditHub } from "../hubs/permissions.js";
 import type { ConversationAccess } from "../messages/conversation-access.service.js";
 import { takePage } from "../messages/pagination.js";
+import { MediaService } from "../media/media.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { extractMentions, previewOf } from "./mentions.js";
 
@@ -35,6 +36,7 @@ export class ActivityService {
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly bus: RealtimeBus,
     private readonly hubs: HubsService,
+    private readonly media: MediaService,
   ) {}
 
   private select() {
@@ -51,6 +53,7 @@ export class ActivityService {
         actorId: users.id,
         actorName: users.displayName,
         actorColor: users.avatarColor,
+        actorKey: users.avatarKey,
         hubId: activity.hubId,
         hubName: hubs.name,
         conversationId: activity.conversationId,
@@ -70,7 +73,7 @@ export class ActivityService {
     return {
       id: row.id,
       kind: row.kind,
-      actor: row.actorId && row.actorName && row.actorColor ? { id: row.actorId, displayName: row.actorName, avatarColor: row.actorColor } : null,
+      actor: row.actorId && row.actorName && row.actorColor ? { id: row.actorId, displayName: row.actorName, avatarColor: row.actorColor, avatarUrl: this.media.publicUrl(row.actorKey) } : null,
       hubId: row.hubId,
       hubName: row.hubName,
       conversationId: row.conversationId,
@@ -184,7 +187,7 @@ export class ActivityService {
     const first = rows[0];
     if (!first) return;
     const [actor] = await this.db
-      .select({ id: users.id, displayName: users.displayName, avatarColor: users.avatarColor })
+      .select({ id: users.id, displayName: users.displayName, avatarColor: users.avatarColor, avatarKey: users.avatarKey })
       .from(users)
       .where(eq(users.id, first.actorId))
       .limit(1);
@@ -195,7 +198,7 @@ export class ActivityService {
       const item: ActivityItem = {
         id: row.id,
         kind: row.kind,
-        actor: actor ?? null,
+        actor: actor ? { id: actor.id, displayName: actor.displayName, avatarColor: actor.avatarColor, avatarUrl: this.media.publicUrl(actor.avatarKey) } : null,
         hubId: row.hubId,
         hubName: hub?.name ?? null,
         conversationId: row.conversationId,

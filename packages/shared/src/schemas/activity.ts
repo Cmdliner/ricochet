@@ -8,7 +8,7 @@ export type ActivityKind = z.infer<typeof activityKindSchema>;
 export const activityItemSchema = z.object({
   id: z.uuid(),
   kind: activityKindSchema,
-  actor: z.object({ id: z.uuid(), displayName: z.string(), avatarColor: hubColorSchema }).nullable(),
+  actor: z.object({ id: z.uuid(), displayName: z.string(), avatarColor: hubColorSchema, avatarUrl: z.string().nullable() }).nullable(),
   hubId: z.uuid().nullable(),
   hubName: z.string().nullable(),
   conversationId: z.uuid().nullable(),

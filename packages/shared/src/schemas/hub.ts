@@ -123,6 +123,7 @@ export const hubMemberSchema = z.object({
   displayName: z.string(),
   handle: z.string(),
   avatarColor: hubColorSchema,
+  avatarUrl: z.string().nullable(),
   role: hubRoleSchema,
   joinedAt: z.string(),
 });
