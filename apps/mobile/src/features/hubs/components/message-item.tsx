@@ -54,7 +54,7 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
       <View className={`flex-row items-end gap-2 px-3 ${mine ? "justify-end" : ""} ${endsGroup ? "mb-3" : "mb-0.5"}`}>
         {!mine && !direct ? (
           <View className="w-8">
-            {endsGroup && author ? <Avatar name={author.name} color={author.color} size={32} /> : null}
+            {endsGroup && author ? <Avatar name={author.name} color={author.color} uri={author.avatarUrl} size={32} /> : null}
           </View>
         ) : null}
 

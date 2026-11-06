@@ -17,10 +17,10 @@ import { useConversation } from "@/features/hubs/hooks";
 import { useHubsStore } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
 
-function ChatIntro({ name, handle, color }: { name: string; handle: string; color: Parameters<typeof Avatar>[0]["color"] }) {
+function ChatIntro({ name, handle, color, avatarUrl }: { name: string; handle: string; color: Parameters<typeof Avatar>[0]["color"]; avatarUrl: string | null }) {
   return (
     <View className="items-center gap-2 px-8 py-10">
-      <Avatar name={name} color={color} size={84} />
+      <Avatar name={name} color={color} uri={avatarUrl} size={84} />
       <Text className="mt-2 font-display text-[22px] text-ink">{name}</Text>
       <Text className="text-muted">@{handle}</Text>
       <Text className="mt-1 max-w-[260px] text-center text-sm text-muted">
@@ -66,7 +66,7 @@ export default function ChatScreen() {
         subtitle={typing ? "typing…" : person.online ? "Online" : "Offline"}
         leading={
           <View>
-            <Avatar name={person.name} color={person.color} size={40} />
+            <Avatar name={person.name} color={person.color} uri={person.avatarUrl} size={40} />
             {person.online ? <View className="absolute right-0 bottom-0 size-3 rounded-full border-2 border-canvas bg-online" /> : null}
           </View>
         }
@@ -93,7 +93,7 @@ export default function ChatScreen() {
           onEndReached={loadOlder}
           onEndReachedThreshold={0.4}
           ListFooterComponent={
-            loaded && !hasOlder ? <ChatIntro name={person.name} handle={person.handle} color={person.color} /> : <ActivityIndicator className="py-6" />
+            loaded && !hasOlder ? <ChatIntro name={person.name} handle={person.handle} color={person.color} avatarUrl={person.avatarUrl} /> : <ActivityIndicator className="py-6" />
           }
           initialNumToRender={14}
           maxToRenderPerBatch={10}

@@ -22,11 +22,11 @@ import { Alert } from "react-native";
 import { z } from "zod";
 import { create } from "zustand";
 import { api, errorMessage } from "@/lib/api";
+import { mediaUrl } from "@/lib/media";
 import { realtime } from "@/lib/realtime";
 import { uuid } from "@/lib/uuid";
 import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
-import { useProfileStore } from "@/features/profile/store";
 import { asLocalId, mergeMessages, toChat, toHub, toLastMessage, toMember, toMessage, toPod } from "./adapters";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
 
@@ -63,6 +63,8 @@ type HubsState = {
   catchUp: (openConversations: string[]) => Promise<void>;
   refreshHub: (hubId: string) => Promise<void>;
   reset: () => void;
+  /** Call after the profile changes, so this person's own name and photo update wherever they appear. */
+  refreshSelf: () => void;
   markPodRead: (podId: string) => void;
   togglePodMute: (podId: string) => Promise<void>;
   updatePod: (podId: string, patch: Partial<Pick<Pod, "name" | "description" | "isPrivate" | "mentionsOnly" | "muted">>) => Promise<void>;
@@ -108,7 +110,8 @@ function selfMember(): Member {
     id: ME_ID,
     name: user?.displayName ?? "You",
     handle: user?.handle ?? "",
-    color: useProfileStore.getState().avatarColor,
+    color: user?.avatarColor ?? "coral",
+    avatarUrl: mediaUrl(user?.avatarUrl),
     online: true,
   };
 }
@@ -230,6 +233,8 @@ export const useHubsStore = create<HubsState>((set, get) => {
     },
 
     reset: () => set({ ...EMPTY }),
+
+    refreshSelf: () => set((state) => ({ members: { ...state.members, [ME_ID]: selfMember() } })),
 
     markPodRead(podId) {
       if (get().unread[podId]) set((state) => ({ unread: { ...state.unread, [podId]: 0 } }));

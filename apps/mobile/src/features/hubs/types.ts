@@ -10,6 +10,7 @@ export type Member = {
   name: string;
   handle: string;
   color: HubColor;
+  avatarUrl: string | null;
   online: boolean;
 };
 

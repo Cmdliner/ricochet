@@ -34,7 +34,7 @@ export default function MembersSheet() {
         {rows.map(({ member, role }) => (
           <View key={member.id} className="flex-row items-center gap-4 rounded-2xl py-2.5">
             <View>
-              <Avatar name={member.name} color={member.color} size={48} />
+              <Avatar name={member.name} color={member.color} uri={member.avatarUrl} size={48} />
               {member.online ? (
                 <View className="absolute right-0 bottom-0 size-4 rounded-full border-2 border-surface bg-online" />
               ) : null}

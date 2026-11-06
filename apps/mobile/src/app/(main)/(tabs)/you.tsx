@@ -1,3 +1,4 @@
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { router } from "expo-router";
@@ -14,8 +15,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { SettingGroup, SettingRow } from "@/components/ui/setting-row";
 import { Text } from "@/components/ui/text";
 import { useHubsStore } from "@/features/hubs/store";
-import { MOCK_PROFILE } from "@/features/profile/mock-profile";
-import { useProfileStore } from "@/features/profile/store";
+import { mediaUrl } from "@/lib/media";
 import { useAuthStore } from "@/stores/auth-store";
 import { useTheme } from "@/theme/theme-provider";
 import type { Preference } from "@/theme/themes";
@@ -43,12 +43,17 @@ export default function You() {
   const user = useAuthStore((s) => s.user);
   const hubs = useHubsStore((s) => s.hubs);
   const pods = useHubsStore((s) => s.pods);
-  const { bio, status, avatarColor } = useProfileStore();
+  const chats = useHubsStore((s) => s.chats);
+  const bio = user?.bio ?? "";
+  const status = user?.status ?? null;
   const { colors, preference, setPreference } = useTheme();
   const [notifications, setNotifications] = useState(true);
   const [haptics, setHaptics] = useState(true);
 
   const name = user?.displayName ?? "You";
+  const joined = user?.joinedAt
+    ? `Joined ${new Date(user.joinedAt).toLocaleDateString(undefined, { month: "long", year: "numeric" })}`
+    : "";
   const myHubs = hubs.length;
   const myPods = pods.filter((pod) => hubs.some((hub) => hub.id === pod.hubId)).length;
 
@@ -65,7 +70,7 @@ export default function You() {
           <View className="-mt-12 px-6">
             <View className="flex-row items-end justify-between">
               <View className="rounded-full bg-canvas p-1.5">
-                <Avatar name={name} color={avatarColor} size={88} />
+                <Avatar name={name} color={user?.avatarColor ?? "coral"} uri={mediaUrl(user?.avatarUrl)} size={88} />
               </View>
               <PressableScale
                 accessibilityRole="button"
@@ -93,7 +98,7 @@ export default function You() {
               ) : null}
               <View className="flex-row items-center gap-1.5 px-1">
                 <Ionicons name="calendar-outline" size={15} color={colors.muted} />
-                <Text className="text-sm text-muted">{MOCK_PROFILE.joined}</Text>
+                <Text className="text-sm text-muted">{joined}</Text>
               </View>
             </View>
           </View>
@@ -103,7 +108,7 @@ export default function You() {
             <View className="my-4 w-px bg-line" />
             <Stat value={myPods} label="Pods" />
             <View className="my-4 w-px bg-line" />
-            <Stat value={MOCK_PROFILE.stats.notes} label="Voice notes" />
+            <Stat value={chats.length} label="Chats" />
           </View>
         </Animated.View>
 
@@ -143,7 +148,7 @@ export default function You() {
 
           <View className="mt-8">
             <Button label="Sign out" variant="ghost" className="border border-line" onPress={() => void useAuthStore.getState().signOut()} />
-            <Text className="mt-4 text-center text-xs text-muted">Ricochet {MOCK_PROFILE.appVersion}</Text>
+            <Text className="mt-4 text-center text-xs text-muted">Ricochet {Constants.expoConfig?.version ?? ""}</Text>
           </View>
         </View>
       </ScrollView>

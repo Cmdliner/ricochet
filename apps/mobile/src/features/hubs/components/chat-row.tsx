@@ -51,7 +51,7 @@ export function ChatRow({ chat }: { chat: Chat }) {
       className="flex-row items-center gap-3.5 rounded-3xl px-3 py-3"
     >
       <View>
-        <Avatar name={person.name} color={person.color} size={56} />
+        <Avatar name={person.name} color={person.color} uri={person.avatarUrl} size={56} />
         {person.online ? (
           <View className="absolute right-0 bottom-0 size-4 rounded-full border-[3px] border-canvas bg-online" />
         ) : null}
