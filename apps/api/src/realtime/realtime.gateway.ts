@@ -1,4 +1,5 @@
 import { Logger, UseFilters } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import {
   ConnectedSocket,
   MessageBody,
@@ -6,6 +7,7 @@ import {
   WebSocketGateway,
   type OnGatewayConnection,
   type OnGatewayDisconnect,
+  type OnGatewayInit,
 } from "@nestjs/websockets";
 import {
   conversationRefSchema,
@@ -15,19 +17,34 @@ import {
   type ConversationRef,
   type SendMessageInput,
 } from "@ricochet/shared";
-import type { Socket } from "socket.io";
+import type { Server, Socket } from "socket.io";
 import { WsAckExceptionFilter } from "../common/ws-ack-exception.filter.js";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
+import { authenticateSocket } from "./socket-auth.js";
 
 /** Rooms: `user:{id}` carries everything for one person; `conversation:{id}` is joined only while that pod or chat is open. */
 @UseFilters(WsAckExceptionFilter)
 @WebSocketGateway({ transports: ["websocket"], cors: { origin: true } })
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly log = new Logger(RealtimeGateway.name);
 
-  handleConnection(client: Socket) {
-    // TODO(auth): verify the JWT from `client.handshake.auth.token`, then join `rooms.user(userId)`.
-    this.log.debug(`connected ${client.id}`);
+  constructor(private readonly jwt: JwtService) {}
+
+  afterInit(server: Server) {
+    // A middleware error becomes `connect_error` on the client, so a bad token never gets a socket at all.
+    server.use(async (client, next) => {
+      const auth = await authenticateSocket(this.jwt, client.handshake.auth.token);
+      if (!auth) return next(new Error("Sign in to continue."));
+      client.data.userId = auth.userId;
+      client.data.sessionId = auth.sessionId;
+      next();
+    });
+  }
+
+  async handleConnection(client: Socket) {
+    const userId = client.data.userId as string;
+    await client.join(rooms.user(userId));
+    this.log.debug(`connected ${client.id} as ${userId}`);
   }
 
   handleDisconnect(client: Socket) {
