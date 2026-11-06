@@ -37,9 +37,9 @@ export function describeMessage(message: Message, authorName?: string): string {
     case "text":
       return `${prefix}${message.text.replace(/\s+/g, " ")}`;
     case "voice":
-      return `${prefix}Voice note ${formatDuration(message.durationMs)}`;
+      return `${prefix}Voice note${message.durationMs ? ` ${formatDuration(message.durationMs)}` : ""}`;
     case "video":
-      return `${prefix}Video note ${formatDuration(message.durationMs)}`;
+      return `${prefix}Video note${message.durationMs ? ` ${formatDuration(message.durationMs)}` : ""}`;
     case "system":
       return message.text;
   }

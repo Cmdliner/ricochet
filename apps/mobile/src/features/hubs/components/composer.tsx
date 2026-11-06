@@ -1,5 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LIMITS } from "@ricochet/shared";
+import {
+  getRecordingPermissionsAsync,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from "expo-audio";
+import { Camera, CameraView } from "expo-camera";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PanResponder, Pressable, TextInput, View } from "react-native";
@@ -29,8 +37,8 @@ const BAR_COUNT = 28;
 type ComposerProps = {
   placeholder: string;
   onSendText: (text: string) => void;
-  onSendVoice: (note: { durationMs: number; waveform: number[] }) => void;
-  onSendVideo: (note: { durationMs: number }) => void;
+  onSendVoice: (note: { uri: string; durationMs: number; waveform: number[] }) => void;
+  onSendVideo: (note: { uri: string; durationMs: number }) => void;
   onTyping?: (typing: boolean) => void;
 };
 
@@ -48,6 +56,29 @@ function toBars(levels: number[]): number[] {
   });
 }
 
+/** The recorder reports decibels, roughly -60 for quiet to 0 for as loud as it gets. The waveform wants 0 to 100. */
+function levelOf(decibels: number | undefined): number {
+  if (decibels === undefined) return 30;
+  return Math.max(4, Math.min(100, ((decibels + 60) / 60) * 100));
+}
+
+type Access = "ready" | "asked" | "denied";
+
+async function ensureAccess(kind: "voice" | "video"): Promise<Access> {
+  const has = async () =>
+    kind === "voice"
+      ? (await getRecordingPermissionsAsync()).granted
+      : (await Camera.getCameraPermissionsAsync()).granted && (await Camera.getMicrophonePermissionsAsync()).granted;
+  if (await has()) return "ready";
+
+  const granted =
+    kind === "voice"
+      ? (await requestRecordingPermissionsAsync()).granted
+      : (await Camera.requestCameraPermissionsAsync()).granted && (await Camera.requestMicrophonePermissionsAsync()).granted;
+  // The permission prompt takes the finger off the button, so the press that triggered it is over either way.
+  return granted ? "asked" : "denied";
+}
+
 function RecordingDot() {
   const { colors } = useTheme();
   const pulse = useSharedValue(1);
@@ -63,7 +94,17 @@ function RecordingDot() {
   return <Animated.View style={[style, { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.danger }]} />;
 }
 
-function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: boolean }) {
+function Viewfinder({
+  elapsedMs,
+  cancelling,
+  cameraRef,
+  onReady,
+}: {
+  elapsedMs: number;
+  cancelling: boolean;
+  cameraRef: React.RefObject<CameraView | null>;
+  onReady: () => void;
+}) {
   const { colors } = useTheme();
   const size = 220;
   const stroke = 5;
@@ -74,29 +115,7 @@ function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: 
     <View pointerEvents="none" className="absolute right-0 bottom-full left-0 items-center pb-5">
       <View style={{ width: size, height: size }} className={cancelling ? "opacity-40" : ""}>
         <View style={{ width: size, height: size, borderRadius: size / 2 }} className="overflow-hidden bg-raised">
-          <View
-            style={{
-              position: "absolute",
-              top: size * 0.2,
-              alignSelf: "center",
-              width: size * 0.3,
-              height: size * 0.3,
-              borderRadius: size * 0.15,
-              backgroundColor: colors.line,
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              top: size * 0.56,
-              alignSelf: "center",
-              width: size * 0.66,
-              height: size * 0.6,
-              borderTopLeftRadius: size * 0.33,
-              borderTopRightRadius: size * 0.33,
-              backgroundColor: colors.line,
-            }}
-          />
+          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="front" mode="video" mirror onCameraReady={onReady} />
         </View>
         <Svg width={size} height={size} style={{ position: "absolute" }}>
           <Circle cx={size / 2} cy={size / 2} r={radius} stroke={colors.line} strokeWidth={stroke} fill="none" />
@@ -131,7 +150,18 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, on
   const [recording, setRecording] = useState<Recording | null>(null);
   const [hint, setHint] = useState<string | null>(null);
 
-  const session = useRef<{ kind: Kind; startedAt: number; levels: number[]; timer: ReturnType<typeof setInterval> } | null>(null);
+  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  const cameraRef = useRef<CameraView>(null);
+  const session = useRef<{
+    kind: Kind;
+    startedAt: number;
+    levels: number[];
+    timer: ReturnType<typeof setInterval>;
+    video?: Promise<{ uri: string } | undefined>;
+  } | null>(null);
+  /** True while the finger is down. Asking for permission or preparing the recorder takes a moment, and the person may let go in that time. */
+  const held = useRef(false);
+  const starting = useRef(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handlers = useRef<{ start: (kind: Kind) => void; stop: (cancelled: boolean) => void; mode: Kind }>({
     start: () => undefined,
@@ -145,14 +175,28 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, on
     hintTimer.current = setTimeout(() => setHint(null), 2200);
   }, []);
 
-  const stop = useCallback(
-    (cancelled: boolean) => {
+  const finish = useCallback(
+    async (cancelled: boolean) => {
       const current = session.current;
       if (!current) return;
       clearInterval(current.timer);
       session.current = null;
       const durationMs = Date.now() - current.startedAt;
       setRecording(null);
+
+      let uri: string | undefined;
+      try {
+        if (current.kind === "voice") {
+          await recorder.stop();
+          uri = recorder.uri ?? undefined;
+          await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+        } else {
+          cameraRef.current?.stopRecording();
+          uri = (await current.video)?.uri;
+        }
+      } catch {
+        uri = undefined;
+      }
 
       if (cancelled) {
         haptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
@@ -162,40 +206,92 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, on
         flashHint("Hold to record, release to send.");
         return;
       }
+      if (!uri) {
+        flashHint("Could not record that. Try again.");
+        return;
+      }
       haptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
-      if (current.kind === "voice") onSendVoice({ durationMs, waveform: toBars(current.levels) });
-      else onSendVideo({ durationMs });
+      if (current.kind === "voice") onSendVoice({ uri, durationMs, waveform: toBars(current.levels) });
+      else onSendVideo({ uri, durationMs });
     },
-    [flashHint, onSendVoice, onSendVideo],
+    [flashHint, onSendVoice, onSendVideo, recorder],
   );
 
-  const start = useCallback((kind: Kind) => {
-    if (session.current) return;
-    const startedAt = Date.now();
-    const timer = setInterval(() => {
-      const live = session.current;
-      if (!live) return;
-      const elapsedMs = Date.now() - live.startedAt;
-      live.levels.push(20 + Math.random() * 80); // stands in for the microphone level until audio is wired up
-      const cap = live.kind === "voice" ? LIMITS.voiceNoteMaxMs : LIMITS.videoNoteMaxMs;
-      if (elapsedMs >= cap) handlers.current.stop(false);
-      else setRecording((r) => (r ? { ...r, elapsedMs } : r));
-    }, 100);
-    session.current = { kind, startedAt, levels: [], timer };
-    setRecording({ kind, elapsedMs: 0, dx: 0 });
-    haptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+  const stop = useCallback(
+    (cancelled: boolean) => {
+      held.current = false;
+      void finish(cancelled);
+    },
+    [finish],
+  );
+
+  const start = useCallback(
+    async (kind: Kind) => {
+      held.current = true;
+      if (session.current || starting.current) return;
+      starting.current = true;
+      try {
+        const access = await ensureAccess(kind);
+        if (access === "denied") {
+          flashHint(kind === "voice" ? "Allow microphone access in Settings to record." : "Allow camera and microphone access in Settings to record.");
+          return;
+        }
+        if (access === "asked") {
+          flashHint("All set. Now hold to record.");
+          return;
+        }
+        if (!held.current) return;
+
+        if (kind === "voice") {
+          await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+          await recorder.prepareToRecordAsync();
+          if (!held.current) return;
+          recorder.record();
+        }
+
+        const timer = setInterval(() => {
+          const live = session.current;
+          if (!live) return;
+          const elapsedMs = Date.now() - live.startedAt;
+          if (live.kind === "voice") live.levels.push(levelOf(recorder.getStatus().metering));
+          const cap = live.kind === "voice" ? LIMITS.voiceNoteMaxMs : LIMITS.videoNoteMaxMs;
+          if (elapsedMs >= cap) handlers.current.stop(false);
+          else setRecording((r) => (r ? { ...r, elapsedMs } : r));
+        }, 100);
+        session.current = { kind, startedAt: Date.now(), levels: [], timer };
+        setRecording({ kind, elapsedMs: 0, dx: 0 });
+        haptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+      } catch {
+        flashHint("Could not start recording.");
+      } finally {
+        starting.current = false;
+      }
+    },
+    [flashHint, recorder],
+  );
+
+  /** The camera takes a moment to come up. Recording, and the clock, start when it does. */
+  const beginVideo = useCallback(() => {
+    const live = session.current;
+    if (!live || live.kind !== "video" || live.video) return;
+    live.startedAt = Date.now();
+    live.video = cameraRef.current?.recordAsync({ maxDuration: LIMITS.videoNoteMaxMs / 1000 });
   }, []);
 
   useEffect(() => {
-    handlers.current = { start, stop, mode };
+    handlers.current = { start: (kind) => void start(kind), stop, mode };
   }, [start, stop, mode]);
 
   useEffect(
     () => () => {
-      if (session.current) clearInterval(session.current.timer);
+      if (session.current) {
+        clearInterval(session.current.timer);
+        if (session.current.kind === "voice") void recorder.stop().catch(() => undefined);
+        else cameraRef.current?.stopRecording();
+      }
       if (hintTimer.current) clearTimeout(hintTimer.current);
     },
-    [],
+    [recorder],
   );
 
   const pan = useMemo(
@@ -236,7 +332,7 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, on
           <Text className="rounded-full bg-ink px-4 py-2 text-sm font-sans-medium text-canvas">{hint}</Text>
         </View>
       ) : null}
-      {recording?.kind === "video" ? <Viewfinder elapsedMs={recording.elapsedMs} cancelling={cancelling} /> : null}
+      {recording?.kind === "video" ? <Viewfinder elapsedMs={recording.elapsedMs} cancelling={cancelling} cameraRef={cameraRef} onReady={beginVideo} /> : null}
 
       <View className="flex-row items-end gap-2">
         {recording ? (

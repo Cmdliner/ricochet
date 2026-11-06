@@ -19,6 +19,7 @@ export function startRealtime() {
       void store().catchUp(openConversations);
     },
     messageNew: (message) => store().receiveMessage(message),
+    messageUpdated: (message) => store().receiveMessage(message),
     unread: (update) => store().receiveUnread(update),
     typing: (notice, on) => store().receiveTyping(notice, on),
     presence: (update) => store().receivePresence(update),

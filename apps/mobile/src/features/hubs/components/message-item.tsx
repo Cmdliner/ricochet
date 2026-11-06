@@ -64,7 +64,7 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
           ) : null}
 
           {isVideo ? (
-            <VideoNoteCircle durationMs={message.durationMs} fresh={!mine} />
+            <VideoNoteCircle message={message} fresh={!mine} />
           ) : (
             <View style={shape} className={`px-3.5 py-2.5 ${mine ? "bg-accent" : "bg-raised"}`}>
               {message.kind === "text" ? (
@@ -72,7 +72,7 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
                   {message.text}
                 </Text>
               ) : (
-                <VoiceContent durationMs={message.durationMs} waveform={message.waveform} mine={mine} />
+                <VoiceContent message={message} mine={mine} />
               )}
             </View>
           )}

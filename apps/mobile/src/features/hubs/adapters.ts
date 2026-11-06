@@ -48,7 +48,7 @@ export function toChat(view: ChatView, myId: string | undefined): Chat {
   return { id: view.id, personId: asLocalId(view.person.id, myId), pinned: view.pinned, muted: view.muted };
 }
 
-type MessageLike = Pick<MessageView, "id" | "type" | "body" | "senderId" | "createdAt"> & Partial<Pick<MessageView, "clientId" | "reactions">>;
+type MessageLike = Pick<MessageView, "id" | "type" | "body" | "senderId" | "createdAt"> & Partial<Pick<MessageView, "clientId" | "reactions" | "media">>;
 
 export function toMessage(view: MessageLike, conversationId: string, myId: string | undefined): Message {
   const base = {
@@ -60,7 +60,20 @@ export function toMessage(view: MessageLike, conversationId: string, myId: strin
   };
   if (view.type === "text") return { ...base, kind: "text", authorId: asLocalId(view.senderId, myId), text: view.body ?? "" };
   if (view.type === "system") return { ...base, kind: "system", text: view.body ?? "" };
-  return { ...base, kind: "system", text: view.type === "voice" ? "Voice note" : "Video note" };
+  if (view.type === "voice" || view.type === "video") {
+    const media = view.media;
+    const recording = {
+      ...base,
+      authorId: asLocalId(view.senderId, myId),
+      durationMs: media?.durationMs ?? 0,
+      mediaUrl: mediaUrl(media?.url),
+      mediaStatus: media && media.status !== "uploading" ? media.status : undefined,
+    };
+    return view.type === "voice"
+      ? { ...recording, kind: "voice", waveform: media?.waveform ?? [] }
+      : { ...recording, kind: "video", posterUrl: mediaUrl(media?.posterUrl) };
+  }
+  return { ...base, kind: "system", text: view.body ?? "" };
 }
 
 export const toLastMessage = (last: ChatLastMessage, conversationId: string, myId: string | undefined) =>

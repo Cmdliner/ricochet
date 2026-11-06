@@ -37,7 +37,25 @@
         }
       ],
       "expo-secure-store",
-      ["expo-image-picker", { "photosPermission": "Ricochet uses your photos so you can choose a profile picture." }]
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ricochet uses your photos so you can choose a profile picture."
+        }
+      ],
+      [
+        "expo-audio",
+        { "microphonePermission": "Ricochet uses the microphone to record voice notes." }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ricochet uses the camera to record video notes.",
+          "microphonePermission": "Ricochet uses the microphone to record voice and video notes.",
+          "recordAudioAndroid": true
+        }
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -56,9 +56,16 @@ type MessageBase = {
   status?: "sending" | "failed";
 };
 
+/** A recording. `mediaUrl` expires, so it is refreshed when someone presses play. `localUri` is the file on this phone before it has been uploaded. */
+type MediaFields = {
+  mediaUrl?: string | null;
+  localUri?: string;
+  mediaStatus?: "processing" | "ready" | "failed";
+};
+
 export type TextMessage = MessageBase & { kind: "text"; authorId: string; text: string };
-export type VoiceMessage = MessageBase & { kind: "voice"; authorId: string; durationMs: number; waveform: number[] };
-export type VideoMessage = MessageBase & { kind: "video"; authorId: string; durationMs: number };
+export type VoiceMessage = MessageBase & MediaFields & { kind: "voice"; authorId: string; durationMs: number; waveform: number[] };
+export type VideoMessage = MessageBase & MediaFields & { kind: "video"; authorId: string; durationMs: number; posterUrl?: string | null };
 export type SystemMessage = MessageBase & { kind: "system"; text: string };
 
 export type Message = TextMessage | VoiceMessage | VideoMessage | SystemMessage;
