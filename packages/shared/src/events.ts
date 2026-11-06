@@ -26,9 +26,12 @@ export type TypingNotice = z.infer<typeof typingNoticeSchema>;
 
 export const conversationReadSchema = z.object({
   conversationId: z.uuid(),
-  lastReadId: z.string().min(1),
+  lastReadId: z.uuid(),
 });
 export type ConversationRead = z.infer<typeof conversationReadSchema>;
+
+export const unreadUpdateSchema = z.object({ conversationId: z.uuid(), unread: z.number().int().min(0) });
+export type UnreadUpdate = z.infer<typeof unreadUpdateSchema>;
 
 export const rooms = {
   user: (userId: string) => `user:${userId}`,

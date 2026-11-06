@@ -10,6 +10,7 @@
 //   open <podId>    open a pod, so its live messages reach you
 //   close           close the pod you have open
 //   say <text>      send a message to the open pod
+//   read            mark the newest message you have seen as read (clears your unread count on every device)
 //   typing          tell the open pod you are typing (it expires by itself after 5 seconds)
 //   stop            tell the open pod you stopped typing
 //   quit
@@ -37,6 +38,7 @@ if (tokenFlag !== -1) {
 
 const socket = io(API, { transports: ["websocket"], auth: { token }, reconnection: false });
 let openPod = null;
+let newestSeen = null;
 
 socket.on("connect", () => log(`connected, socket ${socket.id}`));
 socket.on("connect_error", (error) => {
@@ -44,6 +46,9 @@ socket.on("connect_error", (error) => {
   process.exit(1);
 });
 socket.on("disconnect", (reason) => log(`disconnected: ${reason}`));
+socket.on("message:new", (message) => {
+  if (message.conversationId === openPod) newestSeen = message.id;
+});
 socket.onAny((event, ...args) => log(`<- ${event} ${JSON.stringify(args)}`));
 
 const ask = (event, payload) =>
@@ -78,7 +83,12 @@ const commands = {
   async say(text) {
     if (!openPod) return log("open a pod first");
     const reply = await ask("message:send", { conversationId: openPod, type: "text", body: text, clientId: crypto.randomUUID() });
+    if (reply.ok) newestSeen = reply.message.id;
     log(`say -> ${JSON.stringify(reply)}`);
+  },
+  async read() {
+    if (!openPod || !newestSeen) return log("nothing to mark as read yet");
+    log(`read -> ${JSON.stringify(await ask("conversation:read", { conversationId: openPod, lastReadId: newestSeen }))}`);
   },
   async typing() {
     if (!openPod) return log("open a pod first");

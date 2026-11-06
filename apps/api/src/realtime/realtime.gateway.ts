@@ -11,17 +11,21 @@ import {
   type OnGatewayInit,
 } from "@nestjs/websockets";
 import {
+  conversationReadSchema,
   conversationRefSchema,
   EVENTS,
   rooms,
   sendMessageSchema,
+  type ConversationRead,
   type ConversationRef,
   type SendMessageInput,
 } from "@ricochet/shared";
 import type { Server, Socket } from "socket.io";
 import { WsAckExceptionFilter } from "../common/ws-ack-exception.filter.js";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
+import { ConversationAccessService } from "../messages/conversation-access.service.js";
 import { MessagesService } from "../messages/messages.service.js";
+import { ReadStateService } from "../messages/read-state.service.js";
 import { RealtimeBus } from "./realtime-bus.js";
 import { authenticateSocket } from "./socket-auth.js";
 import { TypingTracker } from "./typing-tracker.js";
@@ -40,6 +44,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   constructor(
     private readonly jwt: JwtService,
     private readonly messages: MessagesService,
+    private readonly access: ConversationAccessService,
+    private readonly readState: ReadStateService,
     private readonly bus: RealtimeBus,
   ) {}
 
@@ -71,7 +77,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @ConnectedSocket() client: Socket,
     @MessageBody(new ZodValidationPipe(conversationRefSchema, "ws")) body: ConversationRef,
   ) {
-    await this.messages.requireAccess(userIdOf(client), body.conversationId);
+    await this.access.require(userIdOf(client), body.conversationId);
     await client.join(rooms.conversation(body.conversationId));
     return { ok: true };
   }
@@ -84,6 +90,15 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.stopTyping(client, body.conversationId);
     await client.leave(rooms.conversation(body.conversationId));
     return { ok: true };
+  }
+
+  @SubscribeMessage(EVENTS.conversationRead)
+  async read(
+    @ConnectedSocket() client: Socket,
+    @MessageBody(new ZodValidationPipe(conversationReadSchema, "ws")) body: ConversationRead,
+  ) {
+    const update = await this.readState.markRead(userIdOf(client), body.conversationId, body.lastReadId);
+    return { ok: true, ...update };
   }
 
   @SubscribeMessage(EVENTS.typingStart)
