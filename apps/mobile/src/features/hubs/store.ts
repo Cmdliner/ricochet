@@ -3,21 +3,31 @@ import {
   HUB_COLORS,
   hubMemberSchema,
   hubSchema,
+  messagePageSchema,
+  messageSchema,
   podSchema,
   unreadSummarySchema,
+  type ChatUpdated,
   type CreateHubInput,
   type CreatePodInput,
   type HubColor,
   type HubView,
+  type MessageView,
+  type PresenceUpdate,
+  type TypingNotice,
+  type UnreadUpdate,
   type UpdateHubInput,
 } from "@ricochet/shared";
+import { Alert } from "react-native";
 import { z } from "zod";
 import { create } from "zustand";
 import { api, errorMessage } from "@/lib/api";
+import { realtime } from "@/lib/realtime";
+import { uuid } from "@/lib/uuid";
 import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/features/profile/store";
-import { asLocalId, toChat, toHub, toMember, toPod } from "./adapters";
+import { asLocalId, mergeMessages, toChat, toHub, toLastMessage, toMember, toMessage, toPod } from "./adapters";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
 
 type SendPayload =
@@ -37,8 +47,21 @@ type HubsState = {
   messages: Record<string, Message[]>;
   unread: Record<string, number>;
   typing: Record<string, string | null>;
+  /** Where each conversation's history stands. `cursor` is the id to ask for older messages from, and null means there are none. */
+  paging: Record<string, { loaded: boolean; cursor: string | null; loadingOlder: boolean }>;
 
   load: () => Promise<void>;
+  openConversation: (id: string) => Promise<void>;
+  closeConversation: (id: string) => void;
+  loadOlder: (id: string) => Promise<void>;
+  retryMessage: (id: string, clientId: string) => Promise<void>;
+  receiveMessage: (message: MessageView) => void;
+  receiveUnread: (update: UnreadUpdate) => void;
+  receiveTyping: (notice: TypingNotice, on: boolean) => void;
+  receivePresence: (update: PresenceUpdate) => void;
+  receiveChatUpdate: (update: ChatUpdated) => void;
+  catchUp: (openConversations: string[]) => Promise<void>;
+  refreshHub: (hubId: string) => Promise<void>;
   reset: () => void;
   markPodRead: (podId: string) => void;
   togglePodMute: (podId: string) => Promise<void>;
@@ -65,15 +88,17 @@ const auth = { auth: true } as const;
 
 /** A hub's pods and member list live behind separate routes, so a hub is only complete once both are in. */
 async function fetchHubDetails(view: HubView) {
-  const [pods, members] = await Promise.all([
+  const [pods, members, presence] = await Promise.all([
     api(`/hubs/${view.id}/pods`, { ...auth, schema: z.array(podSchema) }),
     api(`/hubs/${view.id}/members`, { ...auth, schema: z.array(hubMemberSchema) }),
+    api(`/hubs/${view.id}/presence`, { ...auth, schema: z.object({ online: z.array(z.string()) }) }).catch(() => ({ online: [] as string[] })),
   ]);
   const me = myId();
+  const online = new Set(presence.online);
   return {
     hub: toHub(view, members, me),
     pods: pods.map(toPod),
-    people: members.map((member) => toMember({ id: member.userId, ...member }, me)),
+    people: members.map((member) => toMember({ id: member.userId, ...member }, me, online.has(member.userId))),
   };
 }
 
@@ -98,7 +123,13 @@ const EMPTY = {
   messages: {} as Record<string, Message[]>,
   unread: {} as Record<string, number>,
   typing: {} as Record<string, string | null>,
+  paging: {} as Record<string, { loaded: boolean; cursor: string | null; loadingOlder: boolean }>,
 };
+
+const PAGE_SIZE = 30;
+/** The newest message already reported as read for each conversation, so opening a screen twice sends one request. */
+const reportedRead = new Map<string, string>();
+const refreshingHubs = new Set<string>();
 
 let nextLocalId = 1000;
 
@@ -127,6 +158,39 @@ export const useHubsStore = create<HubsState>((set, get) => {
   const patchChat = (chatId: string, patch: Partial<Chat>) =>
     set((state) => ({ chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, ...patch } : chat)) }));
 
+  const setPaging = (id: string, patch: Partial<HubsState["paging"][string]>) =>
+    set((state) => ({
+      paging: { ...state.paging, [id]: { ...(state.paging[id] ?? { loaded: false, cursor: null, loadingOlder: false }), ...patch } },
+    }));
+
+  const setStatus = (id: string, clientId: string, status: "sending" | "failed" | undefined) =>
+    set((state) => ({
+      messages: { ...state.messages, [id]: (state.messages[id] ?? []).map((m) => (m.clientId === clientId ? { ...m, status } : m)) },
+    }));
+
+  /** The newest page, merged over what is already there. Used on first open and again to catch up after a gap. */
+  async function fetchLatest(id: string) {
+    try {
+      const page = await api(`/conversations/${id}/messages?limit=${PAGE_SIZE}`, { ...auth, schema: messagePageSchema });
+      const me = myId();
+      const incoming = page.items.map((m) => toMessage(m, id, me));
+      const first = !get().paging[id]?.loaded;
+      set((state) => ({ messages: { ...state.messages, [id]: mergeMessages(state.messages[id] ?? [], incoming) } }));
+      setPaging(id, first ? { loaded: true, cursor: page.nextCursor } : { loaded: true });
+    } catch (error) {
+      if (!get().paging[id]?.loaded) showError(error, "Could not load messages");
+    }
+  }
+
+  async function postText(id: string, clientId: string, text: string) {
+    try {
+      const saved = await api("/messages", { ...auth, method: "POST", body: { conversationId: id, type: "text", body: text, clientId }, schema: messageSchema });
+      get().receiveMessage(saved);
+    } catch {
+      setStatus(id, clientId, "failed");
+    }
+  }
+
   return {
     ...EMPTY,
 
@@ -146,14 +210,20 @@ export const useHubsStore = create<HubsState>((set, get) => {
         for (const detail of details) for (const person of detail.people) members[person.id] = person;
         for (const chat of chatViews) members[asLocalId(chat.person.id, me)] = toMember(chat.person, me);
 
-        set({
+        // The chat list shows each chat's last line, so that one message is in place before a chat is ever opened.
+        const lastLines = Object.fromEntries(
+          chatViews.filter((chat) => chat.lastMessage).map((chat) => [chat.id, [toLastMessage(chat.lastMessage!, chat.id, me)]]),
+        );
+
+        set((state) => ({
           status: "ready",
           hubs: details.map((d) => d.hub),
           pods: details.flatMap((d) => d.pods),
           chats: chatViews.map((chat) => toChat(chat, me)),
           members,
+          messages: { ...lastLines, ...state.messages },
           unread: Object.fromEntries(summary.conversations.map((c) => [c.conversationId, c.unread])),
-        });
+        }));
       } catch (error) {
         set({ status: "error", loadError: errorMessage(error) });
       }
@@ -162,8 +232,113 @@ export const useHubsStore = create<HubsState>((set, get) => {
     reset: () => set({ ...EMPTY }),
 
     markPodRead(podId) {
-      if (!get().unread[podId]) return;
-      set((state) => ({ unread: { ...state.unread, [podId]: 0 } }));
+      if (get().unread[podId]) set((state) => ({ unread: { ...state.unread, [podId]: 0 } }));
+      const newest = [...(get().messages[podId] ?? [])].reverse().find((m) => !m.status && m.id.length === 36);
+      if (!newest || reportedRead.get(podId) === newest.id) return;
+      reportedRead.set(podId, newest.id);
+      api(`/conversations/${podId}/read`, { ...auth, method: "POST", body: { lastReadId: newest.id } }).catch(() => reportedRead.delete(podId));
+    },
+
+    async openConversation(id) {
+      realtime.open(id);
+      const paging = get().paging[id];
+      if (paging?.loaded) return get().catchUp([id]);
+      await fetchLatest(id);
+    },
+
+    closeConversation(id) {
+      realtime.close(id);
+    },
+
+    async loadOlder(id) {
+      const paging = get().paging[id];
+      if (!paging?.loaded || paging.cursor === null || paging.loadingOlder) return;
+      setPaging(id, { loadingOlder: true });
+      try {
+        const page = await api(`/conversations/${id}/messages?limit=${PAGE_SIZE}&before=${paging.cursor}`, { ...auth, schema: messagePageSchema });
+        const me = myId();
+        set((state) => ({
+          messages: { ...state.messages, [id]: mergeMessages(state.messages[id] ?? [], page.items.map((m) => toMessage(m, id, me))) },
+        }));
+        setPaging(id, { cursor: page.nextCursor, loadingOlder: false });
+      } catch {
+        setPaging(id, { loadingOlder: false });
+      }
+    },
+
+    async catchUp(openConversations) {
+      await Promise.all(openConversations.filter((id) => get().paging[id]?.loaded).map((id) => fetchLatest(id)));
+    },
+
+    receiveMessage(view) {
+      const message = toMessage(view, view.conversationId, myId());
+      set((state) => ({
+        messages: { ...state.messages, [view.conversationId]: mergeMessages(state.messages[view.conversationId] ?? [], [message]) },
+      }));
+
+      // Someone who joined after this phone loaded the hub has no name or avatar here yet.
+      if (message.kind !== "system" && !get().members[message.authorId]) {
+        const pod = get().pods.find((p) => p.id === view.conversationId);
+        if (pod) void get().refreshHub(pod.hubId);
+      }
+    },
+
+    async refreshHub(hubId) {
+      if (refreshingHubs.has(hubId)) return;
+      refreshingHubs.add(hubId);
+      try {
+        const view = await api(`/hubs/${hubId}`, { ...auth, schema: hubSchema });
+        const { hub, pods, people } = await fetchHubDetails(view);
+        set((state) => ({
+          hubs: state.hubs.map((h) => (h.id === hubId ? hub : h)),
+          pods: [...state.pods.filter((p) => p.hubId !== hubId), ...pods],
+          members: { ...state.members, ...Object.fromEntries(people.map((p) => [p.id, p])) },
+        }));
+      } catch {
+        // The next message from this person tries again.
+      } finally {
+        refreshingHubs.delete(hubId);
+      }
+    },
+
+    receiveUnread(update) {
+      set((state) => ({ unread: { ...state.unread, [update.conversationId]: update.unread } }));
+    },
+
+    receiveTyping(notice, on) {
+      const who = asLocalId(notice.userId, myId());
+      set((state) => {
+        const current = state.typing[notice.conversationId];
+        if (on) return { typing: { ...state.typing, [notice.conversationId]: who } };
+        return current === who ? { typing: { ...state.typing, [notice.conversationId]: null } } : state;
+      });
+    },
+
+    receivePresence(update) {
+      const who = asLocalId(update.userId, myId());
+      set((state) => {
+        const member = state.members[who];
+        return member ? { members: { ...state.members, [who]: { ...member, online: update.online } } } : state;
+      });
+    },
+
+    receiveChatUpdate(update) {
+      if (!get().chats.some((chat) => chat.id === update.conversationId)) {
+        // A chat this phone has never heard of, started by someone else. The list route knows about it.
+        void get().load();
+        return;
+      }
+      const message = toMessage(update.lastMessage, update.conversationId, myId());
+      set((state) => ({
+        messages: { ...state.messages, [update.conversationId]: mergeMessages(state.messages[update.conversationId] ?? [], [message]) },
+      }));
+    },
+
+    async retryMessage(id, clientId) {
+      const draft = get().messages[id]?.find((m) => m.clientId === clientId);
+      if (!draft || draft.kind !== "text") return;
+      setStatus(id, clientId, "sending");
+      await postText(id, clientId, draft.text);
     },
 
     async togglePodMute(podId) {
@@ -287,13 +462,45 @@ export const useHubsStore = create<HubsState>((set, get) => {
       );
     },
 
-    // Messages are still local until the message routes are wired in.
     sendMessage(podId, payload) {
-      const message = { id: `m${++nextLocalId}`, podId, authorId: ME_ID, sentAt: Date.now(), reactions: [], ...payload } as Message;
-      set((state) => ({ messages: { ...state.messages, [podId]: [...(state.messages[podId] ?? []), message] } }));
+      if (payload.kind !== "text") {
+        Alert.alert("Coming soon", "Voice and video notes are not available yet.");
+        return;
+      }
+      const clientId = uuid();
+      const draft: Message = { id: clientId, clientId, podId, kind: "text", authorId: ME_ID, text: payload.text, sentAt: Date.now(), reactions: [], status: "sending" };
+      set((state) => ({ messages: { ...state.messages, [podId]: mergeMessages(state.messages[podId] ?? [], [draft]) } }));
+      void postText(podId, clientId, payload.text);
     },
 
-    toggleReaction() {},
+    async toggleReaction(podId, messageId, emoji) {
+      const message = get().messages[podId]?.find((m) => m.id === messageId);
+      if (!message || message.status) return;
+      const mine = message.reactions.find((r) => r.emoji === emoji)?.userIds.includes(ME_ID) ?? false;
+      const previous = message.reactions;
+
+      const apply = (reactions: Message["reactions"]) =>
+        set((state) => ({
+          messages: { ...state.messages, [podId]: (state.messages[podId] ?? []).map((m) => (m.id === messageId ? { ...m, reactions } : m)) },
+        }));
+      const without = previous.map((r) => (r.emoji === emoji ? { ...r, userIds: r.userIds.filter((u) => u !== ME_ID) } : r)).filter((r) => r.userIds.length > 0);
+      const withMine = previous.some((r) => r.emoji === emoji)
+        ? previous.map((r) => (r.emoji === emoji ? { ...r, userIds: [...r.userIds, ME_ID] } : r))
+        : [...previous, { emoji, userIds: [ME_ID] }];
+
+      apply(mine ? without : withMine);
+      try {
+        const saved = await api(`/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`, {
+          ...auth,
+          method: mine ? "DELETE" : "PUT",
+          schema: messageSchema,
+        });
+        get().receiveMessage(saved);
+      } catch (error) {
+        apply(previous);
+        showError(error);
+      }
+    },
 
     async createHub(input) {
       const view = await api("/hubs", { ...auth, method: "POST", body: input, schema: hubSchema });

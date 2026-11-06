@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo } from "react";
-import { FlatList, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -13,6 +13,7 @@ import { Composer } from "@/features/hubs/components/composer";
 import { DaySeparator } from "@/features/hubs/components/day-separator";
 import { MessageItem } from "@/features/hubs/components/message-item";
 import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
+import { useConversation } from "@/features/hubs/hooks";
 import { useHubsStore } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
 
@@ -39,6 +40,7 @@ export default function ChatScreen() {
   const sendMessage = useHubsStore((s) => s.sendMessage);
   const toggleChatMute = useHubsStore((s) => s.toggleChatMute);
 
+  const { loaded, hasOlder, loadOlder, signalTyping } = useConversation(chatId);
   const items = useMemo(() => buildChatItems(messages ?? [], ME_ID), [messages]);
 
   useEffect(() => {
@@ -88,7 +90,11 @@ export default function ChatScreen() {
           keyboardDismissMode="interactive"
           contentContainerClassName="py-2"
           ListHeaderComponent={typing ? <TypingIndicator member={person} /> : undefined}
-          ListFooterComponent={<ChatIntro name={person.name} handle={person.handle} color={person.color} />}
+          onEndReached={loadOlder}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            loaded && !hasOlder ? <ChatIntro name={person.name} handle={person.handle} color={person.color} /> : <ActivityIndicator className="py-6" />
+          }
           initialNumToRender={14}
           maxToRenderPerBatch={10}
           windowSize={9}
@@ -99,6 +105,7 @@ export default function ChatScreen() {
           onSendText={(text) => sendMessage(chat.id, { kind: "text", text })}
           onSendVoice={(note) => sendMessage(chat.id, { kind: "voice", ...note })}
           onSendVideo={(note) => sendMessage(chat.id, { kind: "video", ...note })}
+          onTyping={signalTyping}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

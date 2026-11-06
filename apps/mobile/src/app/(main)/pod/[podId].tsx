@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo } from "react";
-import { FlatList, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Text } from "@/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,7 +12,7 @@ import { Composer } from "@/features/hubs/components/composer";
 import { DaySeparator } from "@/features/hubs/components/day-separator";
 import { MessageItem } from "@/features/hubs/components/message-item";
 import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
-import { useHubStats } from "@/features/hubs/hooks";
+import { useConversation, useHubStats } from "@/features/hubs/hooks";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
 
@@ -41,6 +41,7 @@ export default function PodScreen() {
   const sendMessage = useHubsStore((s) => s.sendMessage);
   const togglePodMute = useHubsStore((s) => s.togglePodMute);
 
+  const { loaded, hasOlder, loadOlder, signalTyping } = useConversation(podId);
   const items = useMemo(() => buildChatItems(messages ?? [], ME_ID), [messages]);
 
   // Being in the pod means you have read it, including anything that arrives while you watch.
@@ -93,7 +94,9 @@ export default function PodScreen() {
           keyboardDismissMode="interactive"
           contentContainerClassName="py-2"
           ListHeaderComponent={typer ? <TypingIndicator member={typer} /> : undefined}
-          ListFooterComponent={<PodIntro name={pod.name} description={pod.description} />}
+          onEndReached={loadOlder}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loaded && !hasOlder ? <PodIntro name={pod.name} description={pod.description} /> : <ActivityIndicator className="py-6" />}
           initialNumToRender={14}
           maxToRenderPerBatch={10}
           windowSize={9}
@@ -104,6 +107,7 @@ export default function PodScreen() {
           onSendText={(text) => sendMessage(pod.id, { kind: "text", text })}
           onSendVoice={(note) => sendMessage(pod.id, { kind: "voice", ...note })}
           onSendVideo={(note) => sendMessage(pod.id, { kind: "video", ...note })}
+          onTyping={signalTyping}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+import { startRealtime, stopRealtime } from "@/features/hubs/realtime-handlers";
 import { useHubsStore } from "@/features/hubs/store";
 import { useTheme } from "@/theme/theme-provider";
 
@@ -16,7 +17,11 @@ export default function MainLayout() {
   // Everything in this group is signed-in content, so its data is fetched when the group mounts and dropped when it unmounts.
   useEffect(() => {
     void useHubsStore.getState().load();
-    return () => useHubsStore.getState().reset();
+    startRealtime();
+    return () => {
+      stopRealtime();
+      useHubsStore.getState().reset();
+    };
   }, []);
 
   return (

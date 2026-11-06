@@ -1,0 +1,29 @@
+import { realtime } from "@/lib/realtime";
+import { useHubsStore } from "./store";
+
+/** Connects the socket to the store: each event the server sends becomes one store action. */
+export function startRealtime() {
+  const store = () => useHubsStore.getState();
+  let firstConnect = true;
+
+  realtime.start({
+    connected(openConversations) {
+      // The first connect has just loaded everything. Any later one follows a gap, so refetch what could have been missed.
+      if (firstConnect) {
+        firstConnect = false;
+        return;
+      }
+      void store().load();
+      void store().catchUp(openConversations);
+    },
+    messageNew: (message) => store().receiveMessage(message),
+    unread: (update) => store().receiveUnread(update),
+    typing: (notice, on) => store().receiveTyping(notice, on),
+    presence: (update) => store().receivePresence(update),
+    chatUpdated: (update) => store().receiveChatUpdate(update),
+  });
+}
+
+export function stopRealtime() {
+  realtime.stop();
+}

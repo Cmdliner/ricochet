@@ -1,5 +1,5 @@
-import type { ChatView, HubMember, HubView, Person, PodView } from "@ricochet/shared";
-import { ME_ID, type Chat, type Hub, type Member, type Pod } from "./types";
+import type { ChatLastMessage, ChatView, HubMember, HubView, MessageView, Person, PodView } from "@ricochet/shared";
+import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod } from "./types";
 
 /**
  * Screens compare ids with ME_ID to decide what is "mine", so the signed-in person is called "me" inside the
@@ -44,4 +44,36 @@ export function toPod(view: PodView): Pod {
 
 export function toChat(view: ChatView, myId: string | undefined): Chat {
   return { id: view.id, personId: asLocalId(view.person.id, myId), pinned: view.pinned, muted: view.muted };
+}
+
+type MessageLike = Pick<MessageView, "id" | "type" | "body" | "senderId" | "createdAt"> & Partial<Pick<MessageView, "clientId" | "reactions">>;
+
+export function toMessage(view: MessageLike, conversationId: string, myId: string | undefined): Message {
+  const base = {
+    id: view.id,
+    podId: conversationId,
+    sentAt: Date.parse(view.createdAt),
+    clientId: view.clientId,
+    reactions: (view.reactions ?? []).map((r) => ({ emoji: r.emoji, userIds: r.userIds.map((id) => asLocalId(id, myId)) })),
+  };
+  if (view.type === "text") return { ...base, kind: "text", authorId: asLocalId(view.senderId, myId), text: view.body ?? "" };
+  if (view.type === "system") return { ...base, kind: "system", text: view.body ?? "" };
+  return { ...base, kind: "system", text: view.type === "voice" ? "Voice note" : "Video note" };
+}
+
+export const toLastMessage = (last: ChatLastMessage, conversationId: string, myId: string | undefined) =>
+  toMessage(last, conversationId, myId);
+
+/** A saved message replaces the draft the phone made for it, matched by the id the phone invented. Order follows the time written. */
+export function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
+  const result = [...existing];
+  for (const message of incoming) {
+    const same = (other: Message) =>
+      other.id === message.id ||
+      (!!message.clientId && (other.clientId === message.clientId || other.id === message.clientId));
+    const at = result.findIndex(same);
+    if (at === -1) result.push(message);
+    else result[at] = { ...message, status: undefined };
+  }
+  return result.sort((a, b) => a.sentAt - b.sentAt || a.id.localeCompare(b.id));
 }
