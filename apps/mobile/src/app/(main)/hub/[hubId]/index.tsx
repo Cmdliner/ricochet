@@ -127,7 +127,7 @@ export default function HubScreen() {
               <View className="flex-row">
                 {faces.map((person, index) => (
                   <View key={person.id} style={{ marginLeft: index === 0 ? 0 : -10 }} className="rounded-full border-2 border-canvas">
-                    <Avatar name={person.name} color={person.color} size={28} />
+                    <Avatar name={person.name} color={person.color} uri={person.avatarUrl} size={28} />
                   </View>
                 ))}
               </View>

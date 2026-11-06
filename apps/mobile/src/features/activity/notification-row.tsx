@@ -83,7 +83,7 @@ export function NotificationRow({ note }: { note: AppNotification }) {
       >
         <View>
           {actor ? (
-            <Avatar name={actor.name} color={actor.color} size={50} />
+            <Avatar name={actor.name} color={actor.color} uri={actor.avatarUrl} size={50} />
           ) : hub ? (
             <HubAvatar name={hub.name} color={hub.color} icon={hub.icon} size={50} />
           ) : null}

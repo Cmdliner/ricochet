@@ -1,4 +1,5 @@
 import type { ChatLastMessage, ChatView, HubMember, HubView, MessageView, Person, PodView } from "@ricochet/shared";
+import { mediaUrl } from "@/lib/media";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod } from "./types";
 
 /**
@@ -7,12 +8,13 @@ import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod } from 
  */
 export const asLocalId = (id: string, myId: string | undefined) => (id === myId ? ME_ID : id);
 
-export function toMember(person: Pick<Person, "id" | "displayName" | "handle" | "avatarColor">, myId: string | undefined, online = false): Member {
+export function toMember(person: Pick<Person, "id" | "displayName" | "handle" | "avatarColor" | "avatarUrl">, myId: string | undefined, online = false): Member {
   return {
     id: asLocalId(person.id, myId),
     name: person.displayName,
     handle: person.handle,
     color: person.avatarColor,
+    avatarUrl: mediaUrl(person.avatarUrl),
     online,
   };
 }

@@ -261,7 +261,7 @@ export default function HubSettings() {
                     onPress={() => manage(member.id, member.name, memberRole)}
                     className="flex-row items-center gap-3.5 px-4 py-3"
                   >
-                    <Avatar name={member.name} color={member.color} size={42} />
+                    <Avatar name={member.name} color={member.color} uri={member.avatarUrl} size={42} />
                     <View className="flex-1">
                       <Text className="text-[16px] font-sans-semibold text-ink" numberOfLines={1}>
                         {member.id === ME_ID ? "You" : member.name}

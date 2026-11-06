@@ -3,6 +3,7 @@ import { z } from "zod";
 import { create } from "zustand";
 import { useHubsStore } from "@/features/hubs/store";
 import { api, errorMessage } from "@/lib/api";
+import { mediaUrl } from "@/lib/media";
 import { showError } from "@/lib/notify";
 
 export type NotificationKind = ActivityItem["kind"];
@@ -10,7 +11,7 @@ export type NotificationKind = ActivityItem["kind"];
 export type AppNotification = {
   id: string;
   kind: NotificationKind;
-  actor?: { id: string; name: string; color: NonNullable<ActivityItem["actor"]>["avatarColor"] };
+  actor?: { id: string; name: string; color: NonNullable<ActivityItem["actor"]>["avatarColor"]; avatarUrl: string | null };
   hubId?: string;
   podId?: string;
   hubName?: string;
@@ -29,7 +30,7 @@ function toNotification(item: ActivityItem): AppNotification {
   return {
     id: item.id,
     kind: item.kind,
-    actor: item.actor ? { id: item.actor.id, name: item.actor.displayName, color: item.actor.avatarColor } : undefined,
+    actor: item.actor ? { id: item.actor.id, name: item.actor.displayName, color: item.actor.avatarColor, avatarUrl: mediaUrl(item.actor.avatarUrl) } : undefined,
     hubId: item.hubId ?? undefined,
     podId: item.conversationId ?? undefined,
     hubName: item.hubName ?? undefined,

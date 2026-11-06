@@ -1,7 +1,19 @@
-import { authUserSchema, displayNameSchema, handleSchema, type HubColor } from "@ricochet/shared";
+import {
+  authUserSchema,
+  avatarUploadSchema,
+  BIO_MAX,
+  displayNameSchema,
+  handleSchema,
+  STATUS_TEXT_MAX,
+  type HubColor,
+  type UpdateProfileInput,
+} from "@ricochet/shared";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
 import { router, useNavigation, usePreventRemove } from "expo-router";
 import { useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { ActivityIndicator, Alert, Pressable, ScrollView, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -12,8 +24,10 @@ import { ScreenHeader } from "@/components/ui/screen-header";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
-import { BIO_MAX, STATUS_MAX, useProfileStore } from "@/features/profile/store";
+import { useHubsStore } from "@/features/hubs/store";
 import { api, ApiError, errorMessage } from "@/lib/api";
+import { mediaUrl, uploadTo } from "@/lib/media";
+import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
 
 const EMOJIS = ["🎧", "💻", "🌙", "☕", "🚀", "🎯", "🎮", "📚", "🏃", "🌴", "🎨", "🙂"];
@@ -29,15 +43,18 @@ type Errors = { name?: string; handle?: string; general?: string };
 
 export default function EditProfile() {
   const user = useAuthStore((s) => s.user);
-  const saved = useProfileStore();
+  const savedBio = user?.bio ?? "";
+  const savedStatus = user?.status ?? null;
+  const savedColor = user?.avatarColor ?? "coral";
   const navigation = useNavigation();
 
   const [name, setName] = useState(user?.displayName ?? "");
   const [handle, setHandle] = useState(user?.handle ?? "");
-  const [bio, setBio] = useState(saved.bio);
-  const [emoji, setEmoji] = useState<string | null>(saved.status?.emoji ?? null);
-  const [statusText, setStatusText] = useState(saved.status?.text ?? "");
-  const [color, setColor] = useState<HubColor>(saved.avatarColor);
+  const [bio, setBio] = useState(savedBio);
+  const [emoji, setEmoji] = useState<string | null>(savedStatus?.emoji ?? null);
+  const [statusText, setStatusText] = useState(savedStatus?.text ?? "");
+  const [color, setColor] = useState<HubColor>(savedColor);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
   const allowLeave = useRef(false);
@@ -45,10 +62,10 @@ export default function EditProfile() {
   const dirty =
     name.trim() !== (user?.displayName ?? "") ||
     handle !== (user?.handle ?? "") ||
-    bio.trim() !== saved.bio ||
-    statusText.trim() !== (saved.status?.text ?? "") ||
-    (statusText.trim() ? (emoji ?? "💬") : null) !== (saved.status?.emoji ?? null) ||
-    color !== saved.avatarColor;
+    bio.trim() !== savedBio ||
+    statusText.trim() !== (savedStatus?.text ?? "") ||
+    (statusText.trim() ? (emoji ?? "💬") : null) !== (savedStatus?.emoji ?? null) ||
+    color !== savedColor;
 
   usePreventRemove(dirty, ({ data }) => {
     // A finished save leaves straight away: the hook only learns the form is clean on the next render.
@@ -77,21 +94,21 @@ export default function EditProfile() {
     setBusy(true);
     setErrors({});
     try {
-      // Only what changed goes to the server. Bio, status and colour stay on this device for now.
-      const patch: { displayName?: string; handle?: string } = {};
+      // Only what changed goes to the server.
+      const text = statusText.trim();
+      const nextStatus = text ? { emoji: emoji ?? "💬", text } : null;
+      const patch: UpdateProfileInput = {};
       if (nameResult.data !== user.displayName) patch.displayName = nameResult.data;
       if (handleResult.data !== user.handle) patch.handle = handleResult.data;
+      if (bio.trim() !== savedBio) patch.bio = bio.trim();
+      if (color !== savedColor) patch.avatarColor = color;
+      if (nextStatus?.text !== savedStatus?.text || nextStatus?.emoji !== savedStatus?.emoji) patch.status = nextStatus;
+
       if (Object.keys(patch).length > 0) {
         const updated = await api("/me", { method: "PATCH", auth: true, body: patch, schema: authUserSchema });
         useAuthStore.getState().setUser(updated);
+        useHubsStore.getState().refreshSelf();
       }
-
-      const text = statusText.trim();
-      useProfileStore.getState().update({
-        bio: bio.trim(),
-        status: text ? { emoji: emoji ?? "💬", text } : null,
-        avatarColor: color,
-      });
       allowLeave.current = true;
       router.back();
     } catch (e) {
@@ -100,6 +117,57 @@ export default function EditProfile() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function pickPhoto() {
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 1 });
+    const asset = picked.assets?.[0];
+    if (picked.canceled || !asset) return;
+
+    setPhotoBusy(true);
+    try {
+      // Resized here so the server never has to handle a 12 megapixel photo for a 84 pixel circle.
+      const resized = await ImageManipulator.manipulateAsync(asset.uri, [{ resize: { width: 512 } }], {
+        compress: 0.8,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+      const file = await (await fetch(resized.uri)).blob();
+      const { key, upload } = await api("/me/avatar/upload", {
+        method: "POST",
+        auth: true,
+        body: { contentType: "image/jpeg", size: file.size },
+        schema: avatarUploadSchema,
+      });
+      await uploadTo(upload, file);
+      const updated = await api("/me/avatar", { method: "POST", auth: true, body: { key }, schema: authUserSchema });
+      useAuthStore.getState().setUser(updated);
+      useHubsStore.getState().refreshSelf();
+    } catch (caught) {
+      showError(caught, "Could not update your photo");
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  async function removePhoto() {
+    setPhotoBusy(true);
+    try {
+      const updated = await api("/me/avatar", { method: "DELETE", auth: true, schema: authUserSchema });
+      useAuthStore.getState().setUser(updated);
+      useHubsStore.getState().refreshSelf();
+    } catch (caught) {
+      showError(caught, "Could not remove your photo");
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  function photoMenu() {
+    Alert.alert("Profile photo", undefined, [
+      { text: "Choose a photo", onPress: () => void pickPhoto() },
+      ...(user?.avatarUrl ? [{ text: "Remove photo", style: "destructive" as const, onPress: () => void removePhoto() }] : []),
+      { text: "Cancel", style: "cancel" as const },
+    ]);
   }
 
   const previewName = name.trim() || "Your name";
@@ -128,7 +196,18 @@ export default function EditProfile() {
       <KeyboardAwareScrollView bottomOffset={64} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
         <View className="px-4">
           <View className="mt-5 items-center rounded-3xl border border-line bg-surface px-5 pt-6 pb-5">
-            <Avatar name={previewName} color={color} size={84} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Change profile photo"
+              disabled={photoBusy}
+              onPress={photoMenu}
+              className="active:opacity-80"
+            >
+              <Avatar name={previewName} color={color} uri={mediaUrl(user?.avatarUrl)} size={84} />
+              <View className="absolute -right-1 -bottom-1 size-8 items-center justify-center rounded-full border-2 border-surface bg-accent">
+                {photoBusy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="camera" size={15} color="#fff" />}
+              </View>
+            </Pressable>
             <Text className="mt-3 font-display text-[24px] tracking-tight text-ink" numberOfLines={1}>
               {previewName}
             </Text>
@@ -216,7 +295,7 @@ export default function EditProfile() {
                 );
               })}
             </ScrollView>
-            <TextField label="What are you up to?" value={statusText} onChangeText={setStatusText} maxLength={STATUS_MAX} placeholder="Heads down, back soon" />
+            <TextField label="What are you up to?" value={statusText} onChangeText={setStatusText} maxLength={STATUS_TEXT_MAX} placeholder="Heads down, back soon" />
             <View className="flex-row flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <Pressable
