@@ -60,7 +60,8 @@ export function VideoNoteCircle({ message, size = 176, fresh = true }: VideoNote
         const url = await refreshMedia(message.podId, message.id);
         if (!url) return;
         await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-        player.replace({ uri: url });
+        // The async version loads off the main thread. The plain `replace` can freeze the screen on iOS.
+        await player.replaceAsync({ uri: url });
         setActive(true);
       } finally {
         setLoading(false);
