@@ -21,6 +21,9 @@ export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
 export const conversationRefSchema = z.object({ conversationId: z.uuid() });
 export type ConversationRef = z.infer<typeof conversationRefSchema>;
 
+export const typingNoticeSchema = z.object({ conversationId: z.uuid(), userId: z.uuid() });
+export type TypingNotice = z.infer<typeof typingNoticeSchema>;
+
 export const conversationReadSchema = z.object({
   conversationId: z.uuid(),
   lastReadId: z.string().min(1),

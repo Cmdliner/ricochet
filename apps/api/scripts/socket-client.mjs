@@ -10,6 +10,8 @@
 //   open <podId>    open a pod, so its live messages reach you
 //   close           close the pod you have open
 //   say <text>      send a message to the open pod
+//   typing          tell the open pod you are typing (it expires by itself after 5 seconds)
+//   stop            tell the open pod you stopped typing
 //   quit
 //
 // Set API_URL if the API is not on port 3001.
@@ -77,6 +79,14 @@ const commands = {
     if (!openPod) return log("open a pod first");
     const reply = await ask("message:send", { conversationId: openPod, type: "text", body: text, clientId: crypto.randomUUID() });
     log(`say -> ${JSON.stringify(reply)}`);
+  },
+  async typing() {
+    if (!openPod) return log("open a pod first");
+    log(`typing -> ${JSON.stringify(await ask("typing:start", { conversationId: openPod }))}`);
+  },
+  async stop() {
+    if (!openPod) return log("open a pod first");
+    log(`stop -> ${JSON.stringify(await ask("typing:stop", { conversationId: openPod }))}`);
   },
   quit() {
     socket.close();

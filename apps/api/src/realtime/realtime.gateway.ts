@@ -5,6 +5,7 @@ import {
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
+  WsException,
   type OnGatewayConnection,
   type OnGatewayDisconnect,
   type OnGatewayInit,
@@ -23,14 +24,18 @@ import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { MessagesService } from "../messages/messages.service.js";
 import { RealtimeBus } from "./realtime-bus.js";
 import { authenticateSocket } from "./socket-auth.js";
+import { TypingTracker } from "./typing-tracker.js";
 
 const userIdOf = (client: Socket) => client.data.userId as string;
+const TYPING_TTL_MS = 5000;
+const typingKey = (client: Socket, conversationId: string) => `${client.id}:${conversationId}`;
 
 /** Rooms: `user:{id}` carries everything for one person; `conversation:{id}` is joined only while that pod or chat is open. */
 @UseFilters(WsAckExceptionFilter)
 @WebSocketGateway({ transports: ["websocket"], cors: { origin: true } })
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly log = new Logger(RealtimeGateway.name);
+  private readonly typing = new TypingTracker(TYPING_TTL_MS);
 
   constructor(
     private readonly jwt: JwtService,
@@ -57,6 +62,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   }
 
   handleDisconnect(client: Socket) {
+    this.typing.flush(`${client.id}:`);
     this.log.debug(`disconnected ${client.id}`);
   }
 
@@ -75,7 +81,34 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @ConnectedSocket() client: Socket,
     @MessageBody(new ZodValidationPipe(conversationRefSchema, "ws")) body: ConversationRef,
   ) {
+    this.stopTyping(client, body.conversationId);
     await client.leave(rooms.conversation(body.conversationId));
+    return { ok: true };
+  }
+
+  @SubscribeMessage(EVENTS.typingStart)
+  typingStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody(new ZodValidationPipe(conversationRefSchema, "ws")) body: ConversationRef,
+  ) {
+    const room = rooms.conversation(body.conversationId);
+    // Having joined the room already proves access, so there is no database check on every keystroke.
+    if (!client.rooms.has(room)) throw new WsException("Open the conversation first.");
+
+    const notice = { conversationId: body.conversationId, userId: userIdOf(client) };
+    const isNew = this.typing.start(typingKey(client, body.conversationId), () =>
+      client.to(room).emit(EVENTS.typingStop, notice),
+    );
+    if (isNew) client.to(room).emit(EVENTS.typingStart, notice);
+    return { ok: true };
+  }
+
+  @SubscribeMessage(EVENTS.typingStop)
+  typingStop(
+    @ConnectedSocket() client: Socket,
+    @MessageBody(new ZodValidationPipe(conversationRefSchema, "ws")) body: ConversationRef,
+  ) {
+    this.stopTyping(client, body.conversationId);
     return { ok: true };
   }
 
@@ -85,6 +118,14 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @MessageBody(new ZodValidationPipe(sendMessageSchema, "ws")) body: SendMessageInput,
   ) {
     const { message, created } = await this.messages.send(userIdOf(client), body);
+    this.stopTyping(client, body.conversationId);
     return { ok: true, created, message };
+  }
+
+  private stopTyping(client: Socket, conversationId: string) {
+    if (!this.typing.stop(typingKey(client, conversationId))) return;
+    client
+      .to(rooms.conversation(conversationId))
+      .emit(EVENTS.typingStop, { conversationId, userId: userIdOf(client) });
   }
 }
