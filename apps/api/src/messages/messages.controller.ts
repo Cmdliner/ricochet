@@ -17,8 +17,10 @@ import {
   conversationReadSchema,
   listMessagesQuerySchema,
   reactionEmojiSchema,
+  requestUploadSchema,
   sendMessageSchema,
   type ListMessagesQuery,
+  type RequestUploadInput,
   type SendMessageInput,
 } from "@ricochet/shared";
 import type { Response } from "express";
@@ -54,6 +56,21 @@ export class MessagesController {
     @Body(new ZodValidationPipe(markReadBodySchema)) body: { lastReadId: string },
   ) {
     return this.readState.markRead(auth.userId, conversationId, body.lastReadId);
+  }
+
+  @Post("conversations/:conversationId/media")
+  @HttpCode(HttpStatus.OK)
+  requestUpload(
+    @Auth() auth: AuthContext,
+    @Param("conversationId", ParseUUIDPipe) conversationId: string,
+    @Body(new ZodValidationPipe(requestUploadSchema)) body: RequestUploadInput,
+  ) {
+    return this.messages.requestMediaUpload(auth.userId, conversationId, body);
+  }
+
+  @Get("messages/:messageId/media")
+  media(@Auth() auth: AuthContext, @Param("messageId", ParseUUIDPipe) messageId: string) {
+    return this.messages.mediaFor(auth.userId, messageId);
   }
 
   @Post("messages")

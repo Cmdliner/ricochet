@@ -3,10 +3,14 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { QUEUES } from "@ricochet/shared";
 import type { Env } from "../config/env.js";
+import { MessageViewModule } from "../messages/message-view.module.js";
+import { RealtimeBusModule } from "../realtime/realtime-bus.module.js";
 import { MediaProcessor } from "./media.processor.js";
 
 @Module({
   imports: [
+    MessageViewModule,
+    RealtimeBusModule,
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>) => {

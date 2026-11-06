@@ -23,7 +23,7 @@ import { pipeline } from "node:stream/promises";
 import type { Env } from "../config/env.js";
 import { LocalMediaStorage } from "./local-media-storage.js";
 import { verify } from "./media-signature.js";
-import { isSafeKey, MEDIA_STORAGE, PUBLIC_PREFIX, type MediaStorage } from "./media-storage.js";
+import { isSafeKey, MEDIA_STORAGE, parseRange, PUBLIC_PREFIX, type MediaStorage } from "./media-storage.js";
 
 /** The upload and download endpoints for the local provider. With R2 these paths do not exist, because the phone talks to Cloudflare directly. */
 @Controller("media/local")
@@ -79,6 +79,7 @@ export class LocalMediaController {
   async file(
     @Param("key") rawKey: string | string[],
     @Query() query: Record<string, string | undefined>,
+    @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
     const storage = this.local();
@@ -93,8 +94,23 @@ export class LocalMediaController {
     if (!object) throw new NotFoundException();
 
     response.setHeader("content-type", object.contentType ?? "application/octet-stream");
-    response.setHeader("content-length", String(object.size));
+    response.setHeader("accept-ranges", "bytes");
     response.setHeader("cache-control", isPublic ? "public, max-age=31536000, immutable" : "private, no-store");
+
+    // Video players ask for a slice at a time (iOS refuses to play an mp4 without this), so ranges are honoured.
+    const range = parseRange(request.headers.range, object.size);
+    if (range === "invalid") {
+      response.status(416).setHeader("content-range", `bytes */${object.size}`).end();
+      return;
+    }
+    if (range) {
+      response.status(206);
+      response.setHeader("content-range", `bytes ${range.start}-${range.end}/${object.size}`);
+      response.setHeader("content-length", String(range.end - range.start + 1));
+      createReadStream(storage.pathFor(key), { start: range.start, end: range.end }).pipe(response);
+      return;
+    }
+    response.setHeader("content-length", String(object.size));
     createReadStream(storage.pathFor(key)).pipe(response);
   }
 }

@@ -1,14 +1,30 @@
+import { InjectQueue } from "@nestjs/bullmq";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { messages, reactions, type Message } from "@ricochet/db";
-import { EVENTS, type ListMessagesQuery, type MessagePage, type MessageView, type SendMessageInput } from "@ricochet/shared";
-import { and, desc, eq, inArray, lt } from "drizzle-orm";
+import { attachments, messages, reactions } from "@ricochet/db";
+import {
+  EVENTS,
+  MEDIA_JOBS,
+  QUEUES,
+  type ListMessagesQuery,
+  type MediaUpload,
+  type MediaView,
+  type MessagePage,
+  type MessageView,
+  type RequestUploadInput,
+  type SendMessageInput,
+} from "@ricochet/shared";
+import type { Queue } from "bullmq";
+import { and, desc, eq, lt } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { ActivityService } from "../activity/activity.service.js";
 import { ChatsService } from "../chats/chats.service.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
+import { MediaService } from "../media/media.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { ConversationAccessService } from "./conversation-access.service.js";
+import { mediaPrefix, VIDEO_RULE, VOICE_RULE } from "./media-rules.js";
+import { MessageViewService } from "./message-view.service.js";
 import { takePage } from "./pagination.js";
-import { groupReactions } from "./reactions.js";
 import { ReadStateService } from "./read-state.service.js";
 
 @Injectable()
@@ -20,30 +36,10 @@ export class MessagesService {
     private readonly activity: ActivityService,
     private readonly chats: ChatsService,
     private readonly bus: RealtimeBus,
+    private readonly views: MessageViewService,
+    private readonly media: MediaService,
+    @InjectQueue(QUEUES.media) private readonly mediaQueue: Queue,
   ) {}
-
-  private toView(row: Message, reactionsByMessage: Map<string, MessageView["reactions"]>): MessageView {
-    return {
-      id: row.id,
-      conversationId: row.conversationId,
-      senderId: row.senderId,
-      type: row.type,
-      body: row.body,
-      clientId: row.clientId,
-      createdAt: row.createdAt.toISOString(),
-      reactions: reactionsByMessage.get(row.id) ?? [],
-    };
-  }
-
-  private async withReactions(rows: Message[]): Promise<MessageView[]> {
-    if (rows.length === 0) return [];
-    const reactionRows = await this.db
-      .select()
-      .from(reactions)
-      .where(inArray(reactions.messageId, rows.map((row) => row.id)));
-    const grouped = groupReactions(reactionRows);
-    return rows.map((row) => this.toView(row, grouped));
-  }
 
   async list(userId: string, conversationId: string, query: ListMessagesQuery): Promise<MessagePage> {
     await this.access.require(userId, conversationId);
@@ -57,26 +53,73 @@ export class MessagesService {
       .limit(query.limit + 1);
 
     const page = takePage(rows, query.limit);
-    return { items: await this.withReactions(page.items), nextCursor: page.nextCursor };
+    return { items: await this.views.views(page.items), nextCursor: page.nextCursor };
+  }
+
+  /** Step one of sending a recording: where to upload it. Step two is `send` with the key. */
+  async requestMediaUpload(userId: string, conversationId: string, input: RequestUploadInput): Promise<MediaUpload> {
+    await this.access.require(userId, conversationId);
+    const rule = input.kind === "voice" ? VOICE_RULE : VIDEO_RULE;
+    return this.media.requestUpload(rule, mediaPrefix(userId), { contentType: input.contentType, size: input.sizeBytes, id: randomUUID() });
+  }
+
+  /** Fresh links for a recording whose earlier ones have expired. */
+  async mediaFor(userId: string, messageId: string): Promise<MediaView> {
+    const [message] = await this.db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
+    if (!message) throw new NotFoundException("Message not found.");
+    await this.access.require(userId, message.conversationId);
+    const [attachment] = await this.db.select().from(attachments).where(eq(attachments.messageId, messageId)).limit(1);
+    if (!attachment) throw new NotFoundException("This message has no recording.");
+    return this.views.mediaView(attachment);
+  }
+
+  /** The upload went straight to storage, so check the key is this person's and the file is what they said it was. */
+  private async checkRecording(userId: string, kind: "voice" | "video", mediaKey: string): Promise<void> {
+    if (!mediaKey.startsWith(mediaPrefix(userId))) throw new BadRequestException("That recording does not belong to you.");
+    await this.media.verifyUpload(mediaKey, kind === "voice" ? VOICE_RULE : VIDEO_RULE);
   }
 
   async send(userId: string, input: SendMessageInput): Promise<{ message: MessageView; created: boolean }> {
-    if (input.type !== "text") throw new BadRequestException("Voice and video notes are not supported yet.");
     const conversation = await this.access.require(userId, input.conversationId);
+    // The schema already insists on these for recordings. Repeating it here is what lets the compiler know.
+    const recording =
+      input.type === "text"
+        ? null
+        : { kind: input.type, key: input.mediaKey, durationMs: input.durationMs, waveform: input.waveform ?? null };
+    if (recording && (!recording.key || !recording.durationMs)) throw new BadRequestException("Upload the recording first.");
+    if (recording?.key) await this.checkRecording(userId, recording.kind, recording.key);
 
-    const [inserted] = await this.db
-      .insert(messages)
-      .values({
-        conversationId: input.conversationId,
-        senderId: userId,
-        type: "text",
-        body: input.body,
-        clientId: input.clientId,
-      })
-      .onConflictDoNothing({ target: [messages.senderId, messages.clientId] })
-      .returning();
+    const inserted = await this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(messages)
+        .values({
+          conversationId: input.conversationId,
+          senderId: userId,
+          type: input.type,
+          body: input.type === "text" ? input.body : null,
+          clientId: input.clientId,
+        })
+        .onConflictDoNothing({ target: [messages.senderId, messages.clientId] })
+        .returning();
+      if (row && recording?.key) {
+        await tx.insert(attachments).values({
+          messageId: row.id,
+          storageKey: recording.key,
+          durationMs: recording.durationMs,
+          waveform: recording.kind === "voice" ? recording.waveform : null,
+          // A voice note is playable as uploaded. A video still needs its poster frame and a length check.
+          status: recording.kind === "voice" ? "ready" : "processing",
+        });
+      }
+      return row;
+    });
+
     if (inserted) {
-      const message = this.toView(inserted, new Map());
+      const [message] = await this.views.views([inserted]);
+      if (!message) throw new Error("Could not read the saved message.");
+      if (input.type === "video") {
+        await this.mediaQueue.add(MEDIA_JOBS.processVideo, { messageId: inserted.id }, { attempts: 2, backoff: { type: "fixed", delay: 3000 } });
+      }
       this.bus.toConversation(message.conversationId, EVENTS.messageNew, message);
       this.readState.announceInBackground(conversation.id, userId);
       this.activity.inBackground(this.activity.recordForMessage(conversation, message, userId));
@@ -90,7 +133,7 @@ export class MessagesService {
       .where(and(eq(messages.senderId, userId), eq(messages.clientId, input.clientId)))
       .limit(1);
     if (!existing) throw new Error("A message with this client id vanished mid-request.");
-    const [view] = await this.withReactions([existing]);
+    const [view] = await this.views.views([existing]);
     if (!view) throw new Error("Could not read the existing message.");
     return { message: view, created: false };
   }
@@ -108,7 +151,7 @@ export class MessagesService {
         .delete(reactions)
         .where(and(eq(reactions.messageId, messageId), eq(reactions.userId, userId), eq(reactions.emoji, emoji)));
     }
-    const [view] = await this.withReactions([message]);
+    const [view] = await this.views.views([message]);
     if (!view) throw new Error("Could not read the message.");
     return view;
   }

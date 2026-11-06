@@ -1,5 +1,9 @@
 import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createWriteStream } from "node:fs";
+import { readFile } from "node:fs/promises";
+import type { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { PUBLIC_PREFIX, type MediaStorage, type StoredObject, type UploadTarget } from "./media-storage.js";
 
 export type R2Config = {
@@ -54,6 +58,15 @@ export class R2MediaStorage implements MediaStorage {
   createDownloadUrl(key: string, expiresInSeconds: number): Promise<string> {
     if (key.startsWith(PUBLIC_PREFIX)) return Promise.resolve(this.publicUrl(key));
     return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucketFor(key), Key: key }), { expiresIn: expiresInSeconds });
+  }
+
+  async download(key: string, destination: string): Promise<void> {
+    const object = await this.client.send(new GetObjectCommand({ Bucket: this.bucketFor(key), Key: key }));
+    await pipeline(object.Body as Readable, createWriteStream(destination));
+  }
+
+  async uploadFile(key: string, source: string, contentType: string): Promise<void> {
+    await this.client.send(new PutObjectCommand({ Bucket: this.bucketFor(key), Key: key, Body: await readFile(source), ContentType: contentType }));
   }
 
   async delete(key: string): Promise<void> {
