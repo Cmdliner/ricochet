@@ -1,7 +1,7 @@
 {
   "name": "ricochet",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "packageManager": "pnpm@11.20.0",
   "engines": {
     "node": ">=22"
