@@ -1,9 +1,10 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { conversations, messages, participants, reactions, type Message } from "@ricochet/db";
-import type { ListMessagesQuery, MessagePage, MessageView, SendMessageInput } from "@ricochet/shared";
+import { EVENTS, type ListMessagesQuery, type MessagePage, type MessageView, type SendMessageInput } from "@ricochet/shared";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { PodsService } from "../pods/pods.service.js";
+import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { takePage } from "./pagination.js";
 import { groupReactions } from "./reactions.js";
 
@@ -12,9 +13,10 @@ export class MessagesService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly pods: PodsService,
+    private readonly bus: RealtimeBus,
   ) {}
 
-  private async requireAccess(userId: string, conversationId: string): Promise<void> {
+  async requireAccess(userId: string, conversationId: string): Promise<void> {
     const [conversation] = await this.db
       .select({ type: conversations.type })
       .from(conversations)
@@ -87,7 +89,11 @@ export class MessagesService {
       })
       .onConflictDoNothing({ target: [messages.senderId, messages.clientId] })
       .returning();
-    if (inserted) return { message: this.toView(inserted, new Map()), created: true };
+    if (inserted) {
+      const message = this.toView(inserted, new Map());
+      this.bus.toConversation(message.conversationId, EVENTS.messageNew, message);
+      return { message, created: true };
+    }
 
     const [existing] = await this.db
       .select()

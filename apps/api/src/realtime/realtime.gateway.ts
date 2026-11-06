@@ -20,7 +20,11 @@ import {
 import type { Server, Socket } from "socket.io";
 import { WsAckExceptionFilter } from "../common/ws-ack-exception.filter.js";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
+import { MessagesService } from "../messages/messages.service.js";
+import { RealtimeBus } from "./realtime-bus.js";
 import { authenticateSocket } from "./socket-auth.js";
+
+const userIdOf = (client: Socket) => client.data.userId as string;
 
 /** Rooms: `user:{id}` carries everything for one person; `conversation:{id}` is joined only while that pod or chat is open. */
 @UseFilters(WsAckExceptionFilter)
@@ -28,9 +32,14 @@ import { authenticateSocket } from "./socket-auth.js";
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly log = new Logger(RealtimeGateway.name);
 
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly messages: MessagesService,
+    private readonly bus: RealtimeBus,
+  ) {}
 
   afterInit(server: Server) {
+    this.bus.attach(server);
     // A middleware error becomes `connect_error` on the client, so a bad token never gets a socket at all.
     server.use(async (client, next) => {
       const auth = await authenticateSocket(this.jwt, client.handshake.auth.token);
@@ -42,7 +51,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   }
 
   async handleConnection(client: Socket) {
-    const userId = client.data.userId as string;
+    const userId = userIdOf(client);
     await client.join(rooms.user(userId));
     this.log.debug(`connected ${client.id} as ${userId}`);
   }
@@ -56,7 +65,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @ConnectedSocket() client: Socket,
     @MessageBody(new ZodValidationPipe(conversationRefSchema, "ws")) body: ConversationRef,
   ) {
-    // TODO(auth): confirm this user may read the conversation before joining.
+    await this.messages.requireAccess(userIdOf(client), body.conversationId);
     await client.join(rooms.conversation(body.conversationId));
     return { ok: true };
   }
@@ -71,9 +80,11 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   }
 
   @SubscribeMessage(EVENTS.messageSend)
-  send(@MessageBody(new ZodValidationPipe(sendMessageSchema, "ws")) body: SendMessageInput) {
-    // TODO(messages): call MessagesService.create(), which saves once per clientId, then emits
-    // EVENTS.messageNew to rooms.conversation(body.conversationId). The ack carries the saved id.
-    return { ok: true, clientId: body.clientId };
+  async send(
+    @ConnectedSocket() client: Socket,
+    @MessageBody(new ZodValidationPipe(sendMessageSchema, "ws")) body: SendMessageInput,
+  ) {
+    const { message, created } = await this.messages.send(userIdOf(client), body);
+    return { ok: true, created, message };
   }
 }

@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module.js";
+import { MessagesModule } from "../messages/messages.module.js";
+import { RealtimeBusModule } from "./realtime-bus.module.js";
 import { RealtimeGateway } from "./realtime.gateway.js";
 
-@Module({ imports: [AuthModule], providers: [RealtimeGateway] })
+@Module({ imports: [AuthModule, MessagesModule, RealtimeBusModule], providers: [RealtimeGateway] })
 export class RealtimeModule {}
