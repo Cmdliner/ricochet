@@ -6,7 +6,7 @@ import type { Server } from "socket.io";
 export type AccessChange = { userId: string } | { conversationId: string };
 
 /** The part of a socket we use. With the Redis adapter it may live on another server, which is why it is a thin handle. */
-export type RoomSocket = { data: { userId?: string }; rooms: Set<string>; leave(room: string): Promise<void> | void };
+export type RoomSocket = { data: { userId?: string }; rooms: Set<string>; join(room: string): Promise<void> | void; leave(room: string): Promise<void> | void };
 
 /** Lets services talk to the realtime layer without depending on it, since the gateway depends on them. */
 @Injectable()
@@ -20,6 +20,10 @@ export class RealtimeBus {
 
   toConversation(conversationId: string, event: string, payload: unknown) {
     this.server?.to(rooms.conversation(conversationId)).emit(event, payload);
+  }
+
+  toHub(hubId: string, event: string, payload: unknown) {
+    this.server?.to(rooms.hub(hubId)).emit(event, payload);
   }
 
   toUser(userId: string, event: string, payload: unknown) {

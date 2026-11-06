@@ -128,6 +128,7 @@ export class HubsService {
           );
           return hub.id;
         });
+        this.bus.accessChanged({ userId });
         return this.getView(userId, hubId);
       } catch (error) {
         // The only thing that can collide here is the invite code. Pick another and try again.
@@ -174,6 +175,7 @@ export class HubsService {
     const [hub] = await this.db.select({ id: hubs.id }).from(hubs).where(eq(hubs.inviteCode, code)).limit(1);
     if (!hub) throw new NotFoundException("That invite code does not match a hub.");
     await this.db.insert(hubMembers).values({ hubId: hub.id, userId, role: "member" }).onConflictDoNothing();
+    this.bus.accessChanged({ userId });
     return this.getView(userId, hub.id);
   }
 

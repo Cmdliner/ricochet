@@ -26,6 +26,7 @@ import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { ConversationAccessService } from "../messages/conversation-access.service.js";
 import { MessagesService } from "../messages/messages.service.js";
 import { ReadStateService } from "../messages/read-state.service.js";
+import { PresenceService } from "./presence.service.js";
 import { RealtimeBus } from "./realtime-bus.js";
 import { authenticateSocket } from "./socket-auth.js";
 import { TypingTracker } from "./typing-tracker.js";
@@ -47,6 +48,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     private readonly access: ConversationAccessService,
     private readonly readState: ReadStateService,
     private readonly bus: RealtimeBus,
+    private readonly presence: PresenceService,
   ) {}
 
   afterInit(server: Server) {
@@ -64,11 +66,13 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   async handleConnection(client: Socket) {
     const userId = userIdOf(client);
     await client.join(rooms.user(userId));
+    await this.presence.connected(client, userId);
     this.log.debug(`connected ${client.id} as ${userId}`);
   }
 
   handleDisconnect(client: Socket) {
     this.typing.flush(`${client.id}:`);
+    this.presence.disconnected(userIdOf(client));
     this.log.debug(`disconnected ${client.id}`);
   }
 

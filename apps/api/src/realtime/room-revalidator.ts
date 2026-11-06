@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, type OnModuleInit } from "@nestjs/common";
 import { rooms } from "@ricochet/shared";
 import { ConversationAccessService } from "../messages/conversation-access.service.js";
+import { PresenceService } from "./presence.service.js";
 import { RealtimeBus, type AccessChange } from "./realtime-bus.js";
 
 const CONVERSATION_PREFIX = rooms.conversation("");
@@ -16,6 +17,7 @@ export class RoomRevalidator implements OnModuleInit {
   constructor(
     private readonly bus: RealtimeBus,
     private readonly access: ConversationAccessService,
+    private readonly presence: PresenceService,
   ) {}
 
   onModuleInit() {
@@ -25,6 +27,7 @@ export class RoomRevalidator implements OnModuleInit {
   }
 
   async revalidate(change: AccessChange): Promise<void> {
+    if ("userId" in change) await this.presence.syncHubRooms(change.userId);
     const room = "userId" in change ? rooms.user(change.userId) : rooms.conversation(change.conversationId);
     const sockets = await this.bus.socketsIn(room);
 

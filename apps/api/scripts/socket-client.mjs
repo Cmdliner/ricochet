@@ -7,6 +7,7 @@
 // Commands once running:
 //   hub <name>      create a hub (prints its invite code and its pod id)
 //   join <CODE>     join a hub by invite code (prints its pod ids)
+//   who <hubId>     list who is online in a hub right now
 //   open <podId>    open a pod, so its live messages reach you
 //   close           close the pod you have open
 //   say <text>      send a message to the open pod
@@ -62,13 +63,17 @@ const showPods = async (hubId) => {
 const commands = {
   async hub(name) {
     const hub = await call("/hubs", { token, body: { name, color: "coral", starterPods: ["general"] } });
-    log(`hub "${hub.name}" created, invite code ${hub.inviteCode}`);
+    log(`hub "${hub.name}" created, id ${hub.id}, invite code ${hub.inviteCode}`);
     await showPods(hub.id);
   },
   async join(code) {
     const hub = await call("/hubs/join", { token, body: { code } });
-    log(`joined "${hub.name}"`);
+    log(`joined "${hub.name}", id ${hub.id}`);
     await showPods(hub.id);
+  },
+  async who(hubId) {
+    const { online } = await call(`/hubs/${hubId}/presence`, { method: "GET", token });
+    log(`online now: ${online.join(", ") || "nobody"}`);
   },
   async open(podId) {
     const reply = await ask("conversation:open", { conversationId: podId });
