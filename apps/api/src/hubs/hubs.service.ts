@@ -12,6 +12,7 @@ import type {
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { isUniqueViolation } from "../common/db-errors.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
+import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { generateInviteCode } from "./invite-code.js";
 import { canChangeRoles, canDeleteHub, canEditHub, canRemoveMember } from "./permissions.js";
 
@@ -27,7 +28,10 @@ const MAX_CODE_ATTEMPTS = 5;
 
 @Injectable()
 export class HubsService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    private readonly bus: RealtimeBus,
+  ) {}
 
   private readonly viewColumns = {
     id: hubs.id,
@@ -225,8 +229,8 @@ export class HubsService {
     await this.removeFromHub(hubId, targetId);
   }
 
-  private removeFromHub(hubId: string, userId: string) {
-    return this.db.transaction(async (tx) => {
+  private async removeFromHub(hubId: string, userId: string) {
+    await this.db.transaction(async (tx) => {
       await tx.delete(hubMembers).where(and(eq(hubMembers.hubId, hubId), eq(hubMembers.userId, userId)));
       await tx.delete(participants).where(
         and(
@@ -235,5 +239,6 @@ export class HubsService {
         ),
       );
     });
+    this.bus.accessChanged({ userId });
   }
 }
