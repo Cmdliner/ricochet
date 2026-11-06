@@ -60,6 +60,11 @@ export class R2MediaStorage implements MediaStorage {
     return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucketFor(key), Key: key }), { expiresIn: expiresInSeconds });
   }
 
+  async readHead(key: string, length: number): Promise<Buffer> {
+    const object = await this.client.send(new GetObjectCommand({ Bucket: this.bucketFor(key), Key: key, Range: `bytes=0-${length - 1}` }));
+    return Buffer.from((await object.Body?.transformToByteArray()) ?? []);
+  }
+
   async download(key: string, destination: string): Promise<void> {
     const object = await this.client.send(new GetObjectCommand({ Bucket: this.bucketFor(key), Key: key }));
     await pipeline(object.Body as Readable, createWriteStream(destination));

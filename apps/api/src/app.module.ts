@@ -11,6 +11,7 @@ import { MediaModule } from "./media/media.module.js";
 import { MessagesModule } from "./messages/messages.module.js";
 import { PodsModule } from "./pods/pods.module.js";
 import { JobsModule } from "./jobs/jobs.module.js";
+import { PushModule } from "./push/push.module.js";
 import { RealtimeModule } from "./realtime/realtime.module.js";
 import { UsersModule } from "./users/users.module.js";
 
@@ -19,6 +20,7 @@ import { UsersModule } from "./users/users.module.js";
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv, envFilePath: ["../../.env", ".env"] }),
     DbModule,
     MediaModule,
+    PushModule,
     AuthModule,
     UsersModule,
     ActivityModule,

@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { looksLikeFile, SNIFF_BYTES } from "./media-sniff.js";
 import { MEDIA_STORAGE, type MediaStorage, type UploadTarget } from "./media-storage.js";
 
 /** What a kind of upload may be: the types accepted (with the file extension each gets) and how large it can be. */
@@ -37,9 +38,16 @@ export class MediaService {
     const stored = await this.storage.stat(key);
     if (!stored) throw new BadRequestException("The upload did not arrive. Try again.");
     const typeOk = stored.contentType !== null && stored.contentType in rule.types;
-    if (!typeOk || stored.size > rule.maxBytes || stored.size === 0) {
+    const reject = async (message: string): Promise<never> => {
       await this.storage.delete(key).catch(() => undefined);
-      throw new BadRequestException("That file was rejected. Check the type and size and try again.");
+      throw new BadRequestException(message);
+    };
+    if (!typeOk || stored.size > rule.maxBytes || stored.size === 0) {
+      return reject("That file was rejected. Check the type and size and try again.");
+    }
+    // The type is only what the phone claimed, so look at what the file really is.
+    if (!looksLikeFile(await this.storage.readHead(key, SNIFF_BYTES), stored.contentType ?? "")) {
+      return reject("That file is not a valid recording or photo. Try recording it again.");
     }
   }
 

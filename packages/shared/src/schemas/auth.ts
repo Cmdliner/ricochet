@@ -112,6 +112,22 @@ export type AvatarUpload = z.infer<typeof avatarUploadSchema>;
 export const confirmAvatarSchema = z.object({ key: z.string().min(1).max(200) });
 export type ConfirmAvatarInput = z.infer<typeof confirmAvatarSchema>;
 
+export const registerDeviceSchema = z.object({
+  pushToken: z.string().min(10).max(200),
+  platform: z.enum(["ios", "android"]),
+});
+export type RegisterDeviceInput = z.infer<typeof registerDeviceSchema>;
+
+export const unregisterDeviceSchema = z.object({ pushToken: z.string().min(10).max(200) });
+export type UnregisterDeviceInput = z.infer<typeof unregisterDeviceSchema>;
+
+/** What a notification carries so the app can open the right screen when it is tapped. */
+export const pushDataSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("message"), conversationId: z.uuid(), kind: z.enum(["pod", "chat"]) }),
+  z.object({ type: z.literal("invite") }),
+]);
+export type PushData = z.infer<typeof pushDataSchema>;
+
 export const apiErrorSchema = z.object({
   message: z.union([z.string(), z.array(z.string())]).optional(),
   issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),

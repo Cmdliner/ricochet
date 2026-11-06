@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { useActivityStore } from "@/features/activity/store";
+import { usePush } from "@/features/push/use-push";
 import { startRealtime, stopRealtime } from "@/features/hubs/realtime-handlers";
 import { useHubsStore } from "@/features/hubs/store";
 import { useTheme } from "@/theme/theme-provider";
@@ -14,6 +15,7 @@ const sheet = {
 
 export default function MainLayout() {
   const { colors } = useTheme();
+  usePush();
 
   // Everything in this group is signed-in content, so its data is fetched when the group mounts and dropped when it unmounts.
   useEffect(() => {

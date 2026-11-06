@@ -104,6 +104,11 @@ export const realtime = {
     if (socket?.connected) socket.emit(EVENTS.conversationClose, { conversationId });
   },
 
+  /** Whether a screen has this conversation open right now. */
+  isOpen(conversationId: string): boolean {
+    return openRooms.has(conversationId);
+  },
+
   typing(conversationId: string, on: boolean) {
     if (socket?.connected) socket.emit(on ? EVENTS.typingStart : EVENTS.typingStop, { conversationId });
   },

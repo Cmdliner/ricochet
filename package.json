@@ -9,6 +9,7 @@
     "dev:web": "pnpm --filter @ricochet/web dev",
     "dev:api": "pnpm --filter @ricochet/api start:dev",
     "dev:mobile": "pnpm --filter @ricochet/mobile start",
+    "dev:mobile:lan": "pnpm --filter @ricochet/mobile start:lan",
     "dev:packages": "pnpm --parallel --filter \"./packages/*\" dev",
     "build": "pnpm -r build",
     "build:packages": "pnpm --filter \"./packages/*\" build",

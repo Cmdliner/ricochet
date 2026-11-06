@@ -19,6 +19,12 @@ export const envSchema = z.object({
   /** URL scheme the app registers, used for the sign in link in emails. */
   APP_SCHEME: z.string().default("ricochet"),
 
+  /** `expo` sends through Expo's push service. `log` only writes notifications to the log, for machines that must never reach a real phone. */
+  PUSH_PROVIDER: z.enum(["expo", "log"]).default("expo"),
+  EXPO_PUSH_URL: z.string().default("https://exp.host/--/api/v2/push/send"),
+  /** Optional. When set, Expo only accepts pushes that carry it. */
+  EXPO_ACCESS_TOKEN: z.string().optional(),
+
   /** Where the media worker finds ffmpeg and ffprobe. Without them videos are still sent, just without a poster frame. */
   FFMPEG_PATH: z.string().default("ffmpeg"),
   FFPROBE_PATH: z.string().default("ffprobe"),

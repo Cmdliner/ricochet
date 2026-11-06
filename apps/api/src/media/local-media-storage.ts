@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, open, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { sign } from "./media-signature.js";
 import { isSafeKey, PUBLIC_PREFIX, type MediaStorage, type StoredObject, type UploadTarget } from "./media-storage.js";
@@ -61,6 +61,17 @@ export class LocalMediaStorage implements MediaStorage {
     const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
     const query = new URLSearchParams({ exp: String(exp), sig: sign({ action: "download", key, exp }, this.secret) });
     return `/media/local/files/${key}?${query}`;
+  }
+
+  async readHead(key: string, length: number): Promise<Buffer> {
+    const handle = await open(this.pathFor(key), "r");
+    try {
+      const buffer = Buffer.alloc(length);
+      const { bytesRead } = await handle.read(buffer, 0, length, 0);
+      return buffer.subarray(0, bytesRead);
+    } finally {
+      await handle.close();
+    }
   }
 
   async download(key: string, destination: string): Promise<void> {

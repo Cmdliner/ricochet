@@ -1,6 +1,7 @@
 import { mediaUploadSchema, messageSchema, type MessageView } from "@ricochet/shared";
+import { Platform } from "react-native";
 import { api } from "@/lib/api";
-import { uploadTo } from "@/lib/media";
+import { localFileSize, uploadLocalFile } from "@/lib/media";
 
 type Recording = {
   conversationId: string;
@@ -28,14 +29,16 @@ function typeOf(kind: Recording["kind"], uri: string, reported: string): string 
 
 /** The three steps of sending a recording: ask for an upload link, send the file straight to storage, then send the message that points at it. */
 export async function sendRecording(recording: Recording): Promise<MessageView> {
-  const file = await (await fetch(recording.uri)).blob();
+  const size = await localFileSize(recording.uri);
+  // Phones name the type by the file's extension. Only the web has a blob that reports one.
+  const reported = Platform.OS === "web" ? (await (await fetch(recording.uri)).blob()).type : "";
   const { key, upload } = await api(`/conversations/${recording.conversationId}/media`, {
     method: "POST",
     auth: true,
-    body: { kind: recording.kind, contentType: typeOf(recording.kind, recording.uri, file.type), sizeBytes: file.size },
+    body: { kind: recording.kind, contentType: typeOf(recording.kind, recording.uri, reported), sizeBytes: size },
     schema: mediaUploadSchema,
   });
-  await uploadTo(upload, file);
+  await uploadLocalFile(upload, recording.uri);
   return api("/messages", {
     method: "POST",
     auth: true,
