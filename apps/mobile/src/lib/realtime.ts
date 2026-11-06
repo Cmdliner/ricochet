@@ -17,6 +17,7 @@ export type RealtimeHandlers = {
   /** Fires on every connect, including reconnects, so the app can catch up on what it missed while offline. */
   connected: (openConversations: string[]) => void;
   messageNew: (message: MessageView) => void;
+  messageUpdated: (message: MessageView) => void;
   unread: (update: UnreadUpdate) => void;
   typing: (notice: TypingNotice, on: boolean) => void;
   presence: (update: PresenceUpdate) => void;
@@ -71,6 +72,7 @@ export const realtime = {
     });
 
     next.on(EVENTS.messageNew, handlers.messageNew);
+    next.on(EVENTS.messageUpdated, handlers.messageUpdated);
     next.on(EVENTS.unreadUpdate, handlers.unread);
     next.on(EVENTS.typingStart, (notice: TypingNotice) => handlers.typing(notice, true));
     next.on(EVENTS.typingStop, (notice: TypingNotice) => handlers.typing(notice, false));

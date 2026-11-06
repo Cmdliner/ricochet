@@ -4,6 +4,7 @@ import {
   hubMemberSchema,
   hubSchema,
   messagePageSchema,
+  mediaViewSchema,
   messageSchema,
   podSchema,
   unreadSummarySchema,
@@ -18,7 +19,6 @@ import {
   type UnreadUpdate,
   type UpdateHubInput,
 } from "@ricochet/shared";
-import { Alert } from "react-native";
 import { z } from "zod";
 import { create } from "zustand";
 import { api, errorMessage } from "@/lib/api";
@@ -27,13 +27,14 @@ import { realtime } from "@/lib/realtime";
 import { uuid } from "@/lib/uuid";
 import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
+import { sendRecording } from "./media";
 import { asLocalId, mergeMessages, toChat, toHub, toLastMessage, toMember, toMessage, toPod } from "./adapters";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
 
 type SendPayload =
   | { kind: "text"; text: string }
-  | { kind: "voice"; durationMs: number; waveform: number[] }
-  | { kind: "video"; durationMs: number };
+  | { kind: "voice"; uri: string; durationMs: number; waveform: number[] }
+  | { kind: "video"; uri: string; durationMs: number };
 
 type Status = "idle" | "loading" | "ready" | "error";
 
@@ -55,6 +56,8 @@ type HubsState = {
   closeConversation: (id: string) => void;
   loadOlder: (id: string) => Promise<void>;
   retryMessage: (id: string, clientId: string) => Promise<void>;
+  /** Fresh playback links for a recording. Resolves to null when there is nothing to play. */
+  refreshMedia: (id: string, messageId: string) => Promise<string | null>;
   receiveMessage: (message: MessageView) => void;
   receiveUnread: (update: UnreadUpdate) => void;
   receiveTyping: (notice: TypingNotice, on: boolean) => void;
@@ -182,6 +185,14 @@ export const useHubsStore = create<HubsState>((set, get) => {
       setPaging(id, first ? { loaded: true, cursor: page.nextCursor } : { loaded: true });
     } catch (error) {
       if (!get().paging[id]?.loaded) showError(error, "Could not load messages");
+    }
+  }
+
+  async function postRecording(id: string, clientId: string, kind: "voice" | "video", uri: string, durationMs: number, waveform?: number[]) {
+    try {
+      get().receiveMessage(await sendRecording({ conversationId: id, clientId, kind, uri, durationMs, waveform }));
+    } catch {
+      setStatus(id, clientId, "failed");
     }
   }
 
@@ -341,9 +352,34 @@ export const useHubsStore = create<HubsState>((set, get) => {
 
     async retryMessage(id, clientId) {
       const draft = get().messages[id]?.find((m) => m.clientId === clientId);
-      if (!draft || draft.kind !== "text") return;
+      if (!draft || draft.kind === "system") return;
       setStatus(id, clientId, "sending");
-      await postText(id, clientId, draft.text);
+      if (draft.kind === "text") await postText(id, clientId, draft.text);
+      else if (draft.localUri) await postRecording(id, clientId, draft.kind, draft.localUri, draft.durationMs, draft.kind === "voice" ? draft.waveform : undefined);
+      else setStatus(id, clientId, "failed");
+    },
+
+    async refreshMedia(id, messageId) {
+      const message = get().messages[id]?.find((m) => m.id === messageId);
+      if (!message || message.kind === "system" || message.kind === "text") return null;
+      if (message.status || message.id === message.clientId) return message.localUri ?? null;
+      try {
+        const view = await api(`/messages/${messageId}/media`, { ...auth, schema: mediaViewSchema });
+        const url = mediaUrl(view.url);
+        set((state) => ({
+          messages: {
+            ...state.messages,
+            [id]: (state.messages[id] ?? []).map((m) =>
+              m.id === messageId && (m.kind === "voice" || m.kind === "video")
+                ? { ...m, mediaUrl: url, mediaStatus: view.status === "uploading" ? undefined : view.status, ...(m.kind === "video" && { posterUrl: mediaUrl(view.posterUrl) }) }
+                : m,
+            ),
+          },
+        }));
+        return url;
+      } catch {
+        return null;
+      }
     },
 
     async togglePodMute(podId) {
@@ -468,11 +504,14 @@ export const useHubsStore = create<HubsState>((set, get) => {
     },
 
     sendMessage(podId, payload) {
+      const clientId = uuid();
       if (payload.kind !== "text") {
-        Alert.alert("Coming soon", "Voice and video notes are not available yet.");
+        const base = { id: clientId, clientId, podId, authorId: ME_ID, sentAt: Date.now(), reactions: [], status: "sending" as const, localUri: payload.uri, mediaStatus: "ready" as const, durationMs: payload.durationMs };
+        const draft: Message = payload.kind === "voice" ? { ...base, kind: "voice", waveform: payload.waveform } : { ...base, kind: "video" };
+        set((state) => ({ messages: { ...state.messages, [podId]: mergeMessages(state.messages[podId] ?? [], [draft]) } }));
+        void postRecording(podId, clientId, payload.kind, payload.uri, payload.durationMs, payload.kind === "voice" ? payload.waveform : undefined);
         return;
       }
-      const clientId = uuid();
       const draft: Message = { id: clientId, clientId, podId, kind: "text", authorId: ME_ID, text: payload.text, sentAt: Date.now(), reactions: [], status: "sending" };
       set((state) => ({ messages: { ...state.messages, [podId]: mergeMessages(state.messages[podId] ?? [], [draft]) } }));
       void postText(podId, clientId, payload.text);
