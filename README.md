@@ -5,8 +5,7 @@ with voice notes, video notes, reactions, live typing and presence, an activity 
 
 This repository holds everything: the mobile app, the API, the marketing website, and the code they share.
 
-> **License.** All rights reserved. The code is public so it can be read, but no license is granted: you may not use,
-> run, copy, modify or sell it without written permission. See [LICENSE](./LICENSE).
+> **License.** [MIT](./LICENSE).
 
 ## Contents
 
@@ -54,9 +53,6 @@ event are each described once, as a Zod schema in `packages/shared`, and both si
 | **A phone with Expo Go**, or an Android emulator or iOS simulator | to run the mobile app | see [the phone section](#running-the-app-on-a-phone-or-emulator) |
 
 ## First-time setup
-
-These steps are for the owner and for people the owner has given permission to run the project. For everyone else the
-code is there to read. See [License](#license).
 
 Run these from the repository root. Each step says what you should see.
 
@@ -427,12 +423,4 @@ up to 60 seconds, groups up to 40 people, no calls in version 1.
 
 ## License
 
-Copyright (c) 2026 Abiade Abdulazeez. All rights reserved.
-
-You are welcome to read this code and learn from it. No license is granted with it. That means you may not use it,
-run it, copy it, modify it, host it, share it or sell it, for any purpose, without written permission from the
-copyright holder. The full notice is in [LICENSE](./LICENSE).
-
-This is not an open source project, and it is not open to outside contributions.
-
-The open source packages that Ricochet depends on keep their own licenses.
+Released under the [MIT License](./LICENSE). Copyright (c) 2026 Abiade Abdulazeez.
