@@ -20,6 +20,7 @@ import { ActivityService } from "../activity/activity.service.js";
 import { ChatsService } from "../chats/chats.service.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { MediaService } from "../media/media.service.js";
+import { PushService } from "../push/push.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { ConversationAccessService } from "./conversation-access.service.js";
 import { mediaPrefix, VIDEO_RULE, VOICE_RULE } from "./media-rules.js";
@@ -38,6 +39,7 @@ export class MessagesService {
     private readonly bus: RealtimeBus,
     private readonly views: MessageViewService,
     private readonly media: MediaService,
+    private readonly push: PushService,
     @InjectQueue(QUEUES.media) private readonly mediaQueue: Queue,
   ) {}
 
@@ -124,6 +126,7 @@ export class MessagesService {
       this.readState.announceInBackground(conversation.id, userId);
       this.activity.inBackground(this.activity.recordForMessage(conversation, message, userId));
       this.chats.announceInBackground(conversation, inserted);
+      this.push.inBackground(this.push.notifyMessage(conversation, message, userId));
       return { message, created: true };
     }
 

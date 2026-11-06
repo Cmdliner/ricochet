@@ -8,6 +8,7 @@ import { canEditHub } from "../hubs/permissions.js";
 import type { ConversationAccess } from "../messages/conversation-access.service.js";
 import { takePage } from "../messages/pagination.js";
 import { MediaService } from "../media/media.service.js";
+import { PushService } from "../push/push.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { extractMentions, previewOf } from "./mentions.js";
 
@@ -37,6 +38,7 @@ export class ActivityService {
     private readonly bus: RealtimeBus,
     private readonly hubs: HubsService,
     private readonly media: MediaService,
+    private readonly push: PushService,
   ) {}
 
   private select() {
@@ -237,6 +239,10 @@ export class ActivityService {
       [{ userId: targetId, kind: "invite", actorId, hubId }],
       { preview: null, podName: null, emoji: null },
     );
+
+    const [inviter] = await this.db.select({ name: users.displayName }).from(users).where(eq(users.id, actorId)).limit(1);
+    const [hub] = await this.db.select({ name: hubs.name }).from(hubs).where(eq(hubs.id, hubId)).limit(1);
+    this.push.inBackground(this.push.notifyInvite(targetId, inviter?.name ?? "Someone", hub?.name ?? "a hub"));
   }
 
   async respond(userId: string, activityId: string, accept: boolean): Promise<ActivityItem> {
