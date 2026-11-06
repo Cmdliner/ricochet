@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { router } from "expo-router";
 import { Alert, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +13,7 @@ import { SettingGroup, SettingRow } from "@/components/ui/setting-row";
 import { Text } from "@/components/ui/text";
 import { useHubsStore } from "@/features/hubs/store";
 import { MOCK_PROFILE } from "@/features/profile/mock-profile";
+import { useProfileStore } from "@/features/profile/store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useTheme } from "@/theme/theme-provider";
 import type { Preference } from "@/theme/themes";
@@ -39,6 +41,7 @@ export default function You() {
   const user = useAuthStore((s) => s.user);
   const hubs = useHubsStore((s) => s.hubs);
   const pods = useHubsStore((s) => s.pods);
+  const { bio, status, avatarColor } = useProfileStore();
   const { colors, preference, setPreference } = useTheme();
   const [notifications, setNotifications] = useState(true);
   const [haptics, setHaptics] = useState(true);
@@ -60,12 +63,12 @@ export default function You() {
           <View className="-mt-12 px-6">
             <View className="flex-row items-end justify-between">
               <View className="rounded-full bg-canvas p-1.5">
-                <Avatar name={name} color="coral" size={88} />
+                <Avatar name={name} color={avatarColor} size={88} />
               </View>
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel="Edit profile"
-                onPress={() => soon("Edit profile")}
+                onPress={() => router.push("/profile/edit")}
                 className="mb-2 flex-row items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5"
               >
                 <Ionicons name="create-outline" size={17} color={colors.ink} />
@@ -77,13 +80,15 @@ export default function You() {
               {name}
             </Text>
             <Text className="text-base text-muted">@{user?.handle}</Text>
-            <Text className="mt-3 text-base leading-6 text-ink">{MOCK_PROFILE.bio}</Text>
+            {bio ? <Text className="mt-3 text-base leading-6 text-ink">{bio}</Text> : null}
 
             <View className="mt-4 flex-row flex-wrap items-center gap-2">
-              <View className="flex-row items-center gap-2 rounded-full bg-raised py-1.5 pr-3.5 pl-3">
-                <Text className="text-sm">{MOCK_PROFILE.status.emoji}</Text>
-                <Text className="text-sm font-sans-medium text-ink">{MOCK_PROFILE.status.text}</Text>
-              </View>
+              {status ? (
+                <View className="flex-row items-center gap-2 rounded-full bg-raised py-1.5 pr-3.5 pl-3">
+                  <Text className="text-sm">{status.emoji}</Text>
+                  <Text className="text-sm font-sans-medium text-ink">{status.text}</Text>
+                </View>
+              ) : null}
               <View className="flex-row items-center gap-1.5 px-1">
                 <Ionicons name="calendar-outline" size={15} color={colors.muted} />
                 <Text className="text-sm text-muted">{MOCK_PROFILE.joined}</Text>
