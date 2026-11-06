@@ -49,3 +49,32 @@ export const requestUploadSchema = z.object({
   sizeBytes: z.number().int().positive(),
 });
 export type RequestUploadInput = z.infer<typeof requestUploadSchema>;
+
+export const reactionEmojiSchema = z.string().min(1).max(16);
+
+export const reactionSchema = z.object({ emoji: z.string(), userIds: z.array(z.uuid()) });
+export type ReactionView = z.infer<typeof reactionSchema>;
+
+export const messageSchema = z.object({
+  id: z.string(),
+  conversationId: z.uuid(),
+  senderId: z.uuid(),
+  type: messageTypeSchema,
+  body: z.string().nullable(),
+  clientId: z.uuid(),
+  createdAt: z.string(),
+  reactions: z.array(reactionSchema),
+});
+export type MessageView = z.infer<typeof messageSchema>;
+
+export const listMessagesQuerySchema = z.object({
+  before: z.uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+});
+export type ListMessagesQuery = z.infer<typeof listMessagesQuerySchema>;
+
+export const messagePageSchema = z.object({
+  items: z.array(messageSchema),
+  nextCursor: z.string().nullable(),
+});
+export type MessagePage = z.infer<typeof messagePageSchema>;
