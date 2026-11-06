@@ -1,4 +1,4 @@
-import type { HubColor } from "@ricochet/shared";
+import type { HubColor, HubIcon } from "@ricochet/shared";
 
 /** The id used for the signed-in person in mock data. The API will return the real one. */
 export const ME_ID = "me";
@@ -17,6 +17,8 @@ export type Hub = {
   id: string;
   name: string;
   color: HubColor;
+  /** The picture shown instead of a letter. */
+  icon: HubIcon;
   description: string;
   inviteCode: string;
   /** Member ids with their role in this hub. */

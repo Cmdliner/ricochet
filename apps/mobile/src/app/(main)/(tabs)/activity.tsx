@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, SectionList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BrandBar } from "@/components/brand-bar";
 import { ActivityArt } from "@/components/illustrations/empty-art";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Text } from "@/components/ui/text";
@@ -56,13 +57,17 @@ export default function Activity() {
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
-      <View className="flex-row items-center justify-between px-5 pt-5">
+      <BrandBar
+        right={
+          unread > 0 ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Mark all as read" hitSlop={8} onPress={markAllRead} className="rounded-full bg-raised px-4 py-2 active:opacity-70">
+              <Text className="text-sm font-sans-semibold text-ink">Mark all read</Text>
+            </Pressable>
+          ) : undefined
+        }
+      />
+      <View className="px-5 pt-1">
         <Text className="font-display text-[32px] tracking-tight text-ink">Activity</Text>
-        {unread > 0 ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Mark all as read" hitSlop={8} onPress={markAllRead} className="rounded-full bg-raised px-4 py-2 active:opacity-70">
-            <Text className="text-sm font-sans-semibold text-ink">Mark all read</Text>
-          </Pressable>
-        ) : null}
       </View>
 
       <View className="flex-row gap-2 px-5 pt-4 pb-1">

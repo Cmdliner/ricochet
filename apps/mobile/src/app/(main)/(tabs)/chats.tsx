@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { Pressable, SectionList, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BrandBar } from "@/components/brand-bar";
 import { ChatsArt, SearchArt } from "@/components/illustrations/empty-art";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Text } from "@/components/ui/text";
@@ -48,7 +49,8 @@ export default function Chats() {
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
-      <View className="px-5 pt-5">
+      <BrandBar />
+      <View className="px-5 pt-1">
         <Text className="font-display text-[32px] tracking-tight text-ink">Chats</Text>
       </View>
 

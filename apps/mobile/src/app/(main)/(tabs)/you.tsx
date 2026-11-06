@@ -4,7 +4,9 @@ import { router } from "expo-router";
 import { Alert, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BrandBar } from "@/components/brand-bar";
 import { Avatar } from "@/components/ui/avatar";
+import { HubAvatar } from "@/components/ui/hub-avatar";
 import { Button } from "@/components/ui/button";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -52,10 +54,11 @@ export default function You() {
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
+      <BrandBar />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-10">
         <Animated.View entering={FadeInDown.duration(380)}>
           {/* A flat colour band with the avatar sitting over its lower edge. */}
-          <View className="mx-4 mt-3 h-28 overflow-hidden rounded-[28px] bg-accent">
+          <View className="mx-4 mt-1 h-28 overflow-hidden rounded-[28px] bg-accent">
             <View className="absolute -top-8 -right-6 size-32 rounded-full bg-accent-ink/10" />
             <View className="absolute -bottom-10 left-24 size-24 rounded-full bg-white/15" />
           </View>
@@ -112,7 +115,7 @@ export default function You() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-4 px-1 pb-1">
                 {hubs.map((hub) => (
                   <View key={hub.id} className="w-[72px] items-center gap-2">
-                    <Avatar name={hub.name} color={hub.color} size={60} square />
+                    <HubAvatar name={hub.name} color={hub.color} icon={hub.icon} size={60} />
                     <Text className="text-xs font-sans-medium text-muted" numberOfLines={1}>
                       {hub.name}
                     </Text>

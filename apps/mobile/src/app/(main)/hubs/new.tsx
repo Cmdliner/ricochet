@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { colors as tokens, createHubSchema, STARTER_PODS, type HubColor, type StarterPod } from "@ricochet/shared";
+import { colors as tokens, createHubSchema, defaultHubIcon, STARTER_PODS, type HubColor, type HubIcon, type StarterPod } from "@ricochet/shared";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import { Avatar } from "@/components/ui/avatar";
+import { HubAvatar } from "@/components/ui/hub-avatar";
+import { HubIconPicker } from "@/components/ui/hub-icon-picker";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { Sheet } from "@/components/ui/sheet";
@@ -24,6 +25,9 @@ export default function CreateHub() {
 
   const [name, setName] = useState("");
   const [color, setColor] = useState<HubColor>("coral");
+  // Until you pick one, the hub gets a picture chosen from its name, and the preview shows it.
+  const [pickedIcon, setPickedIcon] = useState<HubIcon | null>(null);
+  const icon = pickedIcon ?? defaultHubIcon(name || "?");
   const [pods, setPods] = useState<StarterPod[]>(["general", "announcements"]);
   const [errors, setErrors] = useState<{ name?: string; pods?: string }>({});
 
@@ -31,7 +35,7 @@ export default function CreateHub() {
     setPods((current) => (current.includes(pod) ? current.filter((p) => p !== pod) : [...current, pod]));
 
   function submit() {
-    const parsed = createHubSchema.safeParse({ name, color, starterPods: pods });
+    const parsed = createHubSchema.safeParse({ name, color, icon, starterPods: pods });
     if (!parsed.success) {
       const next: { name?: string; pods?: string } = {};
       for (const issue of parsed.error.issues) {
@@ -49,7 +53,7 @@ export default function CreateHub() {
     <Sheet title="Create a hub">
       <View className="gap-6 pt-2">
         <View className="flex-row items-center gap-4">
-          <Avatar name={name || "?"} color={color} size={64} square />
+          <HubAvatar name={name || "?"} color={color} icon={icon} size={64} />
           <View className="flex-1">
             <TextField
               label="Hub name"
@@ -70,6 +74,11 @@ export default function CreateHub() {
         <View className="gap-3">
           <Text className="text-sm font-sans-medium text-muted">Colour</Text>
           <ColorPicker value={color} onChange={setColor} />
+        </View>
+
+        <View className="gap-3">
+          <Text className="text-sm font-sans-medium text-muted">Picture</Text>
+          <HubIconPicker value={icon} onChange={setPickedIcon} color={color} name={name || "?"} />
         </View>
 
         <View className="gap-3">

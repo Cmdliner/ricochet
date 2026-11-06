@@ -1,4 +1,4 @@
-import { HUB_COLORS, type CreateHubInput, type CreatePodInput, type HubColor, type UpdateHubInput } from "@ricochet/shared";
+import { defaultHubIcon, HUB_COLORS, type CreateHubInput, type CreatePodInput, type HubColor, type UpdateHubInput } from "@ricochet/shared";
 import { create } from "zustand";
 import { DISCOVERABLE_HUBS, HUBS, INITIAL_UNREAD, MEMBERS, MESSAGES, PODS } from "./mock-data";
 import { CHATS, CHAT_MESSAGES, CHAT_UNREAD } from "./mock-chats";
@@ -218,6 +218,7 @@ export const useHubsStore = create<HubsState>((set, get) => ({
       id: hubId,
       name: input.name,
       color: input.color,
+      icon: input.icon ?? defaultHubIcon(input.name),
       description: "A new hub. Say hello in #general.",
       inviteCode: input.name.replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 8).padEnd(4, "X"),
       members: [{ id: ME_ID, role: "owner" }],

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { View } from "react-native";
 import { Avatar } from "@/components/ui/avatar";
+import { HubAvatar } from "@/components/ui/hub-avatar";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Text } from "@/components/ui/text";
 import { formatListTime } from "@/features/hubs/format";
@@ -90,7 +91,7 @@ export function NotificationRow({ note }: { note: AppNotification }) {
           {actor ? (
             <Avatar name={actor.name} color={actor.color} size={50} />
           ) : hub ? (
-            <Avatar name={hub.name} color={hub.color} size={50} square />
+            <HubAvatar name={hub.name} color={hub.color} icon={hub.icon} size={50} />
           ) : null}
           <View className="absolute -right-1 -bottom-1 size-6 items-center justify-center rounded-full border-2 border-canvas bg-accent">
             <Ionicons name={KIND[note.kind].icon} size={12} color={colors.accentInk} />

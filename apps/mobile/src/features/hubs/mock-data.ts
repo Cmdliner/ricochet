@@ -32,6 +32,7 @@ export const HUBS: Hub[] = [
     id: "ship-it",
     name: "Ship It",
     color: "coral",
+    icon: "rocket",
     description: "Indie makers shipping something every week. Share progress, get unstuck.",
     inviteCode: "SHIPIT",
     members: [
@@ -49,6 +50,7 @@ export const HUBS: Hub[] = [
     id: "design-club",
     name: "Design Club",
     color: "sky",
+    icon: "color-palette",
     description: "Crits, critiques and good taste. Bring a screenshot.",
     inviteCode: "CRITS24",
     members: [
@@ -63,6 +65,7 @@ export const HUBS: Hub[] = [
     id: "weekend-run",
     name: "Weekend Run",
     color: "mint",
+    icon: "bicycle",
     description: "Saturday long runs, Sunday recovery. All paces welcome.",
     inviteCode: "RUN5K",
     members: [
@@ -77,6 +80,7 @@ export const HUBS: Hub[] = [
     id: "book-circle",
     name: "Book Circle",
     color: "amber",
+    icon: "book",
     description: "One book a month, one long conversation about it.",
     inviteCode: "PAGES",
     members: [
@@ -94,6 +98,7 @@ export const DISCOVERABLE_HUBS: Hub[] = [
     id: "pixel-lab",
     name: "Pixel Lab",
     color: "sky",
+    icon: "game-controller",
     description: "Game jams, pixel art and procedural everything.",
     inviteCode: "BOUNCE",
     members: [

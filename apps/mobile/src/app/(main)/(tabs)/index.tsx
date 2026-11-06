@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Pressable, TextInput, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BrandBar } from "@/components/brand-bar";
 import { HubsArt, SearchArt } from "@/components/illustrations/empty-art";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconButton } from "@/components/ui/icon-button";
@@ -49,12 +50,9 @@ export default function Hubs() {
         contentContainerClassName="pb-10"
         ListHeaderComponent={
           <View>
-            <View className="flex-row items-center justify-between px-5 pt-5">
-              <Text className="font-display text-[32px] tracking-tight text-ink">Hubs</Text>
-              <IconButton icon="add" label="Add a hub" variant="accent" size={46} onPress={() => router.push("/hubs/add")} />
-            </View>
+            <BrandBar right={<IconButton icon="add" label="Add a hub" variant="accent" size={44} onPress={() => router.push("/hubs/add")} />} />
 
-            <View className="mx-5 mt-5 h-12 flex-row items-center gap-3 rounded-2xl bg-raised px-4">
+            <View className="mx-5 mt-3 h-12 flex-row items-center gap-3 rounded-2xl bg-raised px-4">
               <Ionicons name="search" size={19} color={colors.muted} />
               <TextInput
                 accessibilityLabel="Search hubs and pods"

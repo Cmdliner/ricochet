@@ -4,6 +4,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Text } from "@/components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "./logo-mark";
+import { Wordmark } from "./wordmark";
 
 type AuthScreenProps = {
   /** An illustration shown under the logo. */
@@ -26,7 +27,10 @@ export function AuthScreen({ art, title, subtitle, children, footer }: AuthScree
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-8 gap-3">
-            <LogoMark size={44} />
+            <View className="flex-row items-center gap-3">
+              <LogoMark size={44} />
+              <Wordmark size={36} />
+            </View>
             {art ? <View className="items-center py-2">{art}</View> : null}
             <View className="gap-2">
               <Text className="font-display text-[32px] leading-[38px] tracking-tight text-ink">{title}</Text>
