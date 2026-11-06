@@ -18,7 +18,7 @@ export const conversationType = pgEnum("conversation_type", ["pod", "direct", "g
 export const messageType = pgEnum("message_type", ["text", "voice", "video", "system"]);
 export const mediaStatus = pgEnum("media_status", ["uploading", "processing", "ready", "failed"]);
 export const hubRole = pgEnum("hub_role", ["owner", "admin", "member"]);
-export const activityKind = pgEnum("activity_kind", ["mention", "reply", "invite", "announcement"]);
+export const activityKind = pgEnum("activity_kind", ["mention", "reply", "reaction", "invite", "announcement"]);
 export const devicePlatform = pgEnum("device_platform", ["ios", "android"]);
 export const avatarColor = pgEnum("avatar_color", ["coral", "sky", "mint", "amber"]);
 
@@ -176,12 +176,20 @@ export const activity = pgTable(
     id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
     userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     kind: activityKind("kind").notNull(),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "cascade" }),
     messageId: uuid("message_id").references(() => messages.id, { onDelete: "cascade" }),
+    conversationId: uuid("conversation_id").references(() => conversations.id, { onDelete: "cascade" }),
     hubId: uuid("hub_id").references(() => hubs.id, { onDelete: "cascade" }),
+    /** Only set for reactions. Empty (not null) otherwise, so the unique index below treats repeats as equal. */
+    emoji: text("emoji").notNull().default(""),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [index("activity_by_user").on(t.userId, t.id)],
+  (t) => [
+    index("activity_by_user").on(t.userId, t.id),
+    // Reacting, un-reacting and reacting again must not pile up notifications.
+    uniqueIndex("activity_once").on(t.userId, t.kind, t.messageId, t.actorId, t.emoji),
+  ],
 );
 
 // These power `db.query.*` lookups. The foreign keys above are what the database enforces.

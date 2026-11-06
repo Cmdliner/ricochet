@@ -8,6 +8,9 @@
 //   hub <name>      create a hub (prints its invite code and its pod id)
 //   join <CODE>     join a hub by invite code (prints its pod ids)
 //   who <hubId>     list who is online in a hub right now
+//   unread          everything with a badge: conversations and activity
+//   activity        your notifications, newest first
+//   readall         mark every notification as read
 //   open <podId>    open a pod, so its live messages reach you
 //   close           close the pod you have open
 //   say <text>      send a message to the open pod
@@ -74,6 +77,17 @@ const commands = {
   async who(hubId) {
     const { online } = await call(`/hubs/${hubId}/presence`, { method: "GET", token });
     log(`online now: ${online.join(", ") || "nobody"}`);
+  },
+  async unread() {
+    log(`unread -> ${JSON.stringify(await call("/unread", { method: "GET", token }))}`);
+  },
+  async activity() {
+    const { items } = await call("/activity", { method: "GET", token });
+    for (const item of items) log(`${item.read ? " " : "*"} ${item.kind} ${item.actor?.displayName ?? ""} #${item.podName ?? ""} ${item.emoji ?? ""} ${item.preview ?? ""}`);
+    if (items.length === 0) log("no notifications");
+  },
+  async readall() {
+    log(`readall -> ${JSON.stringify(await call("/activity/read", { token, body: { all: true } }))}`);
   },
   async open(podId) {
     const reply = await ask("conversation:open", { conversationId: podId });

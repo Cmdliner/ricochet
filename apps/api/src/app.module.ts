@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ActivityModule } from "./activity/activity.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnv } from "./config/env.js";
 import { DbModule } from "./db/db.module.js";
@@ -17,6 +18,7 @@ import { UsersModule } from "./users/users.module.js";
     DbModule,
     AuthModule,
     UsersModule,
+    ActivityModule,
     HubsModule,
     PodsModule,
     MessagesModule,

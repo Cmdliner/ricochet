@@ -4,7 +4,13 @@ import { and, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { PodsService } from "../pods/pods.service.js";
 
-export type ConversationAccess = { id: string; type: Conversation["type"]; hubId: string | null; isPrivate: boolean };
+export type ConversationAccess = {
+  id: string;
+  type: Conversation["type"];
+  hubId: string | null;
+  name: string | null;
+  isPrivate: boolean;
+};
 
 @Injectable()
 export class ConversationAccessService {
@@ -19,6 +25,7 @@ export class ConversationAccessService {
         id: conversations.id,
         type: conversations.type,
         hubId: conversations.hubId,
+        name: conversations.name,
         isPrivate: conversations.isPrivate,
       })
       .from(conversations)

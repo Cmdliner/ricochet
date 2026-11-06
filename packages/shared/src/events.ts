@@ -14,6 +14,8 @@ export const EVENTS = {
   messageDeleted: "message:deleted",
   unreadUpdate: "unread:update",
   presenceUpdate: "presence:update",
+  activityNew: "activity:new",
+  activityUnread: "activity:unread",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];

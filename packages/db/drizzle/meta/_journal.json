@@ -22,6 +22,13 @@
       "when": 1793959659562,
       "tag": "0002_married_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793972858781,
+      "tag": "0003_organic_miracleman",
+      "breakpoints": true
     }
   ]
 }

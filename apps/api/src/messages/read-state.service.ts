@@ -1,10 +1,11 @@
 import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { messages, participants } from "@ricochet/db";
 import { EVENTS, type UnreadUpdate } from "@ricochet/shared";
-import { and, count, eq, gt, isNull, lt, ne, or, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
-import { ConversationAccessService, type ConversationAccess } from "./conversation-access.service.js";
+import { ConversationAccessService } from "./conversation-access.service.js";
+import { unreadCounts, type UnreadRow } from "./unread-sql.js";
 
 @Injectable()
 export class ReadStateService {
@@ -40,10 +41,7 @@ export class ReadStateService {
 
     // On a private pod a row means "on the guest list", so an owner who is only looking must not get one.
     if (moved.length === 0 && conversation.type === "pod" && !conversation.isPrivate) {
-      await this.db
-        .insert(participants)
-        .values({ conversationId, userId, lastReadId })
-        .onConflictDoNothing();
+      await this.db.insert(participants).values({ conversationId, userId, lastReadId }).onConflictDoNothing();
     }
 
     const update = { conversationId, unread: await this.unreadFor(userId, conversationId) };
@@ -52,53 +50,27 @@ export class ReadStateService {
   }
 
   async unreadFor(userId: string, conversationId: string): Promise<number> {
-    const [row] = await this.db
-      .select({ lastReadId: participants.lastReadId })
-      .from(participants)
-      .where(and(eq(participants.conversationId, conversationId), eq(participants.userId, userId)))
-      .limit(1);
-    const [result] = await this.db
-      .select({ unread: count() })
-      .from(messages)
-      .where(
-        and(
-          eq(messages.conversationId, conversationId),
-          ne(messages.senderId, userId),
-          row?.lastReadId ? gt(messages.id, row.lastReadId) : undefined,
-        ),
-      );
-    return result?.unread ?? 0;
+    const result = await this.db.execute<UnreadRow>(unreadCounts({ userId, conversationId }));
+    return result.rows[0]?.unread ?? 0;
+  }
+
+  /** Every conversation this person has something unread in. Conversations with nothing unread are left out. */
+  async listUnread(userId: string): Promise<UnreadUpdate[]> {
+    const result = await this.db.execute<UnreadRow>(unreadCounts({ userId }));
+    return result.rows.filter((row) => row.unread > 0).map((row) => ({ conversationId: row.conversationId, unread: row.unread }));
   }
 
   /** Tells everyone who can see the conversation, except the sender, their new unread count. */
-  async announceNewMessage(conversation: ConversationAccess, senderId: string): Promise<void> {
-    const recipients = conversation.hubId
-      ? sql`
-          select hm.user_id as "userId" from hub_members hm
-          left join participants p on p.conversation_id = ${conversation.id} and p.user_id = hm.user_id
-          where hm.hub_id = ${conversation.hubId}
-            ${conversation.isPrivate ? sql`and p.user_id is not null` : sql``}`
-      : sql`select user_id as "userId" from participants where conversation_id = ${conversation.id}`;
-
-    const result = await this.db.execute<{ userId: string; unread: number }>(sql`
-      select r."userId", (
-        select count(*)::int from messages m
-        where m.conversation_id = ${conversation.id}
-          and m.sender_id <> r."userId"
-          and (p.last_read_id is null or m.id > p.last_read_id)
-      ) as unread
-      from (${recipients}) r
-      left join participants p on p.conversation_id = ${conversation.id} and p.user_id = r."userId"
-      where r."userId" <> ${senderId}`);
-
+  async announceNewMessage(conversationId: string, senderId: string): Promise<void> {
+    const result = await this.db.execute<UnreadRow>(unreadCounts({ conversationId, exceptUserId: senderId }));
     for (const row of result.rows) {
-      this.bus.toUser(row.userId, EVENTS.unreadUpdate, { conversationId: conversation.id, unread: row.unread });
+      this.bus.toUser(row.userId, EVENTS.unreadUpdate, { conversationId, unread: row.unread });
     }
   }
 
   /** The message is already saved, so a failure here is logged and must not turn the send into an error. */
-  announceInBackground(conversation: ConversationAccess, senderId: string): void {
-    this.announceNewMessage(conversation, senderId).catch((error: unknown) => {
+  announceInBackground(conversationId: string, senderId: string): void {
+    this.announceNewMessage(conversationId, senderId).catch((error: unknown) => {
       this.log.error(`Could not announce unread counts: ${String(error)}`);
     });
   }
