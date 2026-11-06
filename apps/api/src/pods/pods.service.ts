@@ -14,6 +14,7 @@ import { DRIZZLE, type Database } from "../db/db.module.js";
 import { HubsService } from "../hubs/hubs.service.js";
 import { canEditHub } from "../hubs/permissions.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
+import { MediaService } from "../media/media.service.js";
 import { canSeePod } from "./permissions.js";
 
 type PodAccess = { pod: Conversation & { hubId: string }; hubRole: HubRole };
@@ -26,6 +27,7 @@ export class PodsService {
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly hubs: HubsService,
     private readonly bus: RealtimeBus,
+    private readonly media: MediaService,
   ) {}
 
   private viewQuery(userId: string) {
@@ -178,6 +180,7 @@ export class PodsService {
         displayName: users.displayName,
         handle: users.handle,
         avatarColor: users.avatarColor,
+        avatarKey: users.avatarKey,
         role: hubMembers.role,
         joinedAt: hubMembers.joinedAt,
       })
@@ -194,7 +197,7 @@ export class PodsService {
       : await query.where(eq(hubMembers.hubId, pod.hubId));
 
     return rows
-      .map((row) => ({ ...row, joinedAt: row.joinedAt.toISOString() }))
+      .map(({ avatarKey, ...row }) => ({ ...row, avatarUrl: this.media.publicUrl(avatarKey), joinedAt: row.joinedAt.toISOString() }))
       .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || a.displayName.localeCompare(b.displayName));
   }
 

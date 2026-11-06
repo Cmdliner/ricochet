@@ -3,6 +3,7 @@ import { hubMembers, users } from "@ricochet/db";
 import type { PersonResult } from "@ricochet/shared";
 import { and, asc, eq, ilike, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
+import { MediaService } from "../media/media.service.js";
 import { escapeLike } from "./like-pattern.js";
 
 const RESULT_LIMIT = 20;
@@ -12,11 +13,19 @@ const columns = {
   displayName: users.displayName,
   handle: users.handle,
   avatarColor: users.avatarColor,
+  avatarKey: users.avatarKey,
 };
 
 @Injectable()
 export class PeopleService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    private readonly media: MediaService,
+  ) {}
+
+  private toResult({ avatarKey, ...person }: { id: string; displayName: string; handle: string; avatarColor: PersonResult["avatarColor"]; avatarKey: string | null }, via: PersonResult["via"]): PersonResult {
+    return { ...person, avatarUrl: this.media.publicUrl(avatarKey), via };
+  }
 
   /**
    * People in your hubs are found by name or the start of a handle. Anyone else is found only by typing their
@@ -42,7 +51,7 @@ export class PeopleService {
       .limit(RESULT_LIMIT);
 
     const exact = query.toLowerCase();
-    const results: PersonResult[] = mates.map((person) => ({ ...person, via: "hub" as const }));
+    const results: PersonResult[] = mates.map((person) => this.toResult(person, "hub"));
     results.sort((a, b) => Number(b.handle === exact) - Number(a.handle === exact));
 
     if (!results.some((person) => person.handle === exact)) {
@@ -51,7 +60,7 @@ export class PeopleService {
         .from(users)
         .where(and(eq(users.handle, exact), ne(users.id, userId), isNotNull(users.profileCompletedAt)))
         .limit(1);
-      if (stranger) results.unshift({ ...stranger, via: "handle" });
+      if (stranger) results.unshift(this.toResult(stranger, "handle"));
     }
     return results;
   }

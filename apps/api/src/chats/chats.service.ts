@@ -5,6 +5,7 @@ import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import type { ConversationAccess } from "../messages/conversation-access.service.js";
 import { unreadCounts, type UnreadRow } from "../messages/unread-sql.js";
+import { MediaService } from "../media/media.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { dmKeyFor } from "./dm-key.js";
 
@@ -17,6 +18,7 @@ type ChatRow = {
   display_name: string;
   handle: string;
   avatar_color: ChatView["person"]["avatarColor"];
+  avatar_key: string | null;
   last_id: string | null;
   last_type: MessageType;
   last_body: string | null;
@@ -31,6 +33,7 @@ export class ChatsService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly bus: RealtimeBus,
+    private readonly media: MediaService,
   ) {}
 
   /** Finds the chat between two people, or creates it. Safe to call twice, or from both people at once. */
@@ -127,7 +130,7 @@ export class ChatsService {
   private async query(userId: string, chatId?: string): Promise<ChatView[]> {
     const result = await this.db.execute<ChatRow>(sql`
       select c.id, c.created_at, p.pinned, p.muted,
-        u.id as person_id, u.display_name, u.handle, u.avatar_color,
+        u.id as person_id, u.display_name, u.handle, u.avatar_color, u.avatar_key,
         lm.id as last_id, lm.type as last_type, lm.body as last_body, lm.sender_id as last_sender, lm.created_at as last_at
       from participants p
       join conversations c on c.id = p.conversation_id and c.type = 'direct'
@@ -144,7 +147,13 @@ export class ChatsService {
     );
     return result.rows.map((row) => ({
       id: row.id,
-      person: { id: row.person_id, displayName: row.display_name, handle: row.handle, avatarColor: row.avatar_color },
+      person: {
+        id: row.person_id,
+        displayName: row.display_name,
+        handle: row.handle,
+        avatarColor: row.avatar_color,
+        avatarUrl: this.media.publicUrl(row.avatar_key),
+      },
       pinned: row.pinned,
       muted: row.muted,
       unread: unread.get(row.id) ?? 0,

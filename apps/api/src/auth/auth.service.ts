@@ -7,6 +7,7 @@ import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import type { Env } from "../config/env.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { MailService } from "../mail/mail.service.js";
+import { MediaService } from "../media/media.service.js";
 import {
   generateHandle,
   generateLoginCode,
@@ -22,13 +23,17 @@ type Executor = Pick<Database, "select" | "insert" | "update">;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 
-export function toAuthUser(user: User): AuthUser {
+export function toAuthUser(user: User, avatarUrl: string | null): AuthUser {
   return {
     id: user.id,
     email: user.email,
     handle: user.handle,
     displayName: user.displayName,
-    avatarKey: user.avatarKey,
+    avatarUrl,
+    avatarColor: user.avatarColor,
+    bio: user.bio,
+    status: user.statusEmoji ? { emoji: user.statusEmoji, text: user.statusText ?? "" } : null,
+    joinedAt: user.createdAt.toISOString(),
     profileComplete: user.profileCompletedAt !== null,
   };
 }
@@ -42,6 +47,7 @@ export class AuthService {
     private readonly config: ConfigService<Env, true>,
     private readonly jwt: JwtService,
     private readonly mail: MailService,
+    private readonly media: MediaService,
   ) {}
 
   private get secret() {
@@ -152,7 +158,7 @@ export class AuthService {
     return {
       accessToken: await this.jwt.signAsync({ sub: user.id, sid: session.id }),
       refreshToken: `${session.id}.${secret}`,
-      user: toAuthUser(user),
+      user: toAuthUser(user, this.media.publicUrl(user.avatarKey)),
     };
   }
 
@@ -189,7 +195,7 @@ export class AuthService {
     return {
       accessToken: await this.jwt.signAsync({ sub: user.id, sid: session.id }),
       refreshToken: `${session.id}.${nextSecret}`,
-      user: toAuthUser(user),
+      user: toAuthUser(user, this.media.publicUrl(user.avatarKey)),
     };
   }
 
