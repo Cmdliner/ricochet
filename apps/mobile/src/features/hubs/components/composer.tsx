@@ -31,6 +31,7 @@ type ComposerProps = {
   onSendText: (text: string) => void;
   onSendVoice: (note: { durationMs: number; waveform: number[] }) => void;
   onSendVideo: (note: { durationMs: number }) => void;
+  onTyping?: (typing: boolean) => void;
 };
 
 function haptic(run: () => Promise<void>) {
@@ -121,7 +122,7 @@ function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: 
   );
 }
 
-export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo }: ComposerProps) {
+export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, onTyping }: ComposerProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const keyboardOpen = useKeyboardState((s) => s.isVisible);
@@ -225,6 +226,7 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo }: 
     if (!value) return;
     onSendText(value);
     setText("");
+    onTyping?.(false);
   }
 
   return (
@@ -255,7 +257,10 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo }: 
             <TextInput
               accessibilityLabel={placeholder}
               value={text}
-              onChangeText={setText}
+              onChangeText={(value) => {
+                setText(value);
+                onTyping?.(value.trim().length > 0);
+              }}
               placeholder={placeholder}
               placeholderTextColor={colors.muted}
               selectionColor={colors.accent}

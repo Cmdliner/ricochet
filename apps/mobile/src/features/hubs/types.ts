@@ -49,6 +49,10 @@ type MessageBase = {
   podId: string;
   sentAt: number;
   reactions: Reaction[];
+  /** Set on messages this phone sent. The server echoes it back, which is how a draft is matched to its saved copy. */
+  clientId?: string;
+  /** Only while the message has not been saved yet. */
+  status?: "sending" | "failed";
 };
 
 export type TextMessage = MessageBase & { kind: "text"; authorId: string; text: string };

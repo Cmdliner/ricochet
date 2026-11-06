@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
+import { Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { View, type ViewStyle } from "react-native";
 import { Text } from "@/components/ui/text";
@@ -34,6 +35,7 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
   const { colors } = useTheme();
   const { message, mine, startsGroup, endsGroup } = item;
   const author = useHubsStore((s) => (message.kind === "system" ? undefined : s.members[message.authorId]));
+  const retryMessage = useHubsStore((s) => s.retryMessage);
 
   if (message.kind === "system") {
     return (
@@ -77,10 +79,23 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
 
           <ReactionRow podId={message.podId} messageId={message.id} reactions={message.reactions} mine={mine} />
 
-          {endsGroup ? (
+          {endsGroup || message.status === "failed" ? (
             <View className={`mt-1 flex-row items-center gap-1 ${mine ? "mr-1" : direct ? "ml-1" : "ml-3"}`}>
               <Text className="text-[11px] text-muted">{formatClock(message.sentAt)}</Text>
-              {mine ? <Ionicons name="checkmark-done" size={14} color={colors.accentText} /> : null}
+              {mine && message.status === "sending" ? <Ionicons name="time-outline" size={14} color={colors.muted} /> : null}
+              {mine && message.status === "failed" ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Message not sent. Tap to try again"
+                  hitSlop={8}
+                  onPress={() => message.clientId && retryMessage(message.podId, message.clientId)}
+                  className="flex-row items-center gap-1"
+                >
+                  <Ionicons name="alert-circle" size={14} color={colors.danger} />
+                  <Text className="text-[11px] font-sans-semibold text-danger">Not sent. Tap to retry</Text>
+                </Pressable>
+              ) : null}
+              {mine && !message.status ? <Ionicons name="checkmark-done" size={14} color={colors.accentText} /> : null}
             </View>
           ) : null}
         </View>

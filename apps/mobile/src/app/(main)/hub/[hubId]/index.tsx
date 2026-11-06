@@ -19,6 +19,7 @@ import { PodRow } from "@/features/hubs/components/pod-row";
 import { pluralize } from "@/features/hubs/format";
 import { useHubPods, useHubStats, useMyRole } from "@/features/hubs/hooks";
 import { useHub, useHubsStore } from "@/features/hubs/store";
+import { showError } from "@/lib/notify";
 import { ME_ID, type Pod } from "@/features/hubs/types";
 import { useTheme } from "@/theme/theme-provider";
 
@@ -61,10 +62,10 @@ export default function HubScreen() {
       {
         text: "Leave hub",
         style: "destructive",
-        onPress: () => {
-          router.replace("/");
-          leaveHub(hub.id);
-        },
+        onPress: () =>
+          leaveHub(hub.id)
+            .then(() => router.replace("/"))
+            .catch((caught: unknown) => showError(caught)),
       },
     ]);
   }

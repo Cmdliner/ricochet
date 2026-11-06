@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { realtime } from "@/lib/realtime";
 import { formatDuration } from "./format";
 import { useHubsStore } from "./store";
 import { ME_ID, type Message, type Pod, type Role } from "./types";
@@ -58,4 +59,42 @@ export function usePodStats(podId: string | undefined) {
       video: list.filter((m) => m.kind === "video").length,
     };
   }, [messages]);
+}
+
+const TYPING_PING_MS = 2500;
+
+/** Everything a pod or chat screen needs: its history, its live room, older pages, and the typing signal. */
+export function useConversation(id: string | undefined) {
+  const openConversation = useHubsStore((s) => s.openConversation);
+  const closeConversation = useHubsStore((s) => s.closeConversation);
+  const loadOlderMessages = useHubsStore((s) => s.loadOlder);
+  const paging = useHubsStore((s) => s.paging[id ?? ""]);
+  const lastPing = useRef(0);
+
+  useEffect(() => {
+    if (!id) return;
+    void openConversation(id);
+    return () => closeConversation(id);
+  }, [id, openConversation, closeConversation]);
+
+  const loadOlder = useCallback(() => {
+    if (id) void loadOlderMessages(id);
+  }, [id, loadOlderMessages]);
+
+  /** Called as the person types. The server forgets a typing signal after a few seconds, so it is repeated while they keep going. */
+  const signalTyping = useCallback(
+    (typing: boolean) => {
+      if (!id) return;
+      if (!typing) {
+        lastPing.current = 0;
+        realtime.typing(id, false);
+      } else if (Date.now() - lastPing.current > TYPING_PING_MS) {
+        lastPing.current = Date.now();
+        realtime.typing(id, true);
+      }
+    },
+    [id],
+  );
+
+  return { loaded: !!paging?.loaded, hasOlder: !paging?.loaded || paging.cursor !== null, loadOlder, signalTyping };
 }

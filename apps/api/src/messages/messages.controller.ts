@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  conversationReadSchema,
   listMessagesQuerySchema,
   reactionEmojiSchema,
   sendMessageSchema,
@@ -24,11 +25,17 @@ import type { Response } from "express";
 import { Auth, AuthGuard, type AuthContext } from "../auth/auth.guard.js";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { MessagesService } from "./messages.service.js";
+import { ReadStateService } from "./read-state.service.js";
+
+const markReadBodySchema = conversationReadSchema.pick({ lastReadId: true });
 
 @UseGuards(AuthGuard)
 @Controller()
 export class MessagesController {
-  constructor(private readonly messages: MessagesService) {}
+  constructor(
+    private readonly messages: MessagesService,
+    private readonly readState: ReadStateService,
+  ) {}
 
   @Get("conversations/:conversationId/messages")
   list(
@@ -37,6 +44,16 @@ export class MessagesController {
     @Query(new ZodValidationPipe(listMessagesQuerySchema)) query: ListMessagesQuery,
   ) {
     return this.messages.list(auth.userId, conversationId, query);
+  }
+
+  @Post("conversations/:conversationId/read")
+  @HttpCode(HttpStatus.OK)
+  markRead(
+    @Auth() auth: AuthContext,
+    @Param("conversationId", ParseUUIDPipe) conversationId: string,
+    @Body(new ZodValidationPipe(markReadBodySchema)) body: { lastReadId: string },
+  ) {
+    return this.readState.markRead(auth.userId, conversationId, body.lastReadId);
   }
 
   @Post("messages")

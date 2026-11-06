@@ -16,6 +16,7 @@ import { TextField } from "@/components/ui/text-field";
 import { pluralize } from "@/features/hubs/format";
 import { useMyRole, usePodStats } from "@/features/hubs/hooks";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
+import { showError } from "@/lib/notify";
 import { useTheme } from "@/theme/theme-provider";
 
 function Stat({ icon, value, label }: { icon: keyof typeof Ionicons.glyphMap; value: number; label: string }) {
@@ -55,10 +56,16 @@ export default function PodSettings() {
   const nameError = cleanName.length < 2 ? "Use at least 2 letters or numbers." : null;
   const dirty = cleanName !== pod.name || description.trim() !== pod.description;
 
-  function save() {
+  const attempt = (work: () => Promise<unknown>) => work().catch((caught: unknown) => showError(caught));
+
+  async function save() {
     if (nameError || !pod) return;
-    updatePod(pod.id, { name: cleanName, description: description.trim() });
-    setName(cleanName);
+    try {
+      await updatePod(pod.id, { name: cleanName, description: description.trim() });
+      setName(cleanName);
+    } catch (caught) {
+      showError(caught, "Could not save");
+    }
   }
 
   function confirmDelete() {
@@ -68,11 +75,12 @@ export default function PodSettings() {
       {
         text: "Delete pod",
         style: "destructive",
-        onPress: () => {
-          const hubId = pod.hubId;
-          router.dismissTo({ pathname: "/hub/[hubId]", params: { hubId } });
-          deletePod(pod.id);
-        },
+        onPress: () =>
+          attempt(async () => {
+            const hubId = pod.hubId;
+            await deletePod(pod.id);
+            router.dismissTo({ pathname: "/hub/[hubId]", params: { hubId } });
+          }),
       },
     ]);
   }
@@ -147,12 +155,12 @@ export default function PodSettings() {
             <SettingRow
               icon="notifications-off-outline"
               title="Mute this pod"
-              toggle={{ value: pod.muted, onChange: (muted) => updatePod(pod.id, { muted }) }}
+              toggle={{ value: pod.muted, onChange: (muted) => attempt(() => updatePod(pod.id, { muted })) }}
             />
             <SettingRow
               icon="at"
               title="Mentions only"
-              toggle={{ value: !!pod.mentionsOnly && !pod.muted, onChange: (mentionsOnly) => updatePod(pod.id, { mentionsOnly, muted: false }) }}
+              toggle={{ value: !!pod.mentionsOnly && !pod.muted, onChange: (mentionsOnly) => attempt(() => updatePod(pod.id, { mentionsOnly, muted: false })) }}
               last
             />
           </SettingGroup>
@@ -170,7 +178,7 @@ export default function PodSettings() {
               <SettingRow
                 icon="lock-closed-outline"
                 title="Private pod"
-                toggle={{ value: pod.isPrivate, onChange: (isPrivate) => updatePod(pod.id, { isPrivate }) }}
+                toggle={{ value: pod.isPrivate, onChange: (isPrivate) => attempt(() => updatePod(pod.id, { isPrivate })) }}
               />
             ) : (
               <SettingRow icon="lock-closed-outline" title="Visibility" value={pod.isPrivate ? "Private" : "Open"} />
