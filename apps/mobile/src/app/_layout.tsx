@@ -8,6 +8,7 @@ import { AnimatedSplash } from "@/components/animated-splash";
 import { useAuthStore } from "@/stores/auth-store";
 import { FONT_ASSETS } from "@/theme/fonts";
 import { palettes } from "@/theme/themes";
+import { DialogHost } from "@/components/ui/dialog-host";
 import { ThemeProvider, useTheme } from "@/theme/theme-provider";
 import { useThemeStore } from "@/theme/theme-store";
 import "../global.css";
@@ -57,6 +58,7 @@ function Root() {
           </Stack.Protected>
         </Stack>
       ) : null}
+      <DialogHost />
       {splashDone ? null : <AnimatedSplash ready={ready} onFinish={finishSplash} />}
     </>
   );

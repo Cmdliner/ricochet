@@ -1,6 +1,6 @@
-import { Alert } from "react-native";
 import { errorMessage } from "./api";
+import { showDialog } from "@/lib/dialog";
 
 export function showError(error: unknown, title = "That did not work") {
-  Alert.alert(title, errorMessage(error));
+  showDialog(title, errorMessage(error));
 }

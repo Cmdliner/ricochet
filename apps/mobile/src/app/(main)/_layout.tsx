@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { useActivityStore } from "@/features/activity/store";
+import { MessageMenuHost } from "@/features/hubs/components/message-menu";
 import { usePush } from "@/features/push/use-push";
 import { startRealtime, stopRealtime } from "@/features/hubs/realtime-handlers";
 import { useHubsStore } from "@/features/hubs/store";
@@ -30,13 +31,16 @@ export default function MainLayout() {
   }, []);
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="hubs/add" options={sheet} />
-      <Stack.Screen name="hubs/new" options={sheet} />
-      <Stack.Screen name="hubs/join" options={sheet} />
-      <Stack.Screen name="hub/[hubId]/members" options={sheet} />
-      <Stack.Screen name="hub/[hubId]/new-pod" options={sheet} />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="hubs/add" options={sheet} />
+        <Stack.Screen name="hubs/new" options={sheet} />
+        <Stack.Screen name="hubs/join" options={sheet} />
+        <Stack.Screen name="hub/[hubId]/members" options={sheet} />
+        <Stack.Screen name="hub/[hubId]/new-pod" options={sheet} />
+      </Stack>
+      <MessageMenuHost />
+    </>
   );
 }

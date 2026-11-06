@@ -13,9 +13,10 @@ import { WaveformBars } from "./waveform-bars";
 type VoiceContentProps = {
   message: VoiceMessage;
   mine: boolean;
+  onLongPress?: () => void;
 };
 
-export function VoiceContent({ message, mine }: VoiceContentProps) {
+export function VoiceContent({ message, mine, onLongPress }: VoiceContentProps) {
   const { colors } = useTheme();
   const refreshMedia = useHubsStore((s) => s.refreshMedia);
   const player = useAudioPlayer(null);
@@ -61,6 +62,8 @@ export function VoiceContent({ message, mine }: VoiceContentProps) {
         accessibilityLabel={unavailable ? "Voice note unavailable" : status.playing ? "Pause voice note" : "Play voice note"}
         disabled={unavailable}
         onPress={() => void toggle()}
+        onLongPress={onLongPress}
+        delayLongPress={350}
         className={`size-10 items-center justify-center rounded-full active:opacity-80 ${mine ? "bg-accent-ink" : "bg-accent"} ${unavailable ? "opacity-40" : ""}`}
       >
         {loading ? (
