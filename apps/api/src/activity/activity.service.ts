@@ -1,8 +1,10 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { activity, conversations, hubMembers, hubs, messages, participants, users } from "@ricochet/db";
 import { EVENTS, type ActivityItem, type ActivityNew, type ActivityPage, type ListActivityQuery, type MarkActivityReadInput } from "@ricochet/shared";
 import { and, count, desc, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
+import { HubsService } from "../hubs/hubs.service.js";
+import { canEditHub } from "../hubs/permissions.js";
 import type { ConversationAccess } from "../messages/conversation-access.service.js";
 import { takePage } from "../messages/pagination.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
@@ -32,16 +34,18 @@ export class ActivityService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly bus: RealtimeBus,
+    private readonly hubs: HubsService,
   ) {}
 
-  async list(userId: string, query: ListActivityQuery): Promise<ActivityPage> {
-    const rows = await this.db
+  private select() {
+    return this.db
       .select({
         id: activity.id,
         kind: activity.kind,
         readAt: activity.readAt,
         createdAt: activity.createdAt,
         emoji: activity.emoji,
+        response: activity.response,
         messageId: activity.messageId,
         body: messages.body,
         actorId: users.id,
@@ -59,11 +63,11 @@ export class ActivityService {
       .leftJoin(hubs, eq(hubs.id, activity.hubId))
       .leftJoin(hubMembers, and(eq(hubMembers.hubId, activity.hubId), eq(hubMembers.userId, activity.userId)))
       .leftJoin(participants, and(eq(participants.conversationId, activity.conversationId), eq(participants.userId, activity.userId)))
-      .where(and(eq(activity.userId, userId), visible, query.before ? lt(activity.id, query.before) : undefined))
-      .orderBy(desc(activity.id))
-      .limit(query.limit + 1);
+;
+  }
 
-    const items: ActivityItem[] = rows.map((row) => ({
+  private toItem(row: Awaited<ReturnType<ActivityService["select"]>>[number]): ActivityItem {
+    return {
       id: row.id,
       kind: row.kind,
       actor: row.actorId && row.actorName && row.actorColor ? { id: row.actorId, displayName: row.actorName, avatarColor: row.actorColor } : null,
@@ -74,10 +78,24 @@ export class ActivityService {
       messageId: row.messageId,
       preview: previewOf(row.body),
       emoji: row.emoji || null,
+      invite: row.kind === "invite" ? (row.response === "accepted" || row.response === "declined" ? row.response : "pending") : null,
       read: row.readAt !== null,
       createdAt: row.createdAt.toISOString(),
-    }));
-    return takePage(items, query.limit);
+    };
+  }
+
+  async list(userId: string, query: ListActivityQuery): Promise<ActivityPage> {
+    const rows = await this.select()
+      .where(and(eq(activity.userId, userId), visible, query.before ? lt(activity.id, query.before) : undefined))
+      .orderBy(desc(activity.id))
+      .limit(query.limit + 1);
+    return takePage(rows.map((row) => this.toItem(row)), query.limit);
+  }
+
+  private async get(userId: string, id: string): Promise<ActivityItem> {
+    const [row] = await this.select().where(and(eq(activity.userId, userId), eq(activity.id, id), visible)).limit(1);
+    if (!row) throw new NotFoundException("Notification not found.");
+    return this.toItem(row);
   }
 
   async unreadFor(userId: string): Promise<number> {
@@ -156,7 +174,7 @@ export class ActivityService {
   }
 
   private async insertAndAnnounce(
-    rows: { userId: string; kind: ActivityItem["kind"]; actorId: string; messageId: string; conversationId: string; hubId: string | null; emoji?: string }[],
+    rows: { userId: string; kind: ActivityItem["kind"]; actorId: string; messageId?: string; conversationId?: string; hubId: string | null; emoji?: string }[],
     shared: { preview: string | null; podName: string | null; emoji: string | null },
   ): Promise<void> {
     if (rows.length === 0) return;
@@ -185,12 +203,51 @@ export class ActivityService {
         messageId: row.messageId,
         preview: shared.preview,
         emoji: shared.emoji,
+        invite: row.kind === "invite" ? "pending" : null,
         read: false,
         createdAt: row.createdAt.toISOString(),
       };
       const payload: ActivityNew = { item, unread: unread.get(row.userId) ?? 0 };
       this.bus.toUser(row.userId, EVENTS.activityNew, payload);
     }
+  }
+
+  /** Owners and admins can invite anyone who has a profile. Asking again while an invite is waiting does nothing. */
+  async invite(actorId: string, hubId: string, targetId: string): Promise<void> {
+    await this.hubs.requireRole(hubId, actorId, canEditHub);
+    if (await this.hubs.roleOf(hubId, targetId)) throw new ConflictException("That person is already in this hub.");
+    const [target] = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, targetId), isNotNull(users.profileCompletedAt)))
+      .limit(1);
+    if (!target) throw new NotFoundException("Person not found.");
+
+    const [waiting] = await this.db
+      .select({ id: activity.id })
+      .from(activity)
+      .where(and(eq(activity.userId, targetId), eq(activity.kind, "invite"), eq(activity.hubId, hubId), isNull(activity.response)))
+      .limit(1);
+    if (waiting) return;
+
+    await this.insertAndAnnounce(
+      [{ userId: targetId, kind: "invite", actorId, hubId }],
+      { preview: null, podName: null, emoji: null },
+    );
+  }
+
+  async respond(userId: string, activityId: string, accept: boolean): Promise<ActivityItem> {
+    const current = await this.get(userId, activityId);
+    if (current.kind !== "invite") throw new ConflictException("Only invites can be answered.");
+    if (current.invite !== "pending") throw new ConflictException("You already answered this invite.");
+    if (accept && current.hubId) await this.hubs.joinHub(userId, current.hubId);
+
+    await this.db
+      .update(activity)
+      .set({ response: accept ? "accepted" : "declined", readAt: new Date() })
+      .where(and(eq(activity.id, activityId), eq(activity.userId, userId)));
+    this.bus.toUser(userId, EVENTS.activityUnread, { unread: await this.unreadFor(userId) });
+    return this.get(userId, activityId);
   }
 
   /** The message is already saved, so a failure here is logged and must not fail the request. */
