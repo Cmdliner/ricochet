@@ -76,6 +76,12 @@ export const updateHubSchema = z.object({
 });
 export type UpdateHubInput = z.infer<typeof updateHubSchema>;
 
+/** Editing a hub: send only what changed, but at least one thing. */
+export const patchHubSchema = updateHubSchema
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, { message: "Nothing to change." });
+export type PatchHubInput = z.infer<typeof patchHubSchema>;
+
 /** "Design Crits!" becomes "design-crits": pod names are lowercase words joined by hyphens. */
 export function toPodName(value: string): string {
   return value
@@ -102,3 +108,36 @@ export const createPodSchema = z.object({
   isPrivate: z.boolean(),
 });
 export type CreatePodInput = z.infer<typeof createPodSchema>;
+
+// ---------------------------------------------------------------- what the API returns
+export const hubRoleSchema = z.enum(["owner", "admin", "member"]);
+export type HubRole = z.infer<typeof hubRoleSchema>;
+
+/** A hub as the signed-in person sees it: the hub itself, plus what they are in it. */
+export const hubSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  color: hubColorSchema,
+  icon: hubIconSchema,
+  inviteCode: z.string(),
+  memberCount: z.number().int(),
+  podCount: z.number().int(),
+  myRole: hubRoleSchema,
+  createdAt: z.string(),
+});
+export type HubView = z.infer<typeof hubSchema>;
+
+export const hubMemberSchema = z.object({
+  userId: z.uuid(),
+  displayName: z.string(),
+  handle: z.string(),
+  avatarColor: hubColorSchema,
+  role: hubRoleSchema,
+  joinedAt: z.string(),
+});
+export type HubMember = z.infer<typeof hubMemberSchema>;
+
+/** The owner can promote someone to admin or demote them back. Nobody can be made owner this way. */
+export const setMemberRoleSchema = z.object({ role: z.enum(["admin", "member"]) });
+export type SetMemberRoleInput = z.infer<typeof setMemberRoleSchema>;

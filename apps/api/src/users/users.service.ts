@@ -3,14 +3,8 @@ import { users } from "@ricochet/db";
 import type { AuthUser, UpdateProfileInput } from "@ricochet/shared";
 import { eq } from "drizzle-orm";
 import { toAuthUser } from "../auth/auth.service.js";
+import { isUniqueViolation } from "../common/db-errors.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
-
-/** Postgres reports a duplicate value with code 23505. Drizzle may wrap the driver error. */
-function isUniqueViolation(error: unknown): boolean {
-  const code = (error as { code?: string; cause?: { code?: string } })?.code
-    ?? (error as { cause?: { code?: string } })?.cause?.code;
-  return code === "23505";
-}
 
 @Injectable()
 export class UsersService {
