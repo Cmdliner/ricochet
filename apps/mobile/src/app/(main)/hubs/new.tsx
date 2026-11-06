@@ -11,6 +11,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useHubsStore } from "@/features/hubs/store";
+import { showError } from "@/lib/notify";
 import { useTheme } from "@/theme/theme-provider";
 
 const POD_DESCRIPTIONS: Record<StarterPod, string> = {
@@ -29,11 +30,12 @@ export default function CreateHub() {
   const icon = pickedIcon ?? defaultHubIcon(name || "?");
   const [pods, setPods] = useState<StarterPod[]>(["general", "announcements"]);
   const [errors, setErrors] = useState<{ name?: string; pods?: string }>({});
+  const [busy, setBusy] = useState(false);
 
   const togglePod = (pod: StarterPod) =>
     setPods((current) => (current.includes(pod) ? current.filter((p) => p !== pod) : [...current, pod]));
 
-  function submit() {
+  async function submit() {
     const parsed = createHubSchema.safeParse({ name, color, icon, starterPods: pods });
     if (!parsed.success) {
       const next: { name?: string; pods?: string } = {};
@@ -44,8 +46,13 @@ export default function CreateHub() {
       setErrors(next);
       return;
     }
-    const hubId = createHub(parsed.data);
-    router.replace(`/hub/${hubId}`);
+    setBusy(true);
+    try {
+      router.replace(`/hub/${await createHub(parsed.data)}`);
+    } catch (caught) {
+      showError(caught, "Could not create the hub");
+      setBusy(false);
+    }
   }
 
   return (
@@ -110,7 +117,7 @@ export default function CreateHub() {
           {errors.pods ? <Text className="text-sm text-danger">{errors.pods}</Text> : null}
         </View>
 
-        <Button label="Create hub" onPress={submit} />
+        <Button label="Create hub" onPress={submit} loading={busy} />
       </View>
     </Sheet>
   );

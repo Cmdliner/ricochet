@@ -1,17 +1,35 @@
-import { defaultHubIcon, HUB_COLORS, type CreateHubInput, type CreatePodInput, type HubColor, type UpdateHubInput } from "@ricochet/shared";
+import {
+  chatSchema,
+  HUB_COLORS,
+  hubMemberSchema,
+  hubSchema,
+  podSchema,
+  unreadSummarySchema,
+  type CreateHubInput,
+  type CreatePodInput,
+  type HubColor,
+  type HubView,
+  type UpdateHubInput,
+} from "@ricochet/shared";
+import { z } from "zod";
 import { create } from "zustand";
-import { DISCOVERABLE_HUBS, HUBS, INITIAL_UNREAD, MEMBERS, MESSAGES, PODS } from "./mock-data";
-import { CHATS, CHAT_MESSAGES, CHAT_UNREAD } from "./mock-chats";
+import { api, errorMessage } from "@/lib/api";
+import { showError } from "@/lib/notify";
+import { useAuthStore } from "@/stores/auth-store";
+import { useProfileStore } from "@/features/profile/store";
+import { asLocalId, toChat, toHub, toMember, toPod } from "./adapters";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
-
-// Mock data. The actions become API calls when the API is wired in.
 
 type SendPayload =
   | { kind: "text"; text: string }
   | { kind: "voice"; durationMs: number; waveform: number[] }
   | { kind: "video"; durationMs: number };
 
+type Status = "idle" | "loading" | "ready" | "error";
+
 type HubsState = {
+  status: Status;
+  loadError: string | null;
   hubs: Hub[];
   pods: Pod[];
   chats: Chat[];
@@ -20,235 +38,278 @@ type HubsState = {
   unread: Record<string, number>;
   typing: Record<string, string | null>;
 
+  load: () => Promise<void>;
+  reset: () => void;
   markPodRead: (podId: string) => void;
-  togglePodMute: (podId: string) => void;
-  updatePod: (podId: string, patch: Partial<Pick<Pod, "name" | "description" | "isPrivate" | "mentionsOnly" | "muted">>) => void;
-  deletePod: (podId: string) => void;
-  createPod: (hubId: string, input: CreatePodInput) => string;
-  updateHub: (hubId: string, input: UpdateHubInput) => void;
-  regenerateInviteCode: (hubId: string) => string;
-  deleteHub: (hubId: string) => void;
-  setMemberRole: (hubId: string, memberId: string, role: Role) => void;
-  removeMember: (hubId: string, memberId: string) => void;
-  leaveHub: (hubId: string) => void;
-  toggleChatMute: (chatId: string) => void;
-  togglePin: (chatId: string) => void;
+  togglePodMute: (podId: string) => Promise<void>;
+  updatePod: (podId: string, patch: Partial<Pick<Pod, "name" | "description" | "isPrivate" | "mentionsOnly" | "muted">>) => Promise<void>;
+  deletePod: (podId: string) => Promise<void>;
+  createPod: (hubId: string, input: CreatePodInput) => Promise<string>;
+  updateHub: (hubId: string, input: UpdateHubInput) => Promise<void>;
+  regenerateInviteCode: (hubId: string) => Promise<string>;
+  deleteHub: (hubId: string) => Promise<void>;
+  setMemberRole: (hubId: string, memberId: string, role: Role) => Promise<void>;
+  removeMember: (hubId: string, memberId: string) => Promise<void>;
+  leaveHub: (hubId: string) => Promise<void>;
+  toggleChatMute: (chatId: string) => Promise<void>;
+  togglePin: (chatId: string) => Promise<void>;
   sendMessage: (podId: string, payload: SendPayload) => void;
   toggleReaction: (podId: string, messageId: string, emoji: string) => void;
-  createHub: (input: CreateHubInput) => string;
-  joinHub: (code: string) => Hub | null;
+  createHub: (input: CreateHubInput) => Promise<string>;
+  joinHub: (code: string) => Promise<Hub>;
+  forgetHub: (hubId: string) => void;
 };
 
-let nextId = 1000;
-const newId = (prefix: string) => `${prefix}${++nextId}`;
+const myId = () => useAuthStore.getState().user?.id;
+const auth = { auth: true } as const;
 
-const REPLIES = ["Got it, thanks.", "Nice, looking good.", "On it.", "Ha, same.", "Can you say more about that?", "Love it."];
+/** A hub's pods and member list live behind separate routes, so a hub is only complete once both are in. */
+async function fetchHubDetails(view: HubView) {
+  const [pods, members] = await Promise.all([
+    api(`/hubs/${view.id}/pods`, { ...auth, schema: z.array(podSchema) }),
+    api(`/hubs/${view.id}/members`, { ...auth, schema: z.array(hubMemberSchema) }),
+  ]);
+  const me = myId();
+  return {
+    hub: toHub(view, members, me),
+    pods: pods.map(toPod),
+    people: members.map((member) => toMember({ id: member.userId, ...member }, me)),
+  };
+}
 
-export const useHubsStore = create<HubsState>((set, get) => ({
-  hubs: HUBS,
-  pods: PODS,
-  chats: CHATS,
-  members: MEMBERS,
-  messages: { ...MESSAGES, ...CHAT_MESSAGES },
-  unread: { ...INITIAL_UNREAD, ...CHAT_UNREAD },
-  typing: {},
+function selfMember(): Member {
+  const user = useAuthStore.getState().user;
+  return {
+    id: ME_ID,
+    name: user?.displayName ?? "You",
+    handle: user?.handle ?? "",
+    color: useProfileStore.getState().avatarColor,
+    online: true,
+  };
+}
 
-  markPodRead(podId) {
-    if (!get().unread[podId]) return;
-    set((state) => ({ unread: { ...state.unread, [podId]: 0 } }));
-  },
+const EMPTY = {
+  status: "idle" as Status,
+  loadError: null,
+  hubs: [] as Hub[],
+  pods: [] as Pod[],
+  chats: [] as Chat[],
+  members: {} as Record<string, Member>,
+  messages: {} as Record<string, Message[]>,
+  unread: {} as Record<string, number>,
+  typing: {} as Record<string, string | null>,
+};
 
-  togglePodMute(podId) {
-    set((state) => ({ pods: state.pods.map((pod) => (pod.id === podId ? { ...pod, muted: !pod.muted } : pod)) }));
-  },
+let nextLocalId = 1000;
 
-  updatePod(podId, patch) {
+export const useHubsStore = create<HubsState>((set, get) => {
+  /** Applies a change now and undoes it if the server says no. */
+  async function optimistic(apply: () => void, undo: () => void, request: () => Promise<unknown>) {
+    apply();
+    try {
+      await request();
+    } catch (error) {
+      undo();
+      showError(error);
+    }
+  }
+
+  function addHub(hub: Hub, pods: Pod[], people: Member[]) {
+    set((state) => ({
+      hubs: [hub, ...state.hubs.filter((h) => h.id !== hub.id)],
+      pods: [...state.pods.filter((p) => p.hubId !== hub.id), ...pods],
+      members: { ...state.members, ...Object.fromEntries(people.map((p) => [p.id, p])) },
+    }));
+  }
+
+  const patchPod = (podId: string, patch: Partial<Pod>) =>
     set((state) => ({ pods: state.pods.map((pod) => (pod.id === podId ? { ...pod, ...patch } : pod)) }));
-  },
+  const patchChat = (chatId: string, patch: Partial<Chat>) =>
+    set((state) => ({ chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, ...patch } : chat)) }));
 
-  deletePod(podId) {
-    set((state) => {
-      const { [podId]: _messages, ...messages } = state.messages;
-      const { [podId]: _unread, ...unread } = state.unread;
-      return { pods: state.pods.filter((pod) => pod.id !== podId), messages, unread };
-    });
-  },
+  return {
+    ...EMPTY,
 
-  createPod(hubId, input) {
-    const podId = `${hubId}-${input.name}-${newId("p")}`;
-    const pod: Pod = {
-      id: podId,
-      hubId,
-      name: input.name,
-      category: input.category,
-      description: input.description,
-      muted: false,
-      isPrivate: input.isPrivate,
-    };
-    const welcome: Message = { id: newId("m"), podId, kind: "system", sentAt: Date.now(), text: `You created the pod #${input.name}`, reactions: [] };
-    set((state) => ({
-      pods: [...state.pods, pod],
-      messages: { ...state.messages, [podId]: [welcome] },
-    }));
-    return podId;
-  },
+    async load() {
+      if (get().status === "loading") return;
+      set({ status: get().status === "ready" ? "ready" : "loading", loadError: null });
+      try {
+        const [hubViews, chatViews, summary] = await Promise.all([
+          api("/hubs", { ...auth, schema: z.array(hubSchema) }),
+          api("/chats", { ...auth, schema: z.array(chatSchema) }),
+          api("/unread", { ...auth, schema: unreadSummarySchema }),
+        ]);
+        const details = await Promise.all(hubViews.map(fetchHubDetails));
+        const me = myId();
 
-  updateHub(hubId, input) {
-    set((state) => ({ hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, ...input } : hub)) }));
-  },
+        const members: Record<string, Member> = { [ME_ID]: selfMember() };
+        for (const detail of details) for (const person of detail.people) members[person.id] = person;
+        for (const chat of chatViews) members[asLocalId(chat.person.id, me)] = toMember(chat.person, me);
 
-  regenerateInviteCode(hubId) {
-    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const code = Array.from({ length: 7 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
-    set((state) => ({ hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, inviteCode: code } : hub)) }));
-    return code;
-  },
-
-  deleteHub(hubId) {
-    set((state) => {
-      const podIds = state.pods.filter((pod) => pod.hubId === hubId).map((pod) => pod.id);
-      const messages = { ...state.messages };
-      const unread = { ...state.unread };
-      for (const id of podIds) {
-        delete messages[id];
-        delete unread[id];
+        set({
+          status: "ready",
+          hubs: details.map((d) => d.hub),
+          pods: details.flatMap((d) => d.pods),
+          chats: chatViews.map((chat) => toChat(chat, me)),
+          members,
+          unread: Object.fromEntries(summary.conversations.map((c) => [c.conversationId, c.unread])),
+        });
+      } catch (error) {
+        set({ status: "error", loadError: errorMessage(error) });
       }
-      return {
-        hubs: state.hubs.filter((hub) => hub.id !== hubId),
-        pods: state.pods.filter((pod) => pod.hubId !== hubId),
-        messages,
-        unread,
-      };
-    });
-  },
+    },
 
-  setMemberRole(hubId, memberId, role) {
-    set((state) => ({
-      hubs: state.hubs.map((hub) =>
-        hub.id === hubId ? { ...hub, members: hub.members.map((m) => (m.id === memberId ? { ...m, role } : m)) } : hub,
-      ),
-    }));
-  },
+    reset: () => set({ ...EMPTY }),
 
-  removeMember(hubId, memberId) {
-    set((state) => ({
-      hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, members: hub.members.filter((m) => m.id !== memberId) } : hub)),
-    }));
-  },
+    markPodRead(podId) {
+      if (!get().unread[podId]) return;
+      set((state) => ({ unread: { ...state.unread, [podId]: 0 } }));
+    },
 
-  leaveHub(hubId) {
-    set((state) => ({
-      hubs: state.hubs.filter((hub) => hub.id !== hubId),
-      pods: state.pods.filter((pod) => pod.hubId !== hubId),
-    }));
-  },
+    async togglePodMute(podId) {
+      const pod = get().pods.find((p) => p.id === podId);
+      if (!pod) return;
+      await get().updatePod(podId, { muted: !pod.muted });
+    },
 
-  toggleChatMute(chatId) {
-    set((state) => ({ chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, muted: !chat.muted } : chat)) }));
-  },
+    async updatePod(podId, patch) {
+      const pod = get().pods.find((p) => p.id === podId);
+      if (!pod) return;
+      const { name, description, isPrivate, ...settings } = patch;
+      const details = { name, description, isPrivate };
+      const hasDetails = Object.values(details).some((value) => value !== undefined);
+      const hasSettings = Object.values(settings).some((value) => value !== undefined);
 
-  togglePin(chatId) {
-    set((state) => ({ chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, pinned: !chat.pinned } : chat)) }));
-  },
+      const previous = { ...pod };
+      patchPod(podId, patch);
+      try {
+        if (hasDetails) {
+          const body = Object.fromEntries(Object.entries(details).filter(([, value]) => value !== undefined));
+          const view = await api(`/pods/${podId}`, { ...auth, method: "PATCH", body, schema: podSchema });
+          patchPod(podId, toPod(view));
+        }
+        if (hasSettings) {
+          const view = await api(`/pods/${podId}/me`, { ...auth, method: "PATCH", body: settings, schema: podSchema });
+          patchPod(podId, toPod(view));
+        }
+      } catch (error) {
+        patchPod(podId, previous);
+        throw error;
+      }
+    },
 
-  sendMessage(podId, payload) {
-    const base = { id: newId("m"), podId, authorId: ME_ID, sentAt: Date.now(), reactions: [] };
-    const message: Message = { ...base, ...payload } as Message;
-    set((state) => ({ messages: { ...state.messages, [podId]: [...(state.messages[podId] ?? []), message] } }));
+    async deletePod(podId) {
+      await api(`/pods/${podId}`, { ...auth, method: "DELETE" });
+      set((state) => {
+        const { [podId]: _messages, ...messages } = state.messages;
+        const { [podId]: _unread, ...unread } = state.unread;
+        return { pods: state.pods.filter((pod) => pod.id !== podId), messages, unread };
+      });
+    },
 
-    const chat = get().chats.find((c) => c.id === podId);
-    const hub = get().hubs.find((h) => h.id === get().pods.find((p) => p.id === podId)?.hubId);
-    const others = chat ? [{ id: chat.personId }] : (hub?.members.filter((m) => m.id !== ME_ID) ?? []);
-    const replier = others[Math.floor(Math.random() * others.length)];
-    if (!replier) return;
-    setTimeout(() => set((state) => ({ typing: { ...state.typing, [podId]: replier.id } })), 600);
-    setTimeout(() => {
-      const reply: Message = {
-        id: newId("m"),
-        podId,
-        kind: "text",
-        authorId: replier.id,
-        sentAt: Date.now(),
-        text: REPLIES[Math.floor(Math.random() * REPLIES.length)]!,
-        reactions: [],
-      };
+    async createPod(hubId, input) {
+      const view = await api(`/hubs/${hubId}/pods`, { ...auth, method: "POST", body: input, schema: podSchema });
+      set((state) => ({ pods: [...state.pods, toPod(view)] }));
+      return view.id;
+    },
+
+    async updateHub(hubId, input) {
+      const view = await api(`/hubs/${hubId}`, { ...auth, method: "PATCH", body: input, schema: hubSchema });
       set((state) => ({
-        typing: { ...state.typing, [podId]: null },
-        messages: { ...state.messages, [podId]: [...(state.messages[podId] ?? []), reply] },
+        hubs: state.hubs.map((hub) =>
+          hub.id === hubId ? { ...hub, name: view.name, description: view.description, color: view.color, icon: view.icon } : hub,
+        ),
       }));
-    }, 2200);
-  },
+    },
 
-  toggleReaction(podId, messageId, emoji) {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [podId]: (state.messages[podId] ?? []).map((message) => {
-          if (message.id !== messageId) return message;
-          const existing = message.reactions.find((r) => r.emoji === emoji);
-          let reactions = message.reactions;
-          if (!existing) reactions = [...reactions, { emoji, userIds: [ME_ID] }];
-          else if (existing.userIds.includes(ME_ID)) {
-            const remaining = existing.userIds.filter((u) => u !== ME_ID);
-            reactions = remaining.length
-              ? reactions.map((r) => (r.emoji === emoji ? { ...r, userIds: remaining } : r))
-              : reactions.filter((r) => r.emoji !== emoji);
-          } else {
-            reactions = reactions.map((r) => (r.emoji === emoji ? { ...r, userIds: [...r.userIds, ME_ID] } : r));
-          }
-          return { ...message, reactions };
-        }),
-      },
-    }));
-  },
+    async regenerateInviteCode(hubId) {
+      const view = await api(`/hubs/${hubId}/invite-code`, { ...auth, method: "POST", schema: hubSchema });
+      set((state) => ({ hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, inviteCode: view.inviteCode } : hub)) }));
+      return view.inviteCode;
+    },
 
-  createHub(input) {
-    const hubId = `hub-${newId("h")}`;
-    const hub: Hub = {
-      id: hubId,
-      name: input.name,
-      color: input.color,
-      icon: input.icon ?? defaultHubIcon(input.name),
-      description: "A new hub. Say hello in #general.",
-      inviteCode: input.name.replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 8).padEnd(4, "X"),
-      members: [{ id: ME_ID, role: "owner" }],
-    };
-    const pods: Pod[] = input.starterPods.map((name) => ({
-      id: `${hubId}-${name}`,
-      hubId,
-      name,
-      category: name === "announcements" ? "Start here" : "Social",
-      description: name === "announcements" ? "News from the hub team" : name === "general" ? "Everything else" : "Memes, music and the weather",
-      muted: false,
-      isPrivate: false,
-    }));
-    const welcome: Record<string, Message[]> = Object.fromEntries(
-      pods.map((pod) => [
-        pod.id,
-        [{ id: newId("m"), podId: pod.id, kind: "system", sentAt: Date.now(), text: `You created ${input.name}`, reactions: [] } as Message],
-      ]),
-    );
-    set((state) => ({
-      hubs: [hub, ...state.hubs],
-      pods: [...state.pods, ...pods],
-      messages: { ...state.messages, ...welcome },
-    }));
-    return hubId;
-  },
+    async deleteHub(hubId) {
+      await api(`/hubs/${hubId}`, { ...auth, method: "DELETE" });
+      get().forgetHub(hubId);
+    },
 
-  joinHub(code) {
-    const { hubs } = get();
-    const found = DISCOVERABLE_HUBS.find((hub) => hub.inviteCode === code);
-    if (!found) return null;
-    if (hubs.some((hub) => hub.id === found.id)) return hubs.find((hub) => hub.id === found.id) ?? null;
-    const joined: Hub = { ...found, members: [...found.members, { id: ME_ID, role: "member" }] };
-    set((state) => ({
-      hubs: [joined, ...state.hubs],
-      pods: [...state.pods, ...PODS.filter((pod) => pod.hubId === found.id && !state.pods.some((p) => p.id === pod.id))],
-    }));
-    return joined;
-  },
-}));
+    async setMemberRole(hubId, memberId, role) {
+      await api(`/hubs/${hubId}/members/${memberId}`, { ...auth, method: "PATCH", body: { role } });
+      set((state) => ({
+        hubs: state.hubs.map((hub) =>
+          hub.id === hubId ? { ...hub, members: hub.members.map((m) => (m.id === memberId ? { ...m, role } : m)) } : hub,
+        ),
+      }));
+    },
+
+    async removeMember(hubId, memberId) {
+      await api(`/hubs/${hubId}/members/${memberId}`, { ...auth, method: "DELETE" });
+      set((state) => ({
+        hubs: state.hubs.map((hub) => (hub.id === hubId ? { ...hub, members: hub.members.filter((m) => m.id !== memberId) } : hub)),
+      }));
+    },
+
+    async leaveHub(hubId) {
+      await api(`/hubs/${hubId}/leave`, { ...auth, method: "POST" });
+      get().forgetHub(hubId);
+    },
+
+    forgetHub(hubId) {
+      set((state) => {
+        const podIds = new Set(state.pods.filter((pod) => pod.hubId === hubId).map((pod) => pod.id));
+        const messages = { ...state.messages };
+        const unread = { ...state.unread };
+        for (const id of podIds) {
+          delete messages[id];
+          delete unread[id];
+        }
+        return { hubs: state.hubs.filter((hub) => hub.id !== hubId), pods: state.pods.filter((pod) => pod.hubId !== hubId), messages, unread };
+      });
+    },
+
+    toggleChatMute(chatId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return Promise.resolve();
+      return optimistic(
+        () => patchChat(chatId, { muted: !chat.muted }),
+        () => patchChat(chatId, { muted: chat.muted }),
+        () => api(`/chats/${chatId}/me`, { ...auth, method: "PATCH", body: { muted: !chat.muted } }),
+      );
+    },
+
+    togglePin(chatId) {
+      const chat = get().chats.find((c) => c.id === chatId);
+      if (!chat) return Promise.resolve();
+      return optimistic(
+        () => patchChat(chatId, { pinned: !chat.pinned }),
+        () => patchChat(chatId, { pinned: chat.pinned }),
+        () => api(`/chats/${chatId}/me`, { ...auth, method: "PATCH", body: { pinned: !chat.pinned } }),
+      );
+    },
+
+    // Messages are still local until the message routes are wired in.
+    sendMessage(podId, payload) {
+      const message = { id: `m${++nextLocalId}`, podId, authorId: ME_ID, sentAt: Date.now(), reactions: [], ...payload } as Message;
+      set((state) => ({ messages: { ...state.messages, [podId]: [...(state.messages[podId] ?? []), message] } }));
+    },
+
+    toggleReaction() {},
+
+    async createHub(input) {
+      const view = await api("/hubs", { ...auth, method: "POST", body: input, schema: hubSchema });
+      const { hub, pods, people } = await fetchHubDetails(view);
+      addHub(hub, pods, people);
+      return hub.id;
+    },
+
+    async joinHub(code) {
+      const view = await api("/hubs/join", { ...auth, method: "POST", body: { code }, schema: hubSchema });
+      const { hub, pods, people } = await fetchHubDetails(view);
+      addHub(hub, pods, people);
+      return hub;
+    },
+  };
+});
 
 export function useHub(hubId: string | undefined): Hub | undefined {
   return useHubsStore((s) => s.hubs.find((hub) => hub.id === hubId));

@@ -8,6 +8,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useHubPods } from "@/features/hubs/hooks";
 import { useHub, useHubsStore } from "@/features/hubs/store";
+import { errorMessage } from "@/lib/api";
 import { useTheme } from "@/theme/theme-provider";
 
 const NEW_CATEGORY = "__new__";
@@ -26,11 +27,12 @@ export default function NewPod() {
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; category?: string; description?: string }>({});
+  const [busy, setBusy] = useState(false);
 
   const podName = toPodName(name);
   const choosingNew = category === NEW_CATEGORY || categories.length === 0;
 
-  function submit() {
+  async function submit() {
     if (!hub) return;
     const parsed = createPodSchema.safeParse({
       name: podName,
@@ -51,8 +53,13 @@ export default function NewPod() {
       setErrors(next);
       return;
     }
-    const podId = createPod(hub.id, parsed.data);
-    router.replace(`/pod/${podId}`);
+    setBusy(true);
+    try {
+      router.replace(`/pod/${await createPod(hub.id, parsed.data)}`);
+    } catch (caught) {
+      setErrors({ name: errorMessage(caught) });
+      setBusy(false);
+    }
   }
 
   return (
@@ -140,7 +147,7 @@ export default function NewPod() {
           />
         </View>
 
-        <Button label="Create pod" onPress={submit} />
+        <Button label="Create pod" onPress={submit} loading={busy} />
       </View>
     </Sheet>
   );

@@ -22,7 +22,7 @@ export function configureApi(next: AuthHandlers) {
 }
 
 type ApiOptions<S extends z.ZodType> = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   /** Send the access token, and refresh it once if the server says it has expired. */
   auth?: boolean;

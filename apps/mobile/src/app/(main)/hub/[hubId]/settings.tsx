@@ -18,6 +18,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useMyRole } from "@/features/hubs/hooks";
 import { useHub, useHubsStore } from "@/features/hubs/store";
+import { showError } from "@/lib/notify";
 import { ME_ID, type Role } from "@/features/hubs/types";
 import { useTheme } from "@/theme/theme-provider";
 
@@ -77,7 +78,7 @@ export default function HubSettings() {
   const isOwner = role === "owner";
   const dirty = name.trim() !== hub.name || description.trim() !== hub.description || color !== hub.color || icon !== hub.icon;
 
-  function save() {
+  async function save() {
     if (!hub) return;
     const parsed = updateHubSchema.safeParse({ name, description, color, icon });
     if (!parsed.success) {
@@ -90,10 +91,16 @@ export default function HubSettings() {
       return;
     }
     setErrors({});
-    updateHub(hub.id, parsed.data);
-    setName(parsed.data.name);
-    setDescription(parsed.data.description);
+    try {
+      await updateHub(hub.id, parsed.data);
+      setName(parsed.data.name);
+      setDescription(parsed.data.description);
+    } catch (caught) {
+      showError(caught, "Could not save");
+    }
   }
+
+  const attempt = (work: () => Promise<unknown>) => work().catch((caught: unknown) => showError(caught));
 
   const share = (code: string) =>
     Share.share({ message: `Join ${hub.name} on Ricochet with the code ${code}. https://ricochet.app/i/${code}` });
@@ -102,7 +109,7 @@ export default function HubSettings() {
     if (!hub) return;
     Alert.alert("Generate a new code?", "The current code will stop working. People already in the hub stay in it.", [
       { text: "Cancel", style: "cancel" },
-      { text: "Generate", onPress: () => regenerateInviteCode(hub.id) },
+      { text: "Generate", onPress: () => attempt(() => regenerateInviteCode(hub.id)) },
     ]);
   }
 
@@ -112,8 +119,8 @@ export default function HubSettings() {
     if (isOwner) {
       actions.push(
         memberRole === "admin"
-          ? { text: "Make a regular member", onPress: () => setMemberRole(hub.id, memberId, "member") }
-          : { text: "Make an admin", onPress: () => setMemberRole(hub.id, memberId, "admin") },
+          ? { text: "Make a regular member", onPress: () => attempt(() => setMemberRole(hub.id, memberId, "member")) }
+          : { text: "Make an admin", onPress: () => attempt(() => setMemberRole(hub.id, memberId, "admin")) },
       );
     }
     if (isOwner || memberRole === "member") {
@@ -123,7 +130,7 @@ export default function HubSettings() {
         onPress: () =>
           Alert.alert(`Remove ${memberName}?`, `${memberName} will lose access to ${hub.name}.`, [
             { text: "Cancel", style: "cancel" },
-            { text: "Remove", style: "destructive", onPress: () => removeMember(hub.id, memberId) },
+            { text: "Remove", style: "destructive", onPress: () => attempt(() => removeMember(hub.id, memberId)) },
           ]),
       });
     }
@@ -138,10 +145,11 @@ export default function HubSettings() {
       {
         text: "Delete hub",
         style: "destructive",
-        onPress: () => {
-          router.replace("/");
-          deleteHub(hub.id);
-        },
+        onPress: () =>
+          attempt(async () => {
+            await deleteHub(hub.id);
+            router.replace("/");
+          }),
       },
     ]);
   }
@@ -153,10 +161,11 @@ export default function HubSettings() {
       {
         text: "Leave hub",
         style: "destructive",
-        onPress: () => {
-          router.replace("/");
-          leaveHub(hub.id);
-        },
+        onPress: () =>
+          attempt(async () => {
+            await leaveHub(hub.id);
+            router.replace("/");
+          }),
       },
     ]);
   }
