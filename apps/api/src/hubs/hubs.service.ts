@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { conversations, hubMembers, hubs, users } from "@ricochet/db";
+import { conversations, hubMembers, hubs, participants, users } from "@ricochet/db";
 import type {
   CreateHubInput,
   HubIcon,
@@ -9,7 +9,7 @@ import type {
   PatchHubInput,
   StarterPod,
 } from "@ricochet/shared";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { isUniqueViolation } from "../common/db-errors.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { generateInviteCode } from "./invite-code.js";
@@ -80,7 +80,7 @@ export class HubsService {
     return this.toView(row);
   }
 
-  private async roleOf(hubId: string, userId: string): Promise<HubRole | null> {
+  async roleOf(hubId: string, userId: string): Promise<HubRole | null> {
     const [row] = await this.db
       .select({ role: hubMembers.role })
       .from(hubMembers)
@@ -89,7 +89,7 @@ export class HubsService {
     return row?.role ?? null;
   }
 
-  private async requireRole(hubId: string, userId: string, allowed: (role: HubRole) => boolean): Promise<HubRole> {
+  async requireRole(hubId: string, userId: string, allowed: (role: HubRole) => boolean): Promise<HubRole> {
     const role = await this.roleOf(hubId, userId);
     if (!role) throw new NotFoundException("Hub not found.");
     if (!allowed(role)) throw new ForbiddenException("You do not have permission to do that in this hub.");
@@ -179,7 +179,7 @@ export class HubsService {
     if (role === "owner") {
       throw new ConflictException("Owners cannot leave their hub. Delete it instead.");
     }
-    await this.db.delete(hubMembers).where(and(eq(hubMembers.hubId, hubId), eq(hubMembers.userId, userId)));
+    await this.removeFromHub(hubId, userId);
   }
 
   async listMembers(userId: string, hubId: string): Promise<HubMember[]> {
@@ -222,6 +222,18 @@ export class HubsService {
     if (!canRemoveMember(actorRole, targetRole)) {
       throw new ForbiddenException("You do not have permission to remove that person.");
     }
-    await this.db.delete(hubMembers).where(and(eq(hubMembers.hubId, hubId), eq(hubMembers.userId, targetId)));
+    await this.removeFromHub(hubId, targetId);
+  }
+
+  private removeFromHub(hubId: string, userId: string) {
+    return this.db.transaction(async (tx) => {
+      await tx.delete(hubMembers).where(and(eq(hubMembers.hubId, hubId), eq(hubMembers.userId, userId)));
+      await tx.delete(participants).where(
+        and(
+          eq(participants.userId, userId),
+          inArray(participants.conversationId, tx.select({ id: conversations.id }).from(conversations).where(eq(conversations.hubId, hubId))),
+        ),
+      );
+    });
   }
 }
