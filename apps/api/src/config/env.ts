@@ -1,17 +1,14 @@
 import { z } from "zod";
 
-/** Every environment variable the API reads. The app refuses to start if one is missing or wrong. */
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
 
-  /** Signs access tokens. Long and random in production. */
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters."),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(15 * 60),
 
-  /** Any SMTP provider works. In development this is the Mailpit container. */
   SMTP_HOST: z.string().default("localhost"),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_SECURE: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),

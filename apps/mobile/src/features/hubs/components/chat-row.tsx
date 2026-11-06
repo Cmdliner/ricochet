@@ -11,7 +11,6 @@ import { useLastMessage } from "../hooks";
 import { useHubsStore } from "../store";
 import { ME_ID, type Chat, type Message } from "../types";
 
-/** The one-line preview of a chat: who spoke last, with an icon for voice and video notes. */
 function Preview({ message, hasUnread }: { message: Message | undefined; hasUnread: boolean }) {
   const { colors } = useTheme();
   if (!message) return <Text className="text-sm text-muted">Say hello</Text>;

@@ -26,7 +26,6 @@ async function call(path, { method = "POST", body, token } = {}) {
 const email = `dev.${Date.now()}.${Math.floor(Math.random() * 1000)}@example.com`;
 await call("/auth/request-code", { body: { email } });
 
-// The code arrives by email a moment later. Look for it in Mailpit.
 let code;
 for (let attempt = 0; attempt < 20 && !code; attempt++) {
   await new Promise((resolve) => setTimeout(resolve, 400));

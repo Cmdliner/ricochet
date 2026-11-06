@@ -5,7 +5,6 @@ import { palettes, themeVars, type Palette, type Preference, type Scheme } from 
 
 type ThemeValue = {
   scheme: Scheme;
-  /** Raw colour values for navigators, icons and SVG. Class names cover everything else. */
   colors: Palette;
   preference: Preference;
   setPreference: (preference: Preference) => void;

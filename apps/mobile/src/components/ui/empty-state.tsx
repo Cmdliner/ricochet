@@ -9,22 +9,14 @@ import { Text } from "./text";
 type Hint = { icon: keyof typeof Ionicons.glyphMap; label: string };
 
 type EmptyStateProps = {
-  /** An illustration, usually one from `components/illustrations`. */
   art: ReactNode;
   title: string;
   body: string;
-  /** The main thing to do next. */
   action?: { label: string; onPress: () => void };
-  /** A quieter second choice. */
   secondary?: { label: string; onPress: () => void };
-  /** Small icon chips that say what will show up here. */
   hints?: Hint[];
 };
 
-/**
- * What an empty list looks like: an illustration, a short title and line of help, then the next
- * step. It fades up on arrival so a blank screen never feels abrupt.
- */
 export function EmptyState({ art, title, body, action, secondary, hints }: EmptyStateProps) {
   const { colors } = useTheme();
   return (

@@ -6,7 +6,6 @@ type AvatarProps = {
   name: string;
   color: HubColor;
   size?: number;
-  /** Hubs use rounded squares, people use circles. */
   square?: boolean;
 };
 

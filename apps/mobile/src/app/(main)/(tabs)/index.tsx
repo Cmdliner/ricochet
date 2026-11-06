@@ -23,7 +23,6 @@ export default function Hubs() {
   const [query, setQuery] = useState("");
   const searching = query.trim().length > 0;
 
-  // A hub matches when its name does, or when one of its pods does.
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return hubs;
@@ -39,7 +38,6 @@ export default function Hubs() {
         data={visible}
         keyExtractor={(hub) => hub.id}
         renderItem={({ item, index }) => (
-          // Each card eases in just after the one above it.
           <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 55).duration(340)} style={{ marginHorizontal: 20, marginBottom: 10 }}>
             <HubRow hub={item} />
           </Animated.View>

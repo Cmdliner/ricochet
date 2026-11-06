@@ -48,7 +48,6 @@ export class AuthService {
     return this.config.get("JWT_SECRET", { infer: true });
   }
 
-  // ---------------------------------------------------------------- request a code
   /** Always looks the same to the caller, whether or not the email has an account. */
   async requestCode(rawEmail: string): Promise<void> {
     const email = normalizeEmail(rawEmail);
@@ -80,7 +79,6 @@ export class AuthService {
     await this.mail.sendLoginCode({ to: email, code, link });
   }
 
-  // ---------------------------------------------------------------- verify a code
   async verifyCode(rawEmail: string, code: string): Promise<AuthResponse & { isNewUser: boolean }> {
     const email = normalizeEmail(rawEmail);
     const now = new Date();
@@ -139,7 +137,6 @@ export class AuthService {
     throw new Error("Could not create the account.");
   }
 
-  // ---------------------------------------------------------------- sessions
   private async issueSession(db: Executor, user: User): Promise<AuthResponse> {
     const secret = generateSecret();
     const [session] = await db
@@ -159,7 +156,6 @@ export class AuthService {
     };
   }
 
-  /** Trades a refresh token for a new pair. The old refresh token stops working. */
   async refresh(refreshToken: string): Promise<AuthResponse> {
     const unauthorized = () => new UnauthorizedException("Please sign in again.");
     const parsed = parseRefreshToken(refreshToken);

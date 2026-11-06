@@ -6,11 +6,9 @@ import { cn } from "@/lib/utils";
 type RevealProps = {
   children: React.ReactNode;
   className?: string;
-  /** Milliseconds to wait before the reveal, for staggering siblings. */
   delay?: number;
 };
 
-/** Fades and lifts its children in the first time they scroll into view. */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
 

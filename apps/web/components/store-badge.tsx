@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 
 type StoreBadgeProps = {
   store: "ios" | "android";
-  /** "md" for menus and footers, "lg" for the download page. */
   size?: "md" | "lg";
   className?: string;
 };

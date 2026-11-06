@@ -18,7 +18,6 @@ const pods = [
   { name: "off-topic", unread: 0 },
 ];
 
-/** Miniature of the hub screen: hub rail, pod list and a short conversation. */
 export function HubPreview() {
   return (
     <div className="flex h-[230px] w-full max-w-xl overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl shadow-black/40">

@@ -10,17 +10,13 @@ type Icon = keyof typeof Ionicons.glyphMap;
 type SettingRowProps = {
   icon: Icon;
   title: string;
-  /** Right-aligned detail, for example the current value. */
   value?: string;
-  /** Turns the row into a switch. */
   toggle?: { value: boolean; onChange: (next: boolean) => void };
   onPress?: () => void;
-  /** Hides the divider under the row; set on the last row of a group. */
   last?: boolean;
   trailing?: ReactNode;
 };
 
-/** One line of a settings group: icon tile, title, then a switch, a value or a chevron. */
 export function SettingRow({ icon, title, value, toggle, onPress, last = false, trailing }: SettingRowProps) {
   const { colors } = useTheme();
   const body = (
@@ -66,7 +62,6 @@ export function SettingRow({ icon, title, value, toggle, onPress, last = false, 
   );
 }
 
-/** The rounded card that holds a group of setting rows. */
 export function SettingGroup({ children }: { children: ReactNode }) {
   return <View className="overflow-hidden rounded-3xl border border-line bg-surface">{children}</View>;
 }

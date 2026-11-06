@@ -9,10 +9,7 @@ export function AppleIcon({ className }: IconProps) {
   );
 }
 
-/**
- * Google Play logo in its brand colours. The shapes come from the Simple Icons path (CC0),
- * split into its four pieces: left (blue), top (green), right (yellow), bottom (red).
- */
+/** Google Play logo in brand colours, split from the Simple Icons path (CC0) into its four pieces. */
 export function GooglePlayIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">

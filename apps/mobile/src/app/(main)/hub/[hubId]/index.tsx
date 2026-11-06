@@ -71,7 +71,6 @@ export default function HubScreen() {
 
   const canManage = role === "owner" || role === "admin";
   const tint = tokens.avatar[hub.color];
-  // The first few faces, with the owner and admins leading, so the hub looks lived in.
   const faces = hub.members
     .filter((m) => m.id !== ME_ID)
     .map((m) => people[m.id])
@@ -102,7 +101,6 @@ export default function HubScreen() {
       </View>
 
       <ScrollView contentContainerClassName="pb-12" showsVerticalScrollIndicator={false}>
-        {/* The hub's own colour behind its name, so every hub feels like a place of its own. */}
         <Animated.View entering={FadeInDown.duration(380)} style={{ marginHorizontal: 20 }}>
           <View style={{ backgroundColor: `${tint}2e` }} className="items-center gap-3 rounded-[32px] px-6 pt-8 pb-6">
             <HubAvatar name={hub.name} color={hub.color} icon={hub.icon} size={84} />

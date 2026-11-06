@@ -22,11 +22,9 @@ export type VerifyLoginCodeInput = z.infer<typeof verifyLoginCodeSchema>;
 export const waitlistSchema = z.object({ email });
 export type WaitlistInput = z.infer<typeof waitlistSchema>;
 
-// ---------------------------------------------------------------- sessions
 export const refreshSessionSchema = z.object({ refreshToken: z.string().min(1) });
 export type RefreshSessionInput = z.infer<typeof refreshSessionSchema>;
 
-// ---------------------------------------------------------------- profile
 export const displayNameSchema = z
   .string()
   .trim()
@@ -41,11 +39,9 @@ export const handleSchema = z
   .max(LIMITS.handleMax, `Use at most ${LIMITS.handleMax} characters.`)
   .regex(/^[a-z0-9_]+$/, "Use letters, numbers and underscores only.");
 
-/** First-time profile setup: both fields are required. */
 export const completeProfileSchema = z.object({ displayName: displayNameSchema, handle: handleSchema });
 export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
 
-/** Editing the profile later: send only what changed. */
 export const updateProfileSchema = z
   .object({ displayName: displayNameSchema.optional(), handle: handleSchema.optional() })
   .refine((value) => value.displayName !== undefined || value.handle !== undefined, {
@@ -53,14 +49,12 @@ export const updateProfileSchema = z
   });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
-// ---------------------------------------------------------------- what the API returns
 export const authUserSchema = z.object({
   id: z.uuid(),
   email: z.string(),
   handle: z.string(),
   displayName: z.string(),
   avatarKey: z.string().nullable(),
-  /** False until the person has chosen a name and handle. */
   profileComplete: z.boolean(),
 });
 export type AuthUser = z.infer<typeof authUserSchema>;

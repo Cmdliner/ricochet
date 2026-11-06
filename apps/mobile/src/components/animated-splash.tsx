@@ -44,15 +44,10 @@ function impactHaptic() {
 }
 
 type AnimatedSplashProps = {
-  /** True once the app has finished loading what it needs. The splash leaves after that. */
   ready: boolean;
   onFinish: () => void;
 };
 
-/**
- * Full-screen splash: a ball drops in, ricochets off the floor and draws the Ricochet mark.
- * The native splash is a plain accent colour, so this picks up exactly where it leaves off.
- */
 export function AnimatedSplash({ ready, onFinish }: AnimatedSplashProps) {
   const { width, height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -66,7 +61,6 @@ export function AnimatedSplash({ ready, onFinish }: AnimatedSplashProps) {
   const exit = useSharedValue(0);
   const [played, setPlayed] = useState(false);
 
-  // Scale the mark so it is bold on every screen, and work out where the ball enters from.
   const scene = useMemo(() => {
     const unit = (width * 0.6) / 24;
     const viewW = width / unit;
@@ -105,12 +99,10 @@ export function AnimatedSplash({ ready, onFinish }: AnimatedSplashProps) {
     leg2.value = withDelay(800, withTiming(1, { duration: 480, easing: Easing.out(Easing.cubic) }));
     settle.value = withDelay(1260, withSequence(withTiming(1, { duration: 110 }), withSpring(0, { damping: 9, stiffness: 240 })));
     word.value = withDelay(1050, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
-    // Hold the finished mark for a beat, then report that the animation has played.
     const timer = setTimeout(() => setPlayed(true), 1900);
     return () => clearTimeout(timer);
   }, [reduceMotion, leg1, leg2, squash, ring, settle, word]);
 
-  // A tap on the floor, felt exactly when the ball lands.
   useAnimatedReaction(
     () => leg1.value >= 1,
     (landed, previous) => {
@@ -118,7 +110,6 @@ export function AnimatedSplash({ ready, onFinish }: AnimatedSplashProps) {
     },
   );
 
-  // Leave once the animation has played and the app is ready underneath.
   useEffect(() => {
     if (!played || !ready) return;
     exit.value = withTiming(1, { duration: 320, easing: Easing.in(Easing.quad) }, (finished) => {

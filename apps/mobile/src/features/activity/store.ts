@@ -2,24 +2,18 @@ import { create } from "zustand";
 import { day, ago } from "@/features/hubs/mock-data";
 import { useHubsStore } from "@/features/hubs/store";
 
-/**
- * The notification inbox, held in memory with mock data. When the API is ready this store keeps
- * its shape and its actions become API calls.
- */
+// Mock data. The actions become API calls when the API is wired in.
 
 export type NotificationKind = "mention" | "reply" | "reaction" | "invite" | "announcement";
 
 export type AppNotification = {
   id: string;
   kind: NotificationKind;
-  /** The person who caused it. Announcements may come from a hub instead. */
   actorId?: string;
   hubId?: string;
   podId?: string;
-  /** Hub name for invites to a hub you are not in yet. */
   hubName?: string;
   inviteCode?: string;
-  /** The message or note the notification is about. */
   preview?: string;
   emoji?: string;
   at: number;

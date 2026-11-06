@@ -20,7 +20,6 @@ export class UsersService {
     const [current] = await this.db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!current) throw new NotFoundException("Account not found.");
 
-    // Choosing both a name and a handle for the first time completes the profile.
     const completes = !current.profileCompletedAt && input.displayName !== undefined && input.handle !== undefined;
 
     try {

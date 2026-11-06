@@ -10,7 +10,6 @@ export type ConversationType = z.infer<typeof conversationTypeSchema>;
 export const mediaStatusSchema = z.enum(["uploading", "processing", "ready", "failed"]);
 export type MediaStatus = z.infer<typeof mediaStatusSchema>;
 
-/** What the app sends to create a message (REST body or the `message:send` socket event). */
 export const sendMessageSchema = z
   .object({
     /** Made on the phone. A retry with the same id can never create a second message. */
@@ -20,7 +19,6 @@ export const sendMessageSchema = z
     body: z.string().trim().max(LIMITS.messageBodyMax).optional(),
     mediaKey: z.string().min(1).optional(),
     durationMs: z.number().int().positive().optional(),
-    /** Loudness peaks, 0 to 100, for drawing the waveform. */
     waveform: z.array(z.number().min(0).max(100)).max(128).optional(),
   })
   .superRefine((msg, ctx) => {
@@ -45,7 +43,6 @@ export const sendMessageSchema = z
   });
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 
-/** Asks the API for a signed upload URL for a recording. */
 export const requestUploadSchema = z.object({
   kind: z.enum(["voice", "video"]),
   contentType: z.string().min(1),

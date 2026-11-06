@@ -9,7 +9,6 @@ import { NAV_LINKS } from "@/lib/constants";
 import { buttonClass } from "@/lib/utils";
 
 export function MobileMenu({ onClose }: { onClose: () => void }) {
-  // Lock page scroll and let Escape close the menu while it is open.
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";

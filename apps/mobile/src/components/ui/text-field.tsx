@@ -9,7 +9,6 @@ type TextFieldProps = TextInputProps & {
   className?: string;
 };
 
-/** A filled input: a soft raised surface that gets an accent outline when you are typing in it. */
 export function TextField({ label, error, hint, className, ...rest }: TextFieldProps) {
   const { colors } = useTheme();
   return (

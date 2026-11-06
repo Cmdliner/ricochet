@@ -10,7 +10,6 @@ type WaveformBarsProps = {
   height?: number;
 };
 
-/** The bars of a voice note. The part that has played is drawn in a brighter colour. */
 export function WaveformBars({ bars, progress, playedColor, idleColor, height = 28 }: WaveformBarsProps) {
   return (
     <View className="flex-row items-center" style={{ height, gap: 2.5 }}>

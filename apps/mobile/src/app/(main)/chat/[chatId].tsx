@@ -16,7 +16,6 @@ import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
 import { useHubsStore } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
 
-/** The top of a private chat, above the first message. */
 function ChatIntro({ name, handle, color }: { name: string; handle: string; color: Parameters<typeof Avatar>[0]["color"] }) {
   return (
     <View className="items-center gap-2 px-8 py-10">

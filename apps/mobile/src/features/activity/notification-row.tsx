@@ -18,7 +18,6 @@ const KIND: Record<NotificationKind, { icon: keyof typeof Ionicons.glyphMap }> =
   announcement: { icon: "megaphone" },
 };
 
-/** The sentence at the top of a notification, with the important words in bold. */
 function Headline({ note }: { note: AppNotification }) {
   const actor = useHubsStore((s) => (note.actorId ? s.members[note.actorId] : undefined));
   const hub = useHubsStore((s) => s.hubs.find((h) => h.id === note.hubId));

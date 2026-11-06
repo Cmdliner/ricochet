@@ -6,7 +6,6 @@ import { useTheme } from "@/theme/theme-provider";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-/** One tab: an outline icon when idle, a filled icon when active. Icons first, no text labels. */
 function tab(title: string, outline: IconName, filled: IconName, active: string, idle: string) {
   return {
     title,

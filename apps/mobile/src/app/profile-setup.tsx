@@ -33,7 +33,6 @@ export default function ProfileSetup() {
       // Completing the profile flips the route guard, which opens the main app.
       useAuthStore.getState().setUser(user);
     } catch (e) {
-      // A taken handle belongs on the handle field. Anything else goes under the name.
       if (e instanceof ApiError && e.status === 409) setErrors({ handle: e.message });
       else setErrors({ displayName: errorMessage(e) });
     } finally {

@@ -12,7 +12,6 @@ import { Text } from "./text";
 type SheetProps = {
   title?: string;
   children: ReactNode;
-  /** Let the content scroll. Turn off for short sheets with a few rows. */
   scroll?: boolean;
 };
 
@@ -21,11 +20,6 @@ function dismiss() {
   else router.replace("/");
 }
 
-/**
- * A bottom sheet. It slides up over a dimmed backdrop, and goes away when you tap outside,
- * press the close button or pull the handle down. Use it as the whole content of a route that
- * is declared with `presentation: "transparentModal"`.
- */
 export function Sheet({ title, children, scroll = true }: SheetProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -44,7 +38,6 @@ export function Sheet({ title, children, scroll = true }: SheetProps) {
     });
   }, [progress]);
 
-  // Pull the handle down to dismiss. A short pull springs back.
   const pan = useMemo(
     () =>
       PanResponder.create({

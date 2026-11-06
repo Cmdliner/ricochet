@@ -8,7 +8,6 @@ const sheet = {
   contentStyle: { backgroundColor: "transparent" },
 } as const;
 
-/** Everything a signed-in person can reach: the tabs, hubs, pods and the sheets that open over them. */
 export default function MainLayout() {
   const { colors } = useTheme();
   return (

@@ -7,7 +7,6 @@ type AccessTokenPayload = { sub: string; sid: string };
 export type AuthContext = { userId: string; sessionId: string };
 export type AuthenticatedRequest = Request & { auth: AuthContext };
 
-/** Protects a route. A valid `Authorization: Bearer <access token>` header is required. */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private readonly jwt: JwtService) {}
@@ -27,7 +26,6 @@ export class AuthGuard implements CanActivate {
   }
 }
 
-/** Injects the signed-in user's ids into a controller method. */
 export const Auth = createParamDecorator((_data: unknown, context: ExecutionContext): AuthContext => {
   return context.switchToHttp().getRequest<AuthenticatedRequest>().auth;
 });

@@ -1,7 +1,6 @@
 import Svg, { Circle, Ellipse, G, Path, Rect } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 
-/** Sign in: a message bounces off a chat bubble and sends a dot flying. */
 export function WelcomeArt({ width = 300 }: { width?: number }) {
   const { colors: c } = useTheme();
   const bars = [10, 18, 12, 24, 16, 8, 20, 14];

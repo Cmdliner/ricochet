@@ -116,7 +116,6 @@ export function HowItWorks() {
         </Reveal>
 
         <div className="relative mt-16 sm:mt-20">
-          {/* The bounce: a dashed path that ricochets between the step badges. */}
           <svg
             aria-hidden="true"
             viewBox="0 0 100 96"

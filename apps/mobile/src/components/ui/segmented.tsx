@@ -10,7 +10,6 @@ type SegmentedProps<T extends string> = {
   onChange: (value: T) => void;
 };
 
-/** A row of choices where exactly one is selected, such as System, Light or Dark. */
 export function Segmented<T extends string>({ label, options, value, onChange }: SegmentedProps<T>) {
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} className="flex-row rounded-full bg-raised p-1">

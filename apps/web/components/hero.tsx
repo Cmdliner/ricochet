@@ -3,7 +3,6 @@ import { Avatar } from "@/components/avatar";
 import { PhoneMockups } from "@/components/phone-mockups";
 import { buttonClass, cn } from "@/lib/utils";
 
-/** A small tile that floats beside the headline, tilted as if it were dropped there. */
 function Tile({ className, delay, children }: { className?: string; delay: string; children: React.ReactNode }) {
   return (
     <div aria-hidden="true" className={cn("float absolute hidden md:block", className)} style={{ animationDelay: delay }}>
@@ -24,7 +23,6 @@ export function Hero() {
   return (
     <section className="relative z-0 overflow-hidden bg-canvas">
       <div className="relative mx-auto max-w-6xl px-5 pt-8 text-center sm:px-8 sm:pt-14">
-        {/* Things people send, scattered around the headline instead of a paragraph explaining them. */}
         <Tile className="top-10 left-2 -rotate-[8deg] lg:left-10" delay="0s">
           <div className="rounded-3xl bg-raised p-2 shadow-2xl shadow-black/50">
             <Avatar letter="M" color="#f3a5a5" size="lg" square />
@@ -57,7 +55,6 @@ export function Hero() {
           </div>
         </Tile>
 
-        {/* On a phone the tiles sit in a row above the headline rather than floating around it. */}
         <div aria-hidden="true" className="mb-6 flex items-center justify-center gap-3 md:hidden">
           <div className="-rotate-[8deg] rounded-2xl bg-raised p-1.5 shadow-xl shadow-black/50">
             <Avatar letter="M" color="#f3a5a5" size="md" square />
@@ -112,7 +109,6 @@ export function Hero() {
       </div>
 
       <div className="relative mt-10 sm:mt-14">
-        {/* A quiet stage for the phones: one flat disc, a hairline ring, and the ball that ricocheted off it. */}
         <div aria-hidden="true" className="pointer-events-none absolute top-24 left-1/2 aspect-square w-[150vw] max-w-[1180px] -translate-x-1/2 sm:top-20">
           <span className="absolute inset-0 rounded-full bg-surface" />
           <span className="absolute -inset-[7%] rounded-full border border-line" />

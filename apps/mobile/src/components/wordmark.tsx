@@ -2,10 +2,6 @@ import { colors } from "@ricochet/shared";
 import { Text, View } from "react-native";
 import { useTheme } from "@/theme/theme-provider";
 
-/**
- * The name, set as a logo: "ricochet" in Inter Tight, with the ball taking the place of the dot
- * on the "i". It matches the wordmark on the website. `size` is the font size; everything scales.
- */
 export function Wordmark({ size = 26 }: { size?: number }) {
   const { colors: theme } = useTheme();
   const letters = {

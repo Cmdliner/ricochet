@@ -15,7 +15,6 @@ import { DRIZZLE, type Database } from "../db/db.module.js";
 import { generateInviteCode } from "./invite-code.js";
 import { canChangeRoles, canDeleteHub, canEditHub, canRemoveMember } from "./permissions.js";
 
-/** The pods a new hub starts with, and the heading each one sits under on the hub screen. */
 const STARTER_PODS: Record<StarterPod, { category: string; description: string }> = {
   general: { category: "Social", description: "Everything else" },
   announcements: { category: "Start here", description: "News from the hub team" },
@@ -24,18 +23,12 @@ const STARTER_PODS: Record<StarterPod, { category: string; description: string }
 
 const ROLE_ORDER: Record<HubRole, number> = { owner: 0, admin: 1, member: 2 };
 
-/** A few attempts, in the astronomically unlikely case a random invite code is already taken. */
 const MAX_CODE_ATTEMPTS = 5;
 
 @Injectable()
 export class HubsService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  // ---------------------------------------------------------------- reading
-  /**
-   * The columns of a hub as one person sees it. The two counts are small sub-queries, so the
-   * database does the counting and we never load every member just to know how many there are.
-   */
   private readonly viewColumns = {
     id: hubs.id,
     name: hubs.name,
@@ -65,7 +58,6 @@ export class HubsService {
     return { ...row, icon: row.icon as HubIcon, createdAt: row.createdAt.toISOString() };
   }
 
-  /** Every hub the person belongs to, oldest first. */
   async listMine(userId: string): Promise<HubView[]> {
     const rows = await this.db
       .select(this.viewColumns)
@@ -76,10 +68,7 @@ export class HubsService {
     return rows.map((row) => this.toView(row));
   }
 
-  /**
-   * One hub. A hub you are not in answers "not found", never "forbidden": saying forbidden would
-   * confirm the id exists, and ids should not be guessable for hubs you have no business with.
-   */
+  // A hub you are not in answers "not found", not "forbidden": forbidden would confirm the id exists.
   async getView(userId: string, hubId: string): Promise<HubView> {
     const [row] = await this.db
       .select(this.viewColumns)
@@ -91,7 +80,6 @@ export class HubsService {
     return this.toView(row);
   }
 
-  /** The person's role in a hub, or null when they are not a member. */
   private async roleOf(hubId: string, userId: string): Promise<HubRole | null> {
     const [row] = await this.db
       .select({ role: hubMembers.role })
@@ -101,7 +89,6 @@ export class HubsService {
     return row?.role ?? null;
   }
 
-  /** Throws "not found" for outsiders, and "forbidden" for members who may not do this. */
   private async requireRole(hubId: string, userId: string, allowed: (role: HubRole) => boolean): Promise<HubRole> {
     const role = await this.roleOf(hubId, userId);
     if (!role) throw new NotFoundException("Hub not found.");
@@ -109,11 +96,6 @@ export class HubsService {
     return role;
   }
 
-  // ---------------------------------------------------------------- creating
-  /**
-   * Makes a hub, makes you its owner, and creates the starter pods. All three happen in one
-   * transaction: either the whole hub exists afterwards, or nothing was created at all.
-   */
   async create(userId: string, input: CreateHubInput): Promise<HubView> {
     for (let attempt = 1; ; attempt++) {
       try {
@@ -151,7 +133,6 @@ export class HubsService {
     }
   }
 
-  // ---------------------------------------------------------------- changing
   async update(userId: string, hubId: string, input: PatchHubInput): Promise<HubView> {
     await this.requireRole(hubId, userId, canEditHub);
     await this.db
@@ -166,7 +147,6 @@ export class HubsService {
     return this.getView(userId, hubId);
   }
 
-  /** The old code stops working the moment this returns. */
   async regenerateInviteCode(userId: string, hubId: string): Promise<HubView> {
     await this.requireRole(hubId, userId, canEditHub);
     for (let attempt = 1; ; attempt++) {
@@ -186,8 +166,6 @@ export class HubsService {
     await this.db.delete(hubs).where(eq(hubs.id, hubId));
   }
 
-  // ---------------------------------------------------------------- joining and leaving
-  /** Joining twice is harmless: the second time just returns the hub. */
   async join(userId: string, code: string): Promise<HubView> {
     const [hub] = await this.db.select({ id: hubs.id }).from(hubs).where(eq(hubs.inviteCode, code)).limit(1);
     if (!hub) throw new NotFoundException("That invite code does not match a hub.");
@@ -204,7 +182,6 @@ export class HubsService {
     await this.db.delete(hubMembers).where(and(eq(hubMembers.hubId, hubId), eq(hubMembers.userId, userId)));
   }
 
-  // ---------------------------------------------------------------- members
   async listMembers(userId: string, hubId: string): Promise<HubMember[]> {
     if (!(await this.roleOf(hubId, userId))) throw new NotFoundException("Hub not found.");
     const rows = await this.db

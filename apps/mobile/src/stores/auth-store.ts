@@ -9,13 +9,10 @@ type AuthState = {
   status: Status;
   user: AuthUser | null;
   accessToken: string | null;
-  /** Reads the saved session when the app opens. */
   restore: () => Promise<void>;
-  /** Stores a new session after a successful sign in. */
   signIn: (session: AuthResponse) => Promise<void>;
   setUser: (user: AuthUser) => void;
   signOut: () => Promise<void>;
-  /** Swaps the refresh token for new tokens. Returns the new access token or null. */
   refreshSession: () => Promise<string | null>;
 };
 

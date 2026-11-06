@@ -5,7 +5,6 @@ import { Text } from "./text";
 
 type ButtonProps = Omit<PressableProps, "children"> & {
   label: string;
-  /** Primary is the coral call to action. Ghost is a quiet text button. */
   variant?: "primary" | "ghost";
   loading?: boolean;
   className?: string;

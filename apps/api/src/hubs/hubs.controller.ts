@@ -25,11 +25,6 @@ import { Auth, AuthGuard, type AuthContext } from "../auth/auth.guard.js";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { HubsService } from "./hubs.service.js";
 
-/**
- * The hub endpoints. This file only does three things: check you are signed in (the guard),
- * check the request is shaped correctly (the Zod pipes), and hand the work to the service.
- * The actual rules live in `hubs.service.ts`.
- */
 @UseGuards(AuthGuard)
 @Controller("hubs")
 export class HubsController {

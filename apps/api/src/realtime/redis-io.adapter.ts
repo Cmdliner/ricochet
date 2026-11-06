@@ -4,10 +4,6 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import { Redis } from "ioredis";
 import type { ServerOptions } from "socket.io";
 
-/**
- * Socket.IO adapter backed by Redis. With it, a message that arrives on API server A
- * reaches phones connected to API server B. Run one server or ten, the code is the same.
- */
 export class RedisIoAdapter extends IoAdapter {
   private adapter?: ReturnType<typeof createAdapter>;
 

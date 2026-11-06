@@ -10,13 +10,11 @@ import { ME_ID, type Role } from "@/features/hubs/types";
 
 const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, member: 2 };
 
-/** Everyone in a hub, as a sheet that opens over whatever you were looking at. */
 export default function MembersSheet() {
   const { hubId } = useLocalSearchParams<{ hubId: string }>();
   const hub = useHub(hubId);
   const people = useHubsStore((s) => s.members);
 
-  // Online people first, then by role, then by name.
   const rows = useMemo(() => {
     if (!hub) return [];
     return hub.members

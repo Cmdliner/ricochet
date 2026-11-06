@@ -17,7 +17,6 @@ type MessageRow = Extract<ChatItem, { type: "message" }>;
 const BIG = 20;
 const SMALL = 6;
 
-/** Corners follow the run of messages: inner corners tighten, the last bubble gets a tail. */
 function bubbleShape({
   mine,
   startsGroup,
@@ -31,7 +30,6 @@ function bubbleShape({
   } as ViewStyle;
 }
 
-/** `direct` is a one-to-one chat: no avatar or name beside the bubbles, since it is obvious who is talking. */
 export const MessageItem = memo(function MessageItem({ item, direct = false }: { item: MessageRow; direct?: boolean }) {
   const { colors } = useTheme();
   const { message, mine, startsGroup, endsGroup } = item;
@@ -52,7 +50,6 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
   return (
     <Animated.View entering={isNew ? FadeInDown.duration(260) : undefined}>
       <View className={`flex-row items-end gap-2 px-3 ${mine ? "justify-end" : ""} ${endsGroup ? "mb-3" : "mb-0.5"}`}>
-        {/* People you are talking to show their picture beside the last message of a run. */}
         {!mine && !direct ? (
           <View className="w-8">
             {endsGroup && author ? <Avatar name={author.name} color={author.color} size={32} /> : null}

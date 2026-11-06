@@ -17,11 +17,9 @@ export type Hub = {
   id: string;
   name: string;
   color: HubColor;
-  /** The picture shown instead of a letter. */
   icon: HubIcon;
   description: string;
   inviteCode: string;
-  /** Member ids with their role in this hub. */
   members: { id: string; role: Role }[];
 };
 
@@ -29,11 +27,9 @@ export type Pod = {
   id: string;
   hubId: string;
   name: string;
-  /** Pods are grouped by category on the hub screen. */
   category: string;
   description: string;
   muted: boolean;
-  /** Only notify me when someone mentions me. */
   mentionsOnly?: boolean;
   isPrivate: boolean;
 };
@@ -62,7 +58,6 @@ export type SystemMessage = MessageBase & { kind: "system"; text: string };
 
 export type Message = TextMessage | VoiceMessage | VideoMessage | SystemMessage;
 
-/** One row of the chat list: a day label or a message with its grouping flags. */
 export type ChatItem =
   | { type: "day"; id: string; label: string }
   | { type: "message"; id: string; message: Message; mine: boolean; startsGroup: boolean; endsGroup: boolean };
