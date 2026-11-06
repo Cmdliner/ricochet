@@ -21,13 +21,23 @@ export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
 export const conversationRefSchema = z.object({ conversationId: z.uuid() });
 export type ConversationRef = z.infer<typeof conversationRefSchema>;
 
+export const typingNoticeSchema = z.object({ conversationId: z.uuid(), userId: z.uuid() });
+export type TypingNotice = z.infer<typeof typingNoticeSchema>;
+
 export const conversationReadSchema = z.object({
   conversationId: z.uuid(),
-  lastReadId: z.string().min(1),
+  lastReadId: z.uuid(),
 });
 export type ConversationRead = z.infer<typeof conversationReadSchema>;
 
+export const unreadUpdateSchema = z.object({ conversationId: z.uuid(), unread: z.number().int().min(0) });
+export type UnreadUpdate = z.infer<typeof unreadUpdateSchema>;
+
+export const presenceUpdateSchema = z.object({ userId: z.uuid(), online: z.boolean() });
+export type PresenceUpdate = z.infer<typeof presenceUpdateSchema>;
+
 export const rooms = {
   user: (userId: string) => `user:${userId}`,
+  hub: (hubId: string) => `hub:${hubId}`,
   conversation: (conversationId: string) => `conversation:${conversationId}`,
 } as const;

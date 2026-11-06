@@ -13,6 +13,7 @@ import { isUniqueViolation } from "../common/db-errors.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { HubsService } from "../hubs/hubs.service.js";
 import { canEditHub } from "../hubs/permissions.js";
+import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { canSeePod } from "./permissions.js";
 
 type PodAccess = { pod: Conversation & { hubId: string }; hubRole: HubRole };
@@ -24,6 +25,7 @@ export class PodsService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly hubs: HubsService,
+    private readonly bus: RealtimeBus,
   ) {}
 
   private viewQuery(userId: string) {
@@ -149,12 +151,14 @@ export class PodsService {
     } catch (error) {
       throw this.nameTaken(error, input.name);
     }
+    if (becomesPrivate) this.bus.accessChanged({ conversationId: podId });
     return this.get(userId, podId);
   }
 
   async remove(userId: string, podId: string): Promise<void> {
     await this.requireManage(userId, podId);
     await this.db.delete(conversations).where(eq(conversations.id, podId));
+    this.bus.accessChanged({ conversationId: podId });
   }
 
   async updateSettings(userId: string, podId: string, input: PodSettingsInput): Promise<PodView> {
@@ -209,6 +213,7 @@ export class PodsService {
       .where(and(eq(participants.conversationId, podId), eq(participants.userId, targetId)))
       .returning({ userId: participants.userId });
     if (removed.length === 0) throw new NotFoundException("That person is not in this pod.");
+    this.bus.accessChanged({ userId: targetId });
   }
 
   private nameTaken(error: unknown, name: string | undefined): unknown {

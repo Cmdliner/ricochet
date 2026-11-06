@@ -1,38 +1,22 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { conversations, messages, participants, reactions, type Message } from "@ricochet/db";
-import type { ListMessagesQuery, MessagePage, MessageView, SendMessageInput } from "@ricochet/shared";
+import { messages, reactions, type Message } from "@ricochet/db";
+import { EVENTS, type ListMessagesQuery, type MessagePage, type MessageView, type SendMessageInput } from "@ricochet/shared";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
-import { PodsService } from "../pods/pods.service.js";
+import { RealtimeBus } from "../realtime/realtime-bus.js";
+import { ConversationAccessService } from "./conversation-access.service.js";
 import { takePage } from "./pagination.js";
 import { groupReactions } from "./reactions.js";
+import { ReadStateService } from "./read-state.service.js";
 
 @Injectable()
 export class MessagesService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
-    private readonly pods: PodsService,
+    private readonly access: ConversationAccessService,
+    private readonly readState: ReadStateService,
+    private readonly bus: RealtimeBus,
   ) {}
-
-  private async requireAccess(userId: string, conversationId: string): Promise<void> {
-    const [conversation] = await this.db
-      .select({ type: conversations.type })
-      .from(conversations)
-      .where(eq(conversations.id, conversationId))
-      .limit(1);
-    if (!conversation) throw new NotFoundException("Conversation not found.");
-
-    if (conversation.type === "pod") {
-      await this.pods.access(userId, conversationId);
-      return;
-    }
-    const [member] = await this.db
-      .select({ userId: participants.userId })
-      .from(participants)
-      .where(and(eq(participants.conversationId, conversationId), eq(participants.userId, userId)))
-      .limit(1);
-    if (!member) throw new NotFoundException("Conversation not found.");
-  }
 
   private toView(row: Message, reactionsByMessage: Map<string, MessageView["reactions"]>): MessageView {
     return {
@@ -58,7 +42,7 @@ export class MessagesService {
   }
 
   async list(userId: string, conversationId: string, query: ListMessagesQuery): Promise<MessagePage> {
-    await this.requireAccess(userId, conversationId);
+    await this.access.require(userId, conversationId);
     const rows = await this.db
       .select()
       .from(messages)
@@ -74,7 +58,7 @@ export class MessagesService {
 
   async send(userId: string, input: SendMessageInput): Promise<{ message: MessageView; created: boolean }> {
     if (input.type !== "text") throw new BadRequestException("Voice and video notes are not supported yet.");
-    await this.requireAccess(userId, input.conversationId);
+    const conversation = await this.access.require(userId, input.conversationId);
 
     const [inserted] = await this.db
       .insert(messages)
@@ -87,7 +71,12 @@ export class MessagesService {
       })
       .onConflictDoNothing({ target: [messages.senderId, messages.clientId] })
       .returning();
-    if (inserted) return { message: this.toView(inserted, new Map()), created: true };
+    if (inserted) {
+      const message = this.toView(inserted, new Map());
+      this.bus.toConversation(message.conversationId, EVENTS.messageNew, message);
+      this.readState.announceInBackground(conversation, userId);
+      return { message, created: true };
+    }
 
     const [existing] = await this.db
       .select()
@@ -103,7 +92,7 @@ export class MessagesService {
   async react(userId: string, messageId: string, emoji: string, on: boolean): Promise<MessageView> {
     const [message] = await this.db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
     if (!message) throw new NotFoundException("Message not found.");
-    await this.requireAccess(userId, message.conversationId);
+    await this.access.require(userId, message.conversationId);
 
     if (on) {
       await this.db.insert(reactions).values({ messageId, userId, emoji }).onConflictDoNothing();
