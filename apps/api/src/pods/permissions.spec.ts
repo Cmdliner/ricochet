@@ -19,8 +19,11 @@ describe("canSeePod", () => {
     expect(canSeePod("member", secret, true)).toBe(true);
   });
 
-  it("does not let admins or owners into private pods they were not added to", () => {
+  it("lets the owner see every pod", () => {
+    expect(canSeePod("owner", secret, false)).toBe(true);
+  });
+
+  it("does not let admins into private pods they were not added to", () => {
     expect(canSeePod("admin", secret, false)).toBe(false);
-    expect(canSeePod("owner", secret, false)).toBe(false);
   });
 });

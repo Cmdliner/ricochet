@@ -86,13 +86,14 @@ export class PodsService {
   }
 
   async listForHub(userId: string, hubId: string): Promise<PodView[]> {
-    if (!(await this.hubs.roleOf(hubId, userId))) throw new NotFoundException("Hub not found.");
+    const hubRole = await this.hubs.roleOf(hubId, userId);
+    if (!hubRole) throw new NotFoundException("Hub not found.");
     const rows = await this.viewQuery(userId)
       .where(
         and(
           eq(conversations.hubId, hubId),
           eq(conversations.type, "pod"),
-          or(eq(conversations.isPrivate, false), isNotNull(participants.userId)),
+          hubRole === "owner" ? undefined : or(eq(conversations.isPrivate, false), isNotNull(participants.userId)),
         ),
       )
       .orderBy(asc(conversations.createdAt), asc(conversations.id));
