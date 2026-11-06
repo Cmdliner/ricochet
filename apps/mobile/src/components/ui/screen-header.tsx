@@ -7,15 +7,11 @@ import { IconButton } from "./icon-button";
 type ScreenHeaderProps = {
   title: string;
   subtitle?: string;
-  /** Shown between the back button and the title, for example a hub icon. */
   leading?: ReactNode;
-  /** Buttons on the right edge. */
   actions?: ReactNode;
-  /** Use a close button instead of a back arrow, for screens that open as a sheet. */
   closeStyle?: boolean;
 };
 
-/** The top bar for screens pushed on top of the tabs: back, title with subtitle, then actions. */
 export function ScreenHeader({ title, subtitle, leading, actions, closeStyle = false }: ScreenHeaderProps) {
   return (
     <View className="h-16 flex-row items-center gap-3 border-b border-line px-3">

@@ -57,7 +57,6 @@ export default function You() {
       <BrandBar />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-10">
         <Animated.View entering={FadeInDown.duration(380)}>
-          {/* A flat colour band with the avatar sitting over its lower edge. */}
           <View className="mx-4 mt-1 h-28 overflow-hidden rounded-[28px] bg-accent">
             <View className="absolute -top-8 -right-6 size-32 rounded-full bg-accent-ink/10" />
             <View className="absolute -bottom-10 left-24 size-24 rounded-full bg-white/15" />

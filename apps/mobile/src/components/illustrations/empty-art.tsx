@@ -11,7 +11,6 @@ function Frame({ width, label, children }: ArtProps & { label: string; children:
   );
 }
 
-/** Empty Hubs tab: stacked hub avatars with pod chips under them. */
 export function HubsArt({ width = 220 }: ArtProps) {
   const { colors: c } = useTheme();
   return (
@@ -29,7 +28,6 @@ export function HubsArt({ width = 220 }: ArtProps) {
   );
 }
 
-/** Empty Chats tab: a text bubble, a voice note and a video note. */
 export function ChatsArt({ width = 220 }: ArtProps) {
   const { colors: c } = useTheme();
   const bars = [8, 14, 10, 18, 12, 7];
@@ -55,7 +53,6 @@ export function ChatsArt({ width = 220 }: ArtProps) {
   );
 }
 
-/** Empty Activity tab: a bell with a little spark. */
 export function ActivityArt({ width = 220 }: ArtProps) {
   const { colors: c } = useTheme();
   return (
@@ -73,7 +70,6 @@ export function ActivityArt({ width = 220 }: ArtProps) {
   );
 }
 
-/** No search results: a magnifying glass over a few faded rows. */
 export function SearchArt({ width = 200 }: ArtProps) {
   const { colors: c } = useTheme();
   return (
@@ -91,7 +87,6 @@ export function SearchArt({ width = 200 }: ArtProps) {
   );
 }
 
-/** A hub with no pods yet: empty room tiles waiting to be filled. */
 export function PodsArt({ width = 220 }: ArtProps) {
   const { colors: c } = useTheme();
   return (

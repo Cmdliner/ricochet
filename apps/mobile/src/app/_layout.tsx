@@ -30,9 +30,8 @@ function Root() {
     void useAuthStore.getState().restore();
   }, []);
 
-  // The native window sits behind everything, and app.json paints it brand orange for the splash.
-  // Anywhere the app does not draw over it (under the status and navigation bars, behind the
-  // keyboard, while overscrolling) that colour would show. Follow the theme once the splash is gone.
+  // app.json paints the native window brand orange for the splash. That colour would show wherever
+  // the app does not draw (under the system bars, behind the keyboard), so follow the theme after it.
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(splashDone ? colors.canvas : palettes.dark.accent).catch(() => undefined);
   }, [splashDone, colors.canvas]);

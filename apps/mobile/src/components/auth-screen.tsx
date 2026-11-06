@@ -7,16 +7,13 @@ import { LogoMark } from "./logo-mark";
 import { Wordmark } from "./wordmark";
 
 type AuthScreenProps = {
-  /** An illustration shown under the logo. */
   art?: ReactNode;
   title: string;
   subtitle: string;
   children: ReactNode;
-  /** Shown pinned at the bottom, for secondary actions. */
   footer?: ReactNode;
 };
 
-/** The frame shared by every step of sign in: logo, heading, then the form. */
 export function AuthScreen({ art, title, subtitle, children, footer }: AuthScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-canvas">

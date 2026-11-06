@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-/** Background queue names (BullMQ). */
 export const QUEUES = {
   media: "media",
   push: "push",

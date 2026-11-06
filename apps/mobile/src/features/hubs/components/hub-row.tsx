@@ -9,7 +9,6 @@ import { pluralize } from "../format";
 import { useHubStats } from "../hooks";
 import type { Hub } from "../types";
 
-/** One hub as its own card: icon, name, a line of numbers and the unread count. */
 export function HubRow({ hub }: { hub: Hub }) {
   const stats = useHubStats(hub.id);
 

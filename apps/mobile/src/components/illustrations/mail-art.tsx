@@ -1,7 +1,6 @@
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 
-/** Check your email: a letter with the code sticking out of an envelope. */
 export function MailArt({ width = 300 }: { width?: number }) {
   const { colors: c } = useTheme();
   const dots = [0, 1, 2, 3, 4, 5];

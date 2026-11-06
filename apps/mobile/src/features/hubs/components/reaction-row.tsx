@@ -10,7 +10,6 @@ type ReactionRowProps = {
   mine: boolean;
 };
 
-/** Emoji reactions under a message. Tap one to add yours or take it back. */
 export function ReactionRow({ podId, messageId, reactions, mine }: ReactionRowProps) {
   const toggleReaction = useHubsStore((s) => s.toggleReaction);
   if (reactions.length === 0) return null;

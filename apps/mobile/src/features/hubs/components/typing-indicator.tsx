@@ -39,7 +39,6 @@ function Dot({ delay }: { delay: number }) {
   return <Animated.View style={[style, { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.muted }]} />;
 }
 
-/** "Mira is typing" with three bouncing dots, shown at the bottom of the chat. */
 export function TypingIndicator({ member }: { member: Member }) {
   return (
     <View accessibilityLabel={`${member.name} is typing`} accessibilityLiveRegion="polite" className="mb-3 flex-row items-end gap-2 px-3">

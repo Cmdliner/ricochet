@@ -11,7 +11,6 @@ import { Text } from "@/components/ui/text";
 import { useHubsStore } from "../store";
 import type { Pod } from "../types";
 
-/** A compact card tinted with its hub's colour, so you can tell hubs apart at a glance. */
 function JumpCard({ pod }: { pod: Pod }) {
   const hub = useHubsStore((s) => s.hubs.find((h) => h.id === pod.hubId));
   const unread = useHubsStore((s) => s.unread[pod.id] ?? 0);
@@ -41,7 +40,6 @@ function JumpCard({ pod }: { pod: Pod }) {
   );
 }
 
-/** A row of the pods you were most recently active in, so the next tap is one away. */
 export function JumpBackStrip() {
   const pods = useHubsStore((s) => s.pods);
   const messages = useHubsStore((s) => s.messages);

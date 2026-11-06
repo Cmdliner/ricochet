@@ -11,7 +11,6 @@ type SheetRowProps = {
   onPress: () => void;
 };
 
-/** A tappable choice inside a sheet: an icon tile, a title and a line of help. */
 export function SheetRow({ icon, title, subtitle, onPress }: SheetRowProps) {
   const { colors } = useTheme();
   return (

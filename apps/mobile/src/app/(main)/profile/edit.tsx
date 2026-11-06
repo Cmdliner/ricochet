@@ -50,7 +50,6 @@ export default function EditProfile() {
     (statusText.trim() ? (emoji ?? "💬") : null) !== (saved.status?.emoji ?? null) ||
     color !== saved.avatarColor;
 
-  // Leaving with unsaved changes asks first, so a stray back swipe cannot throw work away.
   usePreventRemove(dirty, ({ data }) => {
     // A finished save leaves straight away: the hook only learns the form is clean on the next render.
     if (allowLeave.current) {
@@ -96,7 +95,6 @@ export default function EditProfile() {
       allowLeave.current = true;
       router.back();
     } catch (e) {
-      // A taken handle belongs on the handle field. Anything else is shown at the top.
       if (e instanceof ApiError && e.status === 409) setErrors({ handle: e.message });
       else setErrors({ general: errorMessage(e) });
     } finally {
@@ -129,7 +127,6 @@ export default function EditProfile() {
 
       <KeyboardAwareScrollView bottomOffset={64} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
         <View className="px-4">
-          {/* A live preview, so every change shows up where people will see it. */}
           <View className="mt-5 items-center rounded-3xl border border-line bg-surface px-5 pt-6 pb-5">
             <Avatar name={previewName} color={color} size={84} />
             <Text className="mt-3 font-display text-[24px] tracking-tight text-ink" numberOfLines={1}>

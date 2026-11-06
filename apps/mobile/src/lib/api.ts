@@ -14,7 +14,6 @@ export class ApiError extends Error {
 /** Lets the auth store plug in without the two files importing each other. */
 type AuthHandlers = {
   getAccessToken: () => string | null;
-  /** Returns a fresh access token, or null when the session is over. */
   refresh: () => Promise<string | null>;
 };
 let handlers: AuthHandlers | null = null;
@@ -27,7 +26,6 @@ type ApiOptions<S extends z.ZodType> = {
   body?: unknown;
   /** Send the access token, and refresh it once if the server says it has expired. */
   auth?: boolean;
-  /** Validates the response. The result is typed from it. */
   schema?: S;
 };
 

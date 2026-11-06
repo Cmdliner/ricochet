@@ -30,7 +30,6 @@ module.exports = {
       },
       colors: {
         ...themed,
-        // The brand colours are the same in both themes.
         accent: colors.accent,
         "accent-ink": colors.accentInk,
         avatar: colors.avatar,

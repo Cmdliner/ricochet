@@ -10,7 +10,6 @@ function format(seconds: number) {
   return `0:${String(seconds).padStart(2, "0")}`;
 }
 
-/** A voice note that plays on a loop and can be paused and resumed. */
 export function VoiceSticker({ className }: { className?: string }) {
   const [playing, setPlaying] = useState(true);
   const [elapsed, setElapsed] = useState(0);

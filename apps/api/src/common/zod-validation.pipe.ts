@@ -4,10 +4,6 @@ import type { ZodType, z } from "zod";
 
 type Transport = "http" | "ws";
 
-/**
- * Validates a request body or socket payload against a Zod schema from `@ricochet/shared`.
- * The same schema runs on the phone first, then here, so the rules cannot drift apart.
- */
 export class ZodValidationPipe<S extends ZodType> implements PipeTransform<unknown, z.output<S>> {
   constructor(
     private readonly schema: S,

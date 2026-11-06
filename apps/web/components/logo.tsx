@@ -18,10 +18,6 @@ export function LogoMark({ className, inverse = false }: { className?: string; i
   );
 }
 
-/**
- * The name, set as a logo. The dot of the "i" is the ricochet ball, in the accent colour, and it
- * bounces when you hover the wordmark. Size it with a text size class, everything scales with it.
- */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span
@@ -43,7 +39,6 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
-/** The mark and the name together, for places with room: the footer and the menu. */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("group/logo inline-flex items-center gap-2.5", className)}>

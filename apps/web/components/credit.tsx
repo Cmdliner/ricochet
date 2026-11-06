@@ -8,7 +8,6 @@ const icons = {
   whatsapp: WhatsAppIcon,
 } as const;
 
-/** "Designed & built by" line with a profile card that opens on hover or focus. */
 export function Credit() {
   return (
     <div className="group relative inline-block">

@@ -4,9 +4,7 @@ import { useTheme } from "@/theme/theme-provider";
 
 type IconButtonProps = Omit<PressableProps, "children"> & {
   icon: keyof typeof Ionicons.glyphMap;
-  /** Read out loud by screen readers, since the button has no text. */
   label: string;
-  /** "filled" sits on a raised circle, "plain" is just the icon. */
   variant?: "filled" | "plain" | "accent";
   size?: number;
 };

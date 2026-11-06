@@ -9,11 +9,9 @@ import { WaveformBars } from "./waveform-bars";
 type VoiceContentProps = {
   durationMs: number;
   waveform: number[];
-  /** Your own notes sit on the accent colour, so they use dark controls. */
   mine: boolean;
 };
 
-/** A voice note you can play. For now it only animates: real audio arrives with the API. */
 export function VoiceContent({ durationMs, waveform, mine }: VoiceContentProps) {
   const { colors } = useTheme();
   const [playing, setPlaying] = useState(false);

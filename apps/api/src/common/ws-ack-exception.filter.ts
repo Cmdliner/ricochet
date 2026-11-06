@@ -1,10 +1,6 @@
 import { Catch, type ArgumentsHost } from "@nestjs/common";
 import { WsException, type BaseWsExceptionFilter } from "@nestjs/websockets";
 
-/**
- * Sends socket errors back through the acknowledgement, so the phone gets
- * `{ ok: false, error }` for the exact event it sent instead of waiting for a timeout.
- */
 @Catch(WsException)
 export class WsAckExceptionFilter implements Pick<BaseWsExceptionFilter, "catch"> {
   catch(exception: WsException, host: ArgumentsHost) {

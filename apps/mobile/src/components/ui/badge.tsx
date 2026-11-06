@@ -1,7 +1,6 @@
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
 
-/** The accent pill that shows how many unread messages there are. Renders nothing for zero. */
 export function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (

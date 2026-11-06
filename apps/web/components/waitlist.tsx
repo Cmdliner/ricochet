@@ -30,7 +30,6 @@ export function Waitlist() {
       id="waitlist"
       className="pattern-light relative z-30 -mt-12 overflow-hidden rounded-t-[3rem] bg-accent pt-24 pb-32 text-center text-accent-ink sm:pt-32 sm:pb-40"
     >
-      {/* Playful stickers that echo the product. The voice note really plays and pauses. */}
       <VoiceSticker className="absolute top-32 left-[6%] hidden -rotate-6 items-center gap-3 rounded-2xl bg-cream-card px-4 py-3 shadow-xl shadow-black/15 lg:flex" />
       <div
         aria-hidden="true"

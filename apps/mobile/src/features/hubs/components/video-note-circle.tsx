@@ -9,11 +9,9 @@ import { formatDuration } from "../format";
 type VideoNoteCircleProps = {
   durationMs: number;
   size?: number;
-  /** A video you have not watched yet gets a bright ring. */
   fresh?: boolean;
 };
 
-/** The round video note. Tapping plays it, which for now only shows the progress ring. */
 export function VideoNoteCircle({ durationMs, size = 176, fresh = true }: VideoNoteCircleProps) {
   const { colors } = useTheme();
   const [playing, setPlaying] = useState(false);
@@ -53,7 +51,6 @@ export function VideoNoteCircle({ durationMs, size = 176, fresh = true }: VideoN
       className="active:opacity-90"
     >
       <View style={{ width: size, height: size, borderRadius: size / 2 }} className="overflow-hidden bg-raised">
-        {/* A friendly stand-in for the camera picture: a head and shoulders. */}
         <View
           style={{
             position: "absolute",

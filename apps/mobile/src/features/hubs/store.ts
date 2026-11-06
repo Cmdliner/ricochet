@@ -4,10 +4,7 @@ import { DISCOVERABLE_HUBS, HUBS, INITIAL_UNREAD, MEMBERS, MESSAGES, PODS } from
 import { CHATS, CHAT_MESSAGES, CHAT_UNREAD } from "./mock-chats";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
 
-/**
- * Everything the hubs screens read, held in memory with mock data.
- * When the API is ready, this store keeps its shape and its actions become API calls.
- */
+// Mock data. The actions become API calls when the API is wired in.
 
 type SendPayload =
   | { kind: "text"; text: string }
@@ -21,30 +18,24 @@ type HubsState = {
   members: Record<string, Member>;
   messages: Record<string, Message[]>;
   unread: Record<string, number>;
-  /** Who is typing in each pod right now. */
   typing: Record<string, string | null>;
 
   markPodRead: (podId: string) => void;
   togglePodMute: (podId: string) => void;
-  /** Changes the editable parts of a pod. */
   updatePod: (podId: string, patch: Partial<Pick<Pod, "name" | "description" | "isPrivate" | "mentionsOnly" | "muted">>) => void;
   deletePod: (podId: string) => void;
-  /** Adds a pod to a hub and returns its id. */
   createPod: (hubId: string, input: CreatePodInput) => string;
   updateHub: (hubId: string, input: UpdateHubInput) => void;
-  /** Replaces the invite code, so the old one stops working. Returns the new code. */
   regenerateInviteCode: (hubId: string) => string;
   deleteHub: (hubId: string) => void;
   setMemberRole: (hubId: string, memberId: string, role: Role) => void;
   removeMember: (hubId: string, memberId: string) => void;
-  /** Removes the hub and everything in it from this person's lists. */
   leaveHub: (hubId: string) => void;
   toggleChatMute: (chatId: string) => void;
   togglePin: (chatId: string) => void;
   sendMessage: (podId: string, payload: SendPayload) => void;
   toggleReaction: (podId: string, messageId: string, emoji: string) => void;
   createHub: (input: CreateHubInput) => string;
-  /** Returns the joined hub, or null when the code matches nothing. */
   joinHub: (code: string) => Hub | null;
 };
 
@@ -165,7 +156,6 @@ export const useHubsStore = create<HubsState>((set, get) => ({
     const message: Message = { ...base, ...payload } as Message;
     set((state) => ({ messages: { ...state.messages, [podId]: [...(state.messages[podId] ?? []), message] } }));
 
-    // Pretend someone is on the other end, so the screen feels alive.
     const chat = get().chats.find((c) => c.id === podId);
     const hub = get().hubs.find((h) => h.id === get().pods.find((p) => p.id === podId)?.hubId);
     const others = chat ? [{ id: chat.personId }] : (hub?.members.filter((m) => m.id !== ME_ID) ?? []);
@@ -260,7 +250,6 @@ export const useHubsStore = create<HubsState>((set, get) => ({
   },
 }));
 
-// ---------------------------------------------------------------- selectors
 export function useHub(hubId: string | undefined): Hub | undefined {
   return useHubsStore((s) => s.hubs.find((hub) => hub.id === hubId));
 }

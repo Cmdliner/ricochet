@@ -1,4 +1,4 @@
-/** Stand-ins for profile details the API does not provide yet. Replace with real data later. `bio` and `status` only seed the profile store. */
+// Stand-ins for profile details the API does not provide yet.
 export const MOCK_PROFILE = {
   bio: "Building things at odd hours. Voice notes over long texts, always.",
   status: { emoji: "🎧", text: "Heads down, back soon" },

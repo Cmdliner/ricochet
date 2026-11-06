@@ -1,7 +1,6 @@
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Rect } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 
-/** Profile setup: an avatar in the middle with hubs orbiting around it. */
 export function ProfileArt({ width = 300 }: { width?: number }) {
   const { colors: c } = useTheme();
 

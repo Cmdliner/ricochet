@@ -39,7 +39,6 @@ export const FOOTER_COLUMNS = [
 export const COOKIE_STORAGE_KEY = "ricochet-cookie-notice";
 export const COOKIE_EVENT = "ricochet:cookie-notice";
 
-/** Flat avatar colours used in the product previews. */
 export const AVATAR_COLORS = {
   coral: "#f4a6a6",
   mint: "#93e0b8",
@@ -47,12 +46,10 @@ export const AVATAR_COLORS = {
   sky: "#9fc9f4",
 } as const;
 
-/** Bar heights (px) for the voice message waveform. */
 export const WAVEFORM_BARS = [
   8, 14, 10, 20, 26, 16, 10, 22, 28, 18, 12, 24, 16, 9, 20, 14, 8, 12, 18, 10, 22, 14,
 ] as const;
 
-/** Footer credit card: who designed and built the site. */
 export const CREDIT = {
   name: "Adeyemi",
   role: "Software Engineer",

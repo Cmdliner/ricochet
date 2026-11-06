@@ -23,12 +23,10 @@ import { formatDuration } from "../format";
 type Kind = "voice" | "video";
 type Recording = { kind: Kind; elapsedMs: number; dx: number };
 
-/** How far left a finger must slide before releasing throws the recording away. */
 const CANCEL_DISTANCE = 90;
 const BAR_COUNT = 28;
 
 type ComposerProps = {
-  /** What the box says while empty, for example "Message #launch". */
   placeholder: string;
   onSendText: (text: string) => void;
   onSendVoice: (note: { durationMs: number; waveform: number[] }) => void;
@@ -39,7 +37,6 @@ function haptic(run: () => Promise<void>) {
   run().catch(() => undefined);
 }
 
-/** Squashes the loudness samples taken while recording down to the bars we draw. */
 function toBars(levels: number[]): number[] {
   if (levels.length === 0) return Array.from({ length: BAR_COUNT }, () => 30 + Math.random() * 60);
   return Array.from({ length: BAR_COUNT }, (_, i) => {
@@ -65,7 +62,6 @@ function RecordingDot() {
   return <Animated.View style={[style, { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.danger }]} />;
 }
 
-/** The round camera preview that appears above the composer while a video note records. */
 function Viewfinder({ elapsedMs, cancelling }: { elapsedMs: number; cancelling: boolean }) {
   const { colors } = useTheme();
   const size = 220;
@@ -193,7 +189,6 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo }: 
     handlers.current = { start, stop, mode };
   }, [start, stop, mode]);
 
-  // Never leave a timer running if the screen closes mid-recording.
   useEffect(
     () => () => {
       if (session.current) clearInterval(session.current.timer);

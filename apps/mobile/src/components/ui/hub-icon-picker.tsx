@@ -6,15 +6,12 @@ import { HubAvatar } from "./hub-avatar";
 type HubIconPickerProps = {
   value: HubIcon;
   onChange: (icon: HubIcon) => void;
-  /** The hub's colour, so each choice previews the way it will really look. */
   color: HubColor;
   name: string;
 };
 
-/** A grid of the pictures a hub can use, each drawn in the hub's own colour. */
 export function HubIconPicker({ value, onChange, color, name }: HubIconPickerProps) {
   const { colors } = useTheme();
-  // Rows of four, so sixteen pictures make an even square.
   const rows = Array.from({ length: Math.ceil(HUB_ICONS.length / 4) }, (_, i) => HUB_ICONS.slice(i * 4, i * 4 + 4));
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel="Hub picture" className="gap-3">

@@ -12,7 +12,6 @@ import { useTheme } from "@/theme/theme-provider";
 
 const NEW_CATEGORY = "__new__";
 
-/** Adds a pod to a hub, as a sheet over the hub screen. */
 export default function NewPod() {
   const { colors } = useTheme();
   const { hubId } = useLocalSearchParams<{ hubId: string }>();

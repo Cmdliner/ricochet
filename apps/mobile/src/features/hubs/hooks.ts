@@ -3,19 +3,16 @@ import { formatDuration } from "./format";
 import { useHubsStore } from "./store";
 import { ME_ID, type Message, type Pod, type Role } from "./types";
 
-/** Pods of one hub, in the order they were defined. */
 export function useHubPods(hubId: string | undefined): Pod[] {
   const pods = useHubsStore((s) => s.pods);
   return useMemo(() => pods.filter((pod) => pod.hubId === hubId), [pods, hubId]);
 }
 
-/** The newest message in a pod, if any. */
 export function useLastMessage(podId: string): Message | undefined {
   const messages = useHubsStore((s) => s.messages[podId]);
   return messages?.[messages.length - 1];
 }
 
-/** Numbers shown on a hub row and on the hub screen. Muted pods do not add to the unread count. */
 export function useHubStats(hubId: string) {
   const hub = useHubsStore((s) => s.hubs.find((h) => h.id === hubId));
   const pods = useHubPods(hubId);
@@ -33,7 +30,6 @@ export function useHubStats(hubId: string) {
   }, [hub, pods, unread, members]);
 }
 
-/** One line that describes a message, for list rows. */
 export function describeMessage(message: Message, authorName?: string): string {
   const prefix = authorName ? `${authorName}: ` : "";
   switch (message.kind) {
@@ -48,12 +44,10 @@ export function describeMessage(message: Message, authorName?: string): string {
   }
 }
 
-/** What the signed-in person is in a hub. Owners and admins can change settings. */
 export function useMyRole(hubId: string | undefined): Role | undefined {
   return useHubsStore((s) => s.hubs.find((h) => h.id === hubId)?.members.find((m) => m.id === ME_ID)?.role);
 }
 
-/** Message counts for a pod, shown on its settings screen. */
 export function usePodStats(podId: string | undefined) {
   const messages = useHubsStore((s) => s.messages[podId ?? ""]);
   return useMemo(() => {

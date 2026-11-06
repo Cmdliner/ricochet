@@ -25,7 +25,6 @@ export default function CreateHub() {
 
   const [name, setName] = useState("");
   const [color, setColor] = useState<HubColor>("coral");
-  // Until you pick one, the hub gets a picture chosen from its name, and the preview shows it.
   const [pickedIcon, setPickedIcon] = useState<HubIcon | null>(null);
   const icon = pickedIcon ?? defaultHubIcon(name || "?");
   const [pods, setPods] = useState<StarterPod[]>(["general", "announcements"]);

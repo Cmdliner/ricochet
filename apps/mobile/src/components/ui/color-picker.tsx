@@ -3,7 +3,6 @@ import { colors as tokens, HUB_COLORS, type HubColor } from "@ricochet/shared";
 import { Pressable, View } from "react-native";
 import { useTheme } from "@/theme/theme-provider";
 
-/** A row of colour swatches where exactly one is selected, used to pick a hub's colour. */
 export function ColorPicker({ value, onChange }: { value: HubColor; onChange: (color: HubColor) => void }) {
   const { colors } = useTheme();
   return (

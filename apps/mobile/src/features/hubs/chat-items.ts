@@ -11,11 +11,7 @@ function sameDay(a: number, b: number): boolean {
   return new Date(a).toDateString() === new Date(b).toDateString();
 }
 
-/**
- * Turns messages (oldest first) into list rows: day labels, and a flag on each message saying
- * whether it opens or closes a run from the same person. The result is newest first, which is
- * the order an inverted chat list wants.
- */
+// The result is newest first, the order an inverted chat list wants.
 export function buildChatItems(messages: Message[], myId: string): ChatItem[] {
   const items: ChatItem[] = [];
 

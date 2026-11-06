@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-/** Real-time event names. Both sides import these, so a typo is a compile error. */
 export const EVENTS = {
   // app -> server
   messageSend: "message:send",
@@ -28,7 +27,6 @@ export const conversationReadSchema = z.object({
 });
 export type ConversationRead = z.infer<typeof conversationReadSchema>;
 
-/** Room names, kept in one place. */
 export const rooms = {
   user: (userId: string) => `user:${userId}`,
   conversation: (conversationId: string) => `conversation:${conversationId}`,

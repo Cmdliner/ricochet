@@ -1,8 +1,5 @@
-/**
- * The address the site is served from, used to turn relative social-preview image paths into
- * full links. Set NEXT_PUBLIC_SITE_URL to pin it (for a custom domain). Otherwise Vercel's own
- * variables are used: the production domain on production, the deployment's address on previews.
- */
+// Set NEXT_PUBLIC_SITE_URL to pin it. Otherwise Vercel's variables give the production domain on
+// production and the deployment's own address on previews.
 export function getSiteUrl(): URL {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL;
   const host =

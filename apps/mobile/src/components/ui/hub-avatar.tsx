@@ -5,15 +5,10 @@ import { View } from "react-native";
 type HubAvatarProps = {
   name: string;
   color: HubColor;
-  /** Hubs that have not picked a picture get a stable one chosen from their name. */
   icon?: HubIcon;
   size?: number;
 };
 
-/**
- * A hub's picture: a coloured tile with an illustrated glyph and two soft shapes behind it, in
- * the same flat style as the rest of the brand. It replaces the plain letter tile.
- */
 export function HubAvatar({ name, color, icon, size = 54 }: HubAvatarProps) {
   const glyph = icon ?? defaultHubIcon(name);
   return (

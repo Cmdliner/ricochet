@@ -1,15 +1,11 @@
 import { WAVEFORM_BARS } from "@/lib/constants";
 
 type WaveformProps = {
-  /** Animate the playhead across the bars. */
   animated?: boolean;
   /** Static played portion, 0 to 100. Ignored when animated. */
   progress?: number;
-  /** How many bars to draw; defaults to all of them. */
   count?: number;
-  /** Freeze the animated playhead. */
   paused?: boolean;
-  /** Use darker unplayed bars, for light backgrounds. */
   light?: boolean;
   /** Seconds for one full pass of the animated playhead. */
   duration?: number;

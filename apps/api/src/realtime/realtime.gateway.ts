@@ -19,12 +19,7 @@ import type { Socket } from "socket.io";
 import { WsAckExceptionFilter } from "../common/ws-ack-exception.filter.js";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 
-/**
- * The live connection to every phone.
- *
- * Rooms: `user:{id}` carries everything meant for one person. `conversation:{id}` is joined
- * only while that pod or chat is open on screen.
- */
+/** Rooms: `user:{id}` carries everything for one person; `conversation:{id}` is joined only while that pod or chat is open. */
 @UseFilters(WsAckExceptionFilter)
 @WebSocketGateway({ transports: ["websocket"], cors: { origin: true } })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {

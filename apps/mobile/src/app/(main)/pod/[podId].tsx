@@ -16,7 +16,6 @@ import { useHubStats } from "@/features/hubs/hooks";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
 
-/** What shows at the very top of a pod, above its first message. */
 function PodIntro({ name, description }: { name: string; description: string }) {
   return (
     <View className="items-center gap-2 px-8 py-10">

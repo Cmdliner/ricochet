@@ -5,7 +5,6 @@ type VideoNoteProps = {
   size?: number;
 };
 
-/** A round video note placeholder: flat silhouette, no photography needed. */
 export function VideoNote({ duration, size = 112 }: VideoNoteProps) {
   return (
     <div

@@ -2,11 +2,7 @@ import type { HubColor } from "@ricochet/shared";
 import { create } from "zustand";
 import { MOCK_PROFILE } from "./mock-profile";
 
-/**
- * The profile details the API does not store yet, held in memory. Name and handle are real and
- * live in the auth store. When the API grows these fields, this store keeps its shape and its
- * action becomes an API call.
- */
+// Name and handle are real and live in the auth store. The rest is mock data until the API stores it.
 
 export type ProfileStatus = { emoji: string; text: string };
 

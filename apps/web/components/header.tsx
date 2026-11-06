@@ -14,8 +14,6 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Always pinned. Once you leave the top, desktop gains a frosted background so the page
-  // reads cleanly underneath it.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();

@@ -1,14 +1,10 @@
 import { z } from "zod";
 
-/** The colours a hub can use for its icon. Keys of the avatar palette in the design tokens. */
 export const HUB_COLORS = ["coral", "sky", "mint", "amber"] as const;
 export const hubColorSchema = z.enum(HUB_COLORS);
 export type HubColor = z.infer<typeof hubColorSchema>;
 
-/**
- * The pictures a hub can wear instead of a letter. Each is the name of an Ionicons glyph, so the
- * app draws them and the server only has to store a short word.
- */
+/** Each is the name of an Ionicons glyph. */
 export const HUB_ICONS = [
   "rocket",
   "color-palette",
@@ -30,14 +26,12 @@ export const HUB_ICONS = [
 export const hubIconSchema = z.enum(HUB_ICONS);
 export type HubIcon = z.infer<typeof hubIconSchema>;
 
-/** A stable icon for a hub that has not picked one: the same name always gets the same picture. */
 export function defaultHubIcon(name: string): HubIcon {
   let hash = 0;
   for (const char of name.trim().toLowerCase()) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return HUB_ICONS[hash % HUB_ICONS.length] ?? "rocket";
 }
 
-/** Pods offered when someone creates a hub. */
 export const STARTER_PODS = ["general", "announcements", "off-topic"] as const;
 export const starterPodSchema = z.enum(STARTER_PODS);
 export type StarterPod = z.infer<typeof starterPodSchema>;
@@ -67,7 +61,6 @@ export type JoinHubInput = z.infer<typeof joinHubSchema>;
 
 export const hubDescriptionSchema = z.string().trim().max(160, "Keep the description under 160 characters.");
 
-/** What an owner or admin can change on a hub. */
 export const updateHubSchema = z.object({
   name: hubNameSchema,
   description: hubDescriptionSchema,
@@ -75,6 +68,11 @@ export const updateHubSchema = z.object({
   icon: hubIconSchema,
 });
 export type UpdateHubInput = z.infer<typeof updateHubSchema>;
+
+export const patchHubSchema = updateHubSchema
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, { message: "Nothing to change." });
+export type PatchHubInput = z.infer<typeof patchHubSchema>;
 
 /** "Design Crits!" becomes "design-crits": pod names are lowercase words joined by hyphens. */
 export function toPodName(value: string): string {
@@ -102,3 +100,33 @@ export const createPodSchema = z.object({
   isPrivate: z.boolean(),
 });
 export type CreatePodInput = z.infer<typeof createPodSchema>;
+
+export const hubRoleSchema = z.enum(["owner", "admin", "member"]);
+export type HubRole = z.infer<typeof hubRoleSchema>;
+
+export const hubSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string(),
+  color: hubColorSchema,
+  icon: hubIconSchema,
+  inviteCode: z.string(),
+  memberCount: z.number().int(),
+  podCount: z.number().int(),
+  myRole: hubRoleSchema,
+  createdAt: z.string(),
+});
+export type HubView = z.infer<typeof hubSchema>;
+
+export const hubMemberSchema = z.object({
+  userId: z.uuid(),
+  displayName: z.string(),
+  handle: z.string(),
+  avatarColor: hubColorSchema,
+  role: hubRoleSchema,
+  joinedAt: z.string(),
+});
+export type HubMember = z.infer<typeof hubMemberSchema>;
+
+export const setMemberRoleSchema = z.object({ role: z.enum(["admin", "member"]) });
+export type SetMemberRoleInput = z.infer<typeof setMemberRoleSchema>;

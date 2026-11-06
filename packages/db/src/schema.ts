@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -14,29 +14,30 @@ import {
 } from "drizzle-orm/pg-core";
 import { uuidv7 } from "uuidv7";
 
-// ---------------------------------------------------------------- enums
 export const conversationType = pgEnum("conversation_type", ["pod", "direct", "group"]);
 export const messageType = pgEnum("message_type", ["text", "voice", "video", "system"]);
 export const mediaStatus = pgEnum("media_status", ["uploading", "processing", "ready", "failed"]);
 export const hubRole = pgEnum("hub_role", ["owner", "admin", "member"]);
 export const activityKind = pgEnum("activity_kind", ["mention", "reply", "invite", "announcement"]);
 export const devicePlatform = pgEnum("device_platform", ["ios", "android"]);
+export const avatarColor = pgEnum("avatar_color", ["coral", "sky", "mint", "amber"]);
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
-// ---------------------------------------------------------------- people and sign in
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   handle: text("handle").notNull().unique(),
   displayName: text("display_name").notNull(),
   avatarKey: text("avatar_key"),
-  /** Set once the person has chosen a name and handle. Empty means they still need to finish setup. */
+  avatarColor: avatarColor("avatar_color").notNull().default("coral"),
+  bio: text("bio").notNull().default(""),
+  statusEmoji: text("status_emoji"),
+  statusText: text("status_text"),
   profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
   createdAt: createdAt(),
 });
 
-/** One row per sign-in request. The code is stored hashed, never in plain text. */
 export const loginCodes = pgTable(
   "login_codes",
   {
@@ -51,7 +52,6 @@ export const loginCodes = pgTable(
   (t) => [index("login_codes_by_email").on(t.email, t.createdAt)],
 );
 
-/** A signed-in phone. The refresh token is stored hashed and rotated on use. */
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -69,10 +69,12 @@ export const devices = pgTable("devices", {
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// ---------------------------------------------------------------- hubs
 export const hubs = pgTable("hubs", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  color: avatarColor("color").notNull().default("coral"),
+  icon: text("icon").notNull().default("rocket"),
   ownerId: uuid("owner_id").notNull().references(() => users.id),
   inviteCode: text("invite_code").notNull().unique(),
   createdAt: createdAt(),
@@ -89,15 +91,25 @@ export const hubMembers = pgTable(
   (t) => [primaryKey({ columns: [t.hubId, t.userId] })],
 );
 
-// ---------------------------------------------------------------- conversations
 /** A pod and a chat are the same table. `hub_id` is set for pods and empty for chats. */
-export const conversations = pgTable("conversations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  type: conversationType("type").notNull(),
-  hubId: uuid("hub_id").references(() => hubs.id, { onDelete: "cascade" }),
-  name: text("name"),
-  createdAt: createdAt(),
-});
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: conversationType("type").notNull(),
+    hubId: uuid("hub_id").references(() => hubs.id, { onDelete: "cascade" }),
+    name: text("name"),
+    category: text("category"),
+    description: text("description").notNull().default(""),
+    /** Private pods are only visible to the people listed in `participants`. */
+    isPrivate: boolean("is_private").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    // Two pods in the same hub cannot share a name. Chats have no name, so they are left out.
+    uniqueIndex("pod_name_per_hub").on(t.hubId, t.name).where(sql`${t.type} = 'pod'`),
+  ],
+);
 
 /** Direct and group chat members, plus per-person settings (read pointer, mute) for any conversation. */
 export const participants = pgTable(
@@ -110,12 +122,12 @@ export const participants = pgTable(
     /** Newest message this person has read. Unread count is "messages after this". */
     lastReadId: uuid("last_read_id"),
     muted: boolean("muted").notNull().default(false),
+    mentionsOnly: boolean("mentions_only").notNull().default(false),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.conversationId, t.userId] })],
 );
 
-// ---------------------------------------------------------------- messages
 export const messages = pgTable(
   "messages",
   {
@@ -158,7 +170,6 @@ export const reactions = pgTable(
   (t) => [primaryKey({ columns: [t.messageId, t.userId, t.emoji] })],
 );
 
-// ---------------------------------------------------------------- activity feed
 export const activity = pgTable(
   "activity",
   {
@@ -173,7 +184,6 @@ export const activity = pgTable(
   (t) => [index("activity_by_user").on(t.userId, t.id)],
 );
 
-// ---------------------------------------------------------------- relations
 // These power `db.query.*` lookups. The foreign keys above are what the database enforces.
 export const hubsRelations = relations(hubs, ({ many }) => ({
   members: many(hubMembers),

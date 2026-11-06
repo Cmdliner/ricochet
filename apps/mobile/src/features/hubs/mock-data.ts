@@ -1,16 +1,11 @@
 import { ME_ID, type Hub, type Member, type Message, type Pod, type Reaction } from "./types";
 
-/**
- * Mock data for building the hubs and pods screens before the API exists.
- * Everything here has the shape the real API will return, so wiring it in later means
- * replacing the store's seed, not redoing the screens.
- */
+// Mock data in the shape the real API will return.
 
 const MINUTE = 60_000;
 const now = Date.now();
 export const ago = (minutes: number) => now - minutes * MINUTE;
 
-// ---------------------------------------------------------------- people
 export const MEMBERS: Record<string, Member> = {
   [ME_ID]: { id: ME_ID, name: "You", handle: "you", color: "coral", online: true },
   mira: { id: "mira", name: "Mira Okafor", handle: "mira", color: "coral", online: true },
@@ -26,7 +21,6 @@ export const MEMBERS: Record<string, Member> = {
   zara: { id: "zara", name: "Zara Ahmed", handle: "zara", color: "coral", online: true },
 };
 
-// ---------------------------------------------------------------- hubs
 export const HUBS: Hub[] = [
   {
     id: "ship-it",
@@ -92,7 +86,6 @@ export const HUBS: Hub[] = [
   },
 ];
 
-/** A hub the person can join with an invite code, to try the join flow. */
 export const DISCOVERABLE_HUBS: Hub[] = [
   {
     id: "pixel-lab",
@@ -109,7 +102,6 @@ export const DISCOVERABLE_HUBS: Hub[] = [
   },
 ];
 
-// ---------------------------------------------------------------- pods
 export const PODS: Pod[] = [
   { id: "ship-welcome", hubId: "ship-it", name: "welcome", category: "Start here", description: "Rules and how this place works", muted: false, isPrivate: false },
   { id: "ship-announce", hubId: "ship-it", name: "announcements", category: "Start here", description: "Hub news from the team", muted: false, isPrivate: false },
@@ -134,7 +126,6 @@ export const PODS: Pod[] = [
   { id: "pixel-jams", hubId: "pixel-lab", name: "game-jams", category: "Make", description: "Teams and themes", muted: false, isPrivate: false },
 ];
 
-/** How many messages each pod starts with unread. */
 export const INITIAL_UNREAD: Record<string, number> = {
   "ship-announce": 1,
   "ship-launch": 12,
@@ -144,7 +135,6 @@ export const INITIAL_UNREAD: Record<string, number> = {
   "book-current": 0,
 };
 
-// ---------------------------------------------------------------- messages
 const wave = (seed: number, count = 28): number[] => {
   let x = seed;
   return Array.from({ length: count }, () => {

@@ -4,6 +4,7 @@ import { AuthModule } from "./auth/auth.module.js";
 import { validateEnv } from "./config/env.js";
 import { DbModule } from "./db/db.module.js";
 import { HealthController } from "./health/health.controller.js";
+import { HubsModule } from "./hubs/hubs.module.js";
 import { JobsModule } from "./jobs/jobs.module.js";
 import { RealtimeModule } from "./realtime/realtime.module.js";
 import { UsersModule } from "./users/users.module.js";
@@ -14,6 +15,7 @@ import { UsersModule } from "./users/users.module.js";
     DbModule,
     AuthModule,
     UsersModule,
+    HubsModule,
     JobsModule,
     RealtimeModule,
   ],

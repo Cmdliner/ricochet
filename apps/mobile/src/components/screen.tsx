@@ -6,13 +6,11 @@ import { Text } from "@/components/ui/text";
 
 type ScreenProps = Pick<ComponentProps<typeof EmptyState>, "art" | "action" | "secondary" | "hints"> & {
   title: string;
-  /** Shown under the illustration when there is nothing to list. */
   emptyTitle: string;
   emptyBody: string;
   children?: ReactNode;
 };
 
-/** Shared frame for the tab screens: a big title, then the content or a proper empty state. */
 export function Screen({ title, art, emptyTitle, emptyBody, action, secondary, hints, children }: ScreenProps) {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">

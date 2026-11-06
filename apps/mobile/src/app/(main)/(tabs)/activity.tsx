@@ -26,7 +26,6 @@ const EMPTY: Record<Filter, { title: string; body: string }> = {
   invites: { title: "No invites waiting", body: "Hub invites from your friends will land here, ready to accept." },
 };
 
-/** Groups the list under "New", "Today", "Yesterday" and so on. */
 function group(items: AppNotification[]) {
   const sections: { title: string; data: AppNotification[] }[] = [];
   const fresh = items.filter((n) => !n.read);
