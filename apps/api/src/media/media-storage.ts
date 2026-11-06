@@ -22,6 +22,8 @@ export interface MediaStorage {
   publicUrl(key: string): string;
   createDownloadUrl(key: string, expiresInSeconds: number): Promise<string>;
   delete(key: string): Promise<void>;
+  /** The first `length` bytes of an object, to check it is what its type claims without downloading all of it. */
+  readHead(key: string, length: number): Promise<Buffer>;
   /** Copies an object to a file on this machine, for the worker that processes media with ffmpeg. */
   download(key: string, destination: string): Promise<void>;
   /** Stores a file from this machine, for things the server makes itself such as a video's poster frame. */

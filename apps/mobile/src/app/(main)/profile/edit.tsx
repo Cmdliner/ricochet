@@ -26,7 +26,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useHubsStore } from "@/features/hubs/store";
 import { api, ApiError, errorMessage } from "@/lib/api";
-import { mediaUrl, uploadTo } from "@/lib/media";
+import { localFileSize, mediaUrl, uploadLocalFile } from "@/lib/media";
 import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -131,14 +131,13 @@ export default function EditProfile() {
         compress: 0.8,
         format: ImageManipulator.SaveFormat.JPEG,
       });
-      const file = await (await fetch(resized.uri)).blob();
       const { key, upload } = await api("/me/avatar/upload", {
         method: "POST",
         auth: true,
-        body: { contentType: "image/jpeg", size: file.size },
+        body: { contentType: "image/jpeg", size: await localFileSize(resized.uri) },
         schema: avatarUploadSchema,
       });
-      await uploadTo(upload, file);
+      await uploadLocalFile(upload, resized.uri);
       const updated = await api("/me/avatar", { method: "POST", auth: true, body: { key }, schema: authUserSchema });
       useAuthStore.getState().setUser(updated);
       useHubsStore.getState().refreshSelf();
