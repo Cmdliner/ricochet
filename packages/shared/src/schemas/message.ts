@@ -50,6 +50,22 @@ export const requestUploadSchema = z.object({
 });
 export type RequestUploadInput = z.infer<typeof requestUploadSchema>;
 
+export const mediaUploadSchema = z.object({
+  key: z.string(),
+  upload: z.object({ url: z.string(), method: z.literal("PUT"), headers: z.record(z.string(), z.string()) }),
+});
+export type MediaUpload = z.infer<typeof mediaUploadSchema>;
+
+/** `url` and `posterUrl` are links that expire. Ask `GET /messages/:id/media` for fresh ones when one stops working. */
+export const mediaViewSchema = z.object({
+  status: mediaStatusSchema,
+  durationMs: z.number().int().nullable(),
+  waveform: z.array(z.number()).nullable(),
+  url: z.string().nullable(),
+  posterUrl: z.string().nullable(),
+});
+export type MediaView = z.infer<typeof mediaViewSchema>;
+
 export const reactionEmojiSchema = z.string().min(1).max(16);
 
 export const reactionSchema = z.object({ emoji: z.string(), userIds: z.array(z.uuid()) });
@@ -64,6 +80,7 @@ export const messageSchema = z.object({
   clientId: z.uuid(),
   createdAt: z.string(),
   reactions: z.array(reactionSchema),
+  media: mediaViewSchema.nullable(),
 });
 export type MessageView = z.infer<typeof messageSchema>;
 

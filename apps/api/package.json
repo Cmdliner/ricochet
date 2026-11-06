@@ -32,6 +32,7 @@
     "@ricochet/db": "workspace:*",
     "@ricochet/shared": "workspace:*",
     "@socket.io/redis-adapter": "^8.3.0",
+    "@socket.io/redis-emitter": "^5.1.0",
     "bullmq": "^6.7.0",
     "drizzle-orm": "catalog:",
     "ioredis": "^6.0.0",

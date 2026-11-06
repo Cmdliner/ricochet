@@ -5,6 +5,8 @@ export const LIMITS = {
   /** A recording shorter than this is discarded as an accidental tap. */
   minRecordingMs: 1000,
   messageBodyMax: 4000,
+  voiceNoteMaxBytes: 25 * 1_000_000,
+  videoNoteMaxBytes: 80 * 1_000_000,
   loginCodeLength: 6,
   loginCodeTtlMs: 10 * 60 * 1000,
   loginCodeMaxAttempts: 5,

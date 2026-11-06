@@ -51,6 +51,14 @@ export class MediaService {
     return this.storage.createDownloadUrl(key, expiresInSeconds);
   }
 
+  download(key: string, destination: string): Promise<void> {
+    return this.storage.download(key, destination);
+  }
+
+  uploadFile(key: string, source: string, contentType: string): Promise<void> {
+    return this.storage.uploadFile(key, source, contentType);
+  }
+
   async remove(key: string | null): Promise<void> {
     if (key) await this.storage.delete(key).catch(() => undefined);
   }

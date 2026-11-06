@@ -19,6 +19,10 @@ export const envSchema = z.object({
   /** URL scheme the app registers, used for the sign in link in emails. */
   APP_SCHEME: z.string().default("ricochet"),
 
+  /** Where the media worker finds ffmpeg and ffprobe. Without them videos are still sent, just without a poster frame. */
+  FFMPEG_PATH: z.string().default("ffmpeg"),
+  FFPROBE_PATH: z.string().default("ffprobe"),
+
   /** Where uploaded files live. `local` stores them on this server's disk for development, `r2` uses Cloudflare R2. */
   MEDIA_PROVIDER: z.enum(["local", "r2"]).default("local"),
   MEDIA_LOCAL_DIR: z.string().default("./.media"),
