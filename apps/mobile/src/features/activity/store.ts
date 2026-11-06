@@ -1,19 +1,20 @@
+import { activityItemSchema, activityPageSchema, unreadSummarySchema, type ActivityItem, type ActivityNew } from "@ricochet/shared";
+import { z } from "zod";
 import { create } from "zustand";
-import { day, ago } from "@/features/hubs/mock-data";
 import { useHubsStore } from "@/features/hubs/store";
+import { api, errorMessage } from "@/lib/api";
+import { showError } from "@/lib/notify";
 
-// Mock data. The actions become API calls when the API is wired in.
-
-export type NotificationKind = "mention" | "reply" | "reaction" | "invite" | "announcement";
+export type NotificationKind = ActivityItem["kind"];
 
 export type AppNotification = {
   id: string;
   kind: NotificationKind;
-  actorId?: string;
+  actor?: { id: string; name: string; color: NonNullable<ActivityItem["actor"]>["avatarColor"] };
   hubId?: string;
   podId?: string;
   hubName?: string;
-  inviteCode?: string;
+  podName?: string;
   preview?: string;
   emoji?: string;
   at: number;
@@ -21,44 +22,113 @@ export type AppNotification = {
   invite?: "pending" | "accepted" | "declined";
 };
 
-const SEED: AppNotification[] = [
-  { id: "n1", kind: "mention", actorId: "mira", hubId: "ship-it", podId: "ship-launch", preview: "@you can you look at the pricing copy before we freeze it?", at: ago(6), read: false },
-  { id: "n2", kind: "invite", actorId: "leo", hubName: "Pixel Lab", inviteCode: "BOUNCE", preview: "Game jams, pixel art and procedural everything.", at: ago(38), read: false, invite: "pending" },
-  { id: "n3", kind: "reaction", actorId: "jonah", hubId: "ship-it", podId: "ship-launch", emoji: "🔥", preview: "Landing page is live. Go break it.", at: ago(95), read: false },
-  { id: "n4", kind: "reply", actorId: "tola", hubId: "design-club", podId: "design-crits", preview: "Agree on the spacing, but the icon weight feels heavy next to the type.", at: ago(210), read: true },
-  { id: "n5", kind: "announcement", hubId: "ship-it", podId: "ship-announce", preview: "Friday launch call moved to 4pm. Bring your checklists.", at: ago(day - 40), read: true },
-  { id: "n6", kind: "mention", actorId: "priya", hubId: "design-club", podId: "design-inspo", preview: "@you this is exactly the vibe you described last week", at: ago(day + 120), read: true },
-  { id: "n7", kind: "reaction", actorId: "noor", hubId: "book-circle", podId: "book-current", emoji: "❤️", preview: "Chapter 7 wrecked me in the best way.", at: ago(2 * day + 60), read: true },
-  { id: "n8", kind: "reply", actorId: "zara", hubId: "book-circle", podId: "book-next", preview: "I voted for the memoir too. Finally someone with taste.", at: ago(4 * day), read: true },
-];
+const PAGE_SIZE = 30;
+const auth = { auth: true } as const;
+
+function toNotification(item: ActivityItem): AppNotification {
+  return {
+    id: item.id,
+    kind: item.kind,
+    actor: item.actor ? { id: item.actor.id, name: item.actor.displayName, color: item.actor.avatarColor } : undefined,
+    hubId: item.hubId ?? undefined,
+    podId: item.conversationId ?? undefined,
+    hubName: item.hubName ?? undefined,
+    podName: item.podName ?? undefined,
+    preview: item.preview ?? undefined,
+    emoji: item.emoji ?? undefined,
+    at: Date.parse(item.createdAt),
+    read: item.read,
+    invite: item.invite ?? undefined,
+  };
+}
+
+type Status = "idle" | "loading" | "ready" | "error";
 
 type ActivityState = {
+  status: Status;
   items: AppNotification[];
+  /** The server's count, which can be higher than what is loaded here. */
+  unread: number;
+  cursor: string | null;
+  loadingMore: boolean;
+
+  load: () => Promise<void>;
+  loadMore: () => Promise<void>;
+  reset: () => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
-  respondToInvite: (id: string, accept: boolean) => void;
+  respondToInvite: (id: string, accept: boolean) => Promise<void>;
+  receiveNew: (event: ActivityNew) => void;
+  receiveUnread: (unread: number) => void;
 };
 
+const EMPTY = { status: "idle" as Status, items: [] as AppNotification[], unread: 0, cursor: null as string | null, loadingMore: false };
+
 export const useActivityStore = create<ActivityState>((set, get) => ({
-  items: SEED,
+  ...EMPTY,
+
+  async load() {
+    set({ status: get().status === "ready" ? "ready" : "loading" });
+    try {
+      const [page, summary] = await Promise.all([
+        api(`/activity?limit=${PAGE_SIZE}`, { ...auth, schema: activityPageSchema }),
+        api("/unread", { ...auth, schema: unreadSummarySchema }),
+      ]);
+      set({ status: "ready", items: page.items.map(toNotification), cursor: page.nextCursor, unread: summary.activity });
+    } catch {
+      set({ status: "error" });
+    }
+  },
+
+  async loadMore() {
+    const { cursor, loadingMore } = get();
+    if (!cursor || loadingMore) return;
+    set({ loadingMore: true });
+    try {
+      const page = await api(`/activity?limit=${PAGE_SIZE}&before=${cursor}`, { ...auth, schema: activityPageSchema });
+      set((state) => ({ items: [...state.items, ...page.items.map(toNotification)], cursor: page.nextCursor, loadingMore: false }));
+    } catch {
+      set({ loadingMore: false });
+    }
+  },
+
+  reset: () => set({ ...EMPTY }),
 
   markRead(id) {
-    set((state) => ({ items: state.items.map((n) => (n.id === id ? { ...n, read: true } : n)) }));
+    const note = get().items.find((n) => n.id === id);
+    if (!note || note.read) return;
+    set((state) => ({ items: state.items.map((n) => (n.id === id ? { ...n, read: true } : n)), unread: Math.max(0, state.unread - 1) }));
+    api("/activity/read", { ...auth, method: "POST", body: { ids: [id] }, schema: z.object({ unread: z.number() }) })
+      .then((result) => set({ unread: result.unread }))
+      .catch(() => get().receiveUnread(get().unread + 1));
   },
 
   markAllRead() {
-    set((state) => ({ items: state.items.map((n) => ({ ...n, read: true })) }));
+    const previous = get();
+    set((state) => ({ items: state.items.map((n) => ({ ...n, read: true })), unread: 0 }));
+    api("/activity/read", { ...auth, method: "POST", body: { all: true } }).catch((error: unknown) => {
+      set({ items: previous.items, unread: previous.unread });
+      showError(error);
+    });
   },
 
-  respondToInvite(id, accept) {
-    const note = get().items.find((n) => n.id === id);
-    if (accept && note?.inviteCode) useHubsStore.getState().joinHub(note.inviteCode);
-    set((state) => ({
-      items: state.items.map((n) => (n.id === id ? { ...n, read: true, invite: accept ? "accepted" : "declined" } : n)),
-    }));
+  async respondToInvite(id, accept) {
+    try {
+      const item = await api(`/activity/${id}/respond`, { ...auth, method: "POST", body: { accept }, schema: activityItemSchema });
+      set((state) => ({ items: state.items.map((n) => (n.id === id ? toNotification(item) : n)) }));
+      if (accept) await useHubsStore.getState().load();
+    } catch (error) {
+      showError(error, errorMessage(error).includes("already") ? "Already answered" : undefined);
+    }
   },
+
+  receiveNew({ item, unread }) {
+    set((state) => ({ items: [toNotification(item), ...state.items.filter((n) => n.id !== item.id)], unread }));
+  },
+
+  receiveUnread: (unread) => set({ unread }),
 }));
 
 export function useUnreadActivity(): number {
-  return useActivityStore((s) => s.items.filter((n) => !n.read).length);
+  return useActivityStore((s) => s.unread);
 }

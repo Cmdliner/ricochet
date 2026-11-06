@@ -19,14 +19,9 @@ const KIND: Record<NotificationKind, { icon: keyof typeof Ionicons.glyphMap }> =
 };
 
 function Headline({ note }: { note: AppNotification }) {
-  const actor = useHubsStore((s) => (note.actorId ? s.members[note.actorId] : undefined));
-  const hub = useHubsStore((s) => s.hubs.find((h) => h.id === note.hubId));
-  const pod = useHubsStore((s) => s.pods.find((p) => p.id === note.podId));
-  const who = actor?.name.split(" ")[0] ?? hub?.name ?? "Someone";
+  const who = note.actor?.name.split(" ")[0] ?? note.hubName ?? "Someone";
   const bold = "font-sans-semibold text-ink";
-  const where = pod ? (
-    <Text className={bold}>#{pod.name}</Text>
-  ) : null;
+  const where = note.podName ? <Text className={bold}>#{note.podName}</Text> : null;
 
   switch (note.kind) {
     case "mention":
@@ -56,7 +51,7 @@ function Headline({ note }: { note: AppNotification }) {
     case "announcement":
       return (
         <Text className="text-[15px] leading-5 text-muted">
-          New announcement in <Text className={bold}>{hub?.name}</Text>
+          New announcement in <Text className={bold}>{note.hubName}</Text>
         </Text>
       );
   }
@@ -66,7 +61,7 @@ export function NotificationRow({ note }: { note: AppNotification }) {
   const { colors } = useTheme();
   const markRead = useActivityStore((s) => s.markRead);
   const respond = useActivityStore((s) => s.respondToInvite);
-  const actor = useHubsStore((s) => (note.actorId ? s.members[note.actorId] : undefined));
+  const actor = note.actor;
   const hub = useHubsStore((s) => s.hubs.find((h) => h.id === note.hubId));
   const isInvite = note.kind === "invite";
 

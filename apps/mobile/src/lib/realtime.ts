@@ -1,5 +1,7 @@
 import {
   EVENTS,
+  type ActivityNew,
+  type ActivityUnread,
   type ChatUpdated,
   type MessageView,
   type PresenceUpdate,
@@ -19,6 +21,8 @@ export type RealtimeHandlers = {
   typing: (notice: TypingNotice, on: boolean) => void;
   presence: (update: PresenceUpdate) => void;
   chatUpdated: (update: ChatUpdated) => void;
+  activityNew: (event: ActivityNew) => void;
+  activityUnread: (event: ActivityUnread) => void;
 };
 
 const REFRESH_MARGIN_MS = 30_000;
@@ -72,6 +76,8 @@ export const realtime = {
     next.on(EVENTS.typingStop, (notice: TypingNotice) => handlers.typing(notice, false));
     next.on(EVENTS.presenceUpdate, handlers.presence);
     next.on(EVENTS.chatUpdated, handlers.chatUpdated);
+    next.on(EVENTS.activityNew, handlers.activityNew);
+    next.on(EVENTS.activityUnread, handlers.activityUnread);
 
     appStateSubscription = AppState.addEventListener("change", (state) => {
       if (state === "active" && !next.connected) next.connect();

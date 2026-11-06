@@ -42,9 +42,10 @@ function group(items: AppNotification[]) {
 export default function Activity() {
   const items = useActivityStore((s) => s.items);
   const markAllRead = useActivityStore((s) => s.markAllRead);
+  const loadMore = useActivityStore((s) => s.loadMore);
+  const serverUnread = useActivityStore((s) => s.unread);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const unread = items.filter((n) => !n.read).length;
   const sections = useMemo(() => {
     const filtered = items
       .filter((n) => (filter === "mentions" ? n.kind === "mention" : filter === "invites" ? n.kind === "invite" : true))
@@ -58,7 +59,7 @@ export default function Activity() {
     <SafeAreaView edges={["top"]} className="flex-1 bg-canvas">
       <BrandBar
         right={
-          unread > 0 ? (
+          serverUnread > 0 ? (
             <Pressable accessibilityRole="button" accessibilityLabel="Mark all as read" hitSlop={8} onPress={markAllRead} className="rounded-full bg-raised px-4 py-2 active:opacity-70">
               <Text className="text-sm font-sans-semibold text-ink">Mark all read</Text>
             </Pressable>
@@ -94,6 +95,8 @@ export default function Activity() {
           <Text className="bg-canvas px-5 pt-5 pb-1 text-xs font-sans-semibold tracking-widest text-muted uppercase">{section.title}</Text>
         )}
         stickySectionHeadersEnabled={false}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 40 }}
         ListEmptyComponent={<EmptyState art={<ActivityArt width={240} />} title={copy.title} body={copy.body} />}
       />
