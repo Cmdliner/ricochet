@@ -3,6 +3,7 @@ import { messages, reactions, type Message } from "@ricochet/db";
 import { EVENTS, type ListMessagesQuery, type MessagePage, type MessageView, type SendMessageInput } from "@ricochet/shared";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { ActivityService } from "../activity/activity.service.js";
+import { ChatsService } from "../chats/chats.service.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { ConversationAccessService } from "./conversation-access.service.js";
@@ -17,6 +18,7 @@ export class MessagesService {
     private readonly access: ConversationAccessService,
     private readonly readState: ReadStateService,
     private readonly activity: ActivityService,
+    private readonly chats: ChatsService,
     private readonly bus: RealtimeBus,
   ) {}
 
@@ -78,6 +80,7 @@ export class MessagesService {
       this.bus.toConversation(message.conversationId, EVENTS.messageNew, message);
       this.readState.announceInBackground(conversation.id, userId);
       this.activity.inBackground(this.activity.recordForMessage(conversation, message, userId));
+      this.chats.announceInBackground(conversation, inserted);
       return { message, created: true };
     }
 

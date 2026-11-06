@@ -14,6 +14,7 @@ export const EVENTS = {
   messageDeleted: "message:deleted",
   unreadUpdate: "unread:update",
   presenceUpdate: "presence:update",
+  chatUpdated: "chat:updated",
   activityNew: "activity:new",
   activityUnread: "activity:unread",
 } as const;
