@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -21,6 +21,8 @@ export const mediaStatus = pgEnum("media_status", ["uploading", "processing", "r
 export const hubRole = pgEnum("hub_role", ["owner", "admin", "member"]);
 export const activityKind = pgEnum("activity_kind", ["mention", "reply", "invite", "announcement"]);
 export const devicePlatform = pgEnum("device_platform", ["ios", "android"]);
+/** The four tile colours a hub or a person's avatar can use. Names match the design tokens. */
+export const avatarColor = pgEnum("avatar_color", ["coral", "sky", "mint", "amber"]);
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
@@ -31,6 +33,12 @@ export const users = pgTable("users", {
   handle: text("handle").notNull().unique(),
   displayName: text("display_name").notNull(),
   avatarKey: text("avatar_key"),
+  /** The tile colour behind the person's initial, until they upload a photo. */
+  avatarColor: avatarColor("avatar_color").notNull().default("coral"),
+  bio: text("bio").notNull().default(""),
+  /** A short "what I'm up to" line with an emoji. Both empty means no status. */
+  statusEmoji: text("status_emoji"),
+  statusText: text("status_text"),
   /** Set once the person has chosen a name and handle. Empty means they still need to finish setup. */
   profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
   createdAt: createdAt(),
@@ -73,6 +81,10 @@ export const devices = pgTable("devices", {
 export const hubs = pgTable("hubs", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  color: avatarColor("color").notNull().default("coral"),
+  /** An Ionicons glyph name from the shared HUB_ICONS list. The API checks it, the database just stores it. */
+  icon: text("icon").notNull().default("rocket"),
   ownerId: uuid("owner_id").notNull().references(() => users.id),
   inviteCode: text("invite_code").notNull().unique(),
   createdAt: createdAt(),
@@ -91,13 +103,25 @@ export const hubMembers = pgTable(
 
 // ---------------------------------------------------------------- conversations
 /** A pod and a chat are the same table. `hub_id` is set for pods and empty for chats. */
-export const conversations = pgTable("conversations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  type: conversationType("type").notNull(),
-  hubId: uuid("hub_id").references(() => hubs.id, { onDelete: "cascade" }),
-  name: text("name"),
-  createdAt: createdAt(),
-});
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: conversationType("type").notNull(),
+    hubId: uuid("hub_id").references(() => hubs.id, { onDelete: "cascade" }),
+    name: text("name"),
+    /** Pods are grouped under a heading on the hub screen, such as "Build" or "Social". */
+    category: text("category"),
+    description: text("description").notNull().default(""),
+    /** Private pods are only visible to the people listed in `participants`. */
+    isPrivate: boolean("is_private").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    // Two pods in the same hub cannot share a name. Chats have no name, so they are left out.
+    uniqueIndex("pod_name_per_hub").on(t.hubId, t.name).where(sql`${t.type} = 'pod'`),
+  ],
+);
 
 /** Direct and group chat members, plus per-person settings (read pointer, mute) for any conversation. */
 export const participants = pgTable(
@@ -110,6 +134,8 @@ export const participants = pgTable(
     /** Newest message this person has read. Unread count is "messages after this". */
     lastReadId: uuid("last_read_id"),
     muted: boolean("muted").notNull().default(false),
+    /** Only notify this person when they are mentioned. */
+    mentionsOnly: boolean("mentions_only").notNull().default(false),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.conversationId, t.userId] })],
