@@ -3,6 +3,7 @@ export * from "./events";
 export * from "./queues";
 export * from "./schemas/activity";
 export * from "./schemas/auth";
+export * from "./schemas/chat";
 export * from "./schemas/hub";
 export * from "./schemas/pod";
 export * from "./schemas/message";

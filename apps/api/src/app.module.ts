@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ActivityModule } from "./activity/activity.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnv } from "./config/env.js";
+import { ChatsModule } from "./chats/chats.module.js";
 import { DbModule } from "./db/db.module.js";
 import { HealthController } from "./health/health.controller.js";
 import { HubsModule } from "./hubs/hubs.module.js";
@@ -19,6 +20,7 @@ import { UsersModule } from "./users/users.module.js";
     AuthModule,
     UsersModule,
     ActivityModule,
+    ChatsModule,
     HubsModule,
     PodsModule,
     MessagesModule,

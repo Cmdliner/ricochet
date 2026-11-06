@@ -11,6 +11,11 @@
 //   unread          everything with a badge: conversations and activity
 //   activity        your notifications, newest first
 //   readall         mark every notification as read
+//   find <text>     search people (your hubs by name, anyone by exact handle)
+//   dm <userId>     start or find a chat with someone; then use `open <chatId>` and `say`
+//   chats           your chats with their last message and unread count
+//   invite <hubId> <userId>   invite someone to a hub you own or admin
+//   respond <activityId> yes|no   answer a hub invite from your notifications
 //   open <podId>    open a pod, so its live messages reach you
 //   close           close the pod you have open
 //   say <text>      send a message to the open pod
@@ -88,6 +93,30 @@ const commands = {
   },
   async readall() {
     log(`readall -> ${JSON.stringify(await call("/activity/read", { token, body: { all: true } }))}`);
+  },
+  async find(text) {
+    const people = await call(`/people/search?q=${encodeURIComponent(text)}`, { method: "GET", token });
+    for (const person of people) log(`${person.displayName} @${person.handle} (${person.via})  ${person.id}`);
+    if (people.length === 0) log("nobody found");
+  },
+  async dm(userId) {
+    const chat = await call("/chats", { token, body: { userId } });
+    log(`chat with ${chat.person.displayName}  ${chat.id}`);
+  },
+  async chats() {
+    const chats = await call("/chats", { method: "GET", token });
+    for (const chat of chats) log(`${chat.pinned ? "^" : " "} ${chat.person.displayName} (${chat.unread} unread) ${chat.lastMessage?.body ?? ""}  ${chat.id}`);
+    if (chats.length === 0) log("no chats with messages yet");
+  },
+  async invite(args) {
+    const [hubId, userId] = args.split(" ");
+    await call(`/hubs/${hubId}/invites`, { token, body: { userId } });
+    log("invite sent");
+  },
+  async respond(args) {
+    const [id, answer] = args.split(" ");
+    const item = await call(`/activity/${id}/respond`, { token, body: { accept: answer === "yes" } });
+    log(`invite ${item.invite}`);
   },
   async open(podId) {
     const reply = await ask("conversation:open", { conversationId: podId });

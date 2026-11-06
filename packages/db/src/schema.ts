@@ -103,11 +103,14 @@ export const conversations = pgTable(
     description: text("description").notNull().default(""),
     /** Private pods are only visible to the people listed in `participants`. */
     isPrivate: boolean("is_private").notNull().default(false),
+    /** For one-to-one chats: the two user ids, sorted and joined. Makes "start a chat with Mira" safe to repeat and to race. */
+    dmKey: text("dm_key"),
     createdAt: createdAt(),
   },
   (t) => [
     // Two pods in the same hub cannot share a name. Chats have no name, so they are left out.
     uniqueIndex("pod_name_per_hub").on(t.hubId, t.name).where(sql`${t.type} = 'pod'`),
+    uniqueIndex("one_chat_per_pair").on(t.dmKey).where(sql`${t.dmKey} is not null`),
   ],
 );
 
@@ -123,6 +126,7 @@ export const participants = pgTable(
     lastReadId: uuid("last_read_id"),
     muted: boolean("muted").notNull().default(false),
     mentionsOnly: boolean("mentions_only").notNull().default(false),
+    pinned: boolean("pinned").notNull().default(false),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.conversationId, t.userId] })],
@@ -182,6 +186,8 @@ export const activity = pgTable(
     hubId: uuid("hub_id").references(() => hubs.id, { onDelete: "cascade" }),
     /** Only set for reactions. Empty (not null) otherwise, so the unique index below treats repeats as equal. */
     emoji: text("emoji").notNull().default(""),
+    /** Only for invites: how the person answered. Empty means still waiting. */
+    response: text("response"),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: createdAt(),
   },

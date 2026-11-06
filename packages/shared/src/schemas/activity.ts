@@ -16,6 +16,8 @@ export const activityItemSchema = z.object({
   messageId: z.uuid().nullable(),
   preview: z.string().nullable(),
   emoji: z.string().nullable(),
+  /** Only for invites: where the person's answer stands. */
+  invite: z.enum(["pending", "accepted", "declined"]).nullable(),
   read: z.boolean(),
   createdAt: z.string(),
 });
@@ -34,6 +36,12 @@ export const markActivityReadSchema = z
   .object({ ids: z.array(z.uuid()).min(1).max(100).optional(), all: z.literal(true).optional() })
   .refine((body) => body.ids !== undefined || body.all === true, "Say which notifications to mark, or send all: true.");
 export type MarkActivityReadInput = z.infer<typeof markActivityReadSchema>;
+
+export const respondToInviteSchema = z.object({ accept: z.boolean() });
+export type RespondToInviteInput = z.infer<typeof respondToInviteSchema>;
+
+export const inviteToHubSchema = z.object({ userId: z.uuid() });
+export type InviteToHubInput = z.infer<typeof inviteToHubSchema>;
 
 export const activityNewSchema = z.object({ item: activityItemSchema, unread: z.number().int().min(0) });
 export type ActivityNew = z.infer<typeof activityNewSchema>;

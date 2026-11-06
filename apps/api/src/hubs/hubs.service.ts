@@ -174,9 +174,13 @@ export class HubsService {
   async join(userId: string, code: string): Promise<HubView> {
     const [hub] = await this.db.select({ id: hubs.id }).from(hubs).where(eq(hubs.inviteCode, code)).limit(1);
     if (!hub) throw new NotFoundException("That invite code does not match a hub.");
-    await this.db.insert(hubMembers).values({ hubId: hub.id, userId, role: "member" }).onConflictDoNothing();
+    return this.joinHub(userId, hub.id);
+  }
+
+  async joinHub(userId: string, hubId: string): Promise<HubView> {
+    await this.db.insert(hubMembers).values({ hubId, userId, role: "member" }).onConflictDoNothing();
     this.bus.accessChanged({ userId });
-    return this.getView(userId, hub.id);
+    return this.getView(userId, hubId);
   }
 
   async leave(userId: string, hubId: string): Promise<void> {
