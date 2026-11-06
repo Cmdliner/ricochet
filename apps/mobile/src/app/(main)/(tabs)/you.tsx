@@ -16,6 +16,7 @@ import { SettingGroup, SettingRow } from "@/components/ui/setting-row";
 import { Text } from "@/components/ui/text";
 import { useHubsStore } from "@/features/hubs/store";
 import { mediaUrl } from "@/lib/media";
+import { registerForPush, unregisterPush, usePushStore } from "@/lib/push";
 import { useAuthStore } from "@/stores/auth-store";
 import { useTheme } from "@/theme/theme-provider";
 import type { Preference } from "@/theme/themes";
@@ -39,6 +40,22 @@ function soon(feature: string) {
   Alert.alert(feature, "This is coming soon.");
 }
 
+async function changePush(on: boolean) {
+  if (!on) {
+    await unregisterPush();
+    return;
+  }
+  const result = await registerForPush().catch(() => "unsupported" as const);
+  if (result === "denied") Alert.alert("Notifications are off", "Allow notifications for Ricochet in your phone's Settings, then try again.");
+  if (result === "unsupported") Alert.alert("Not available here", "Notifications work on a real phone with the Ricochet app installed.");
+}
+
+/** The phone stops being notified before the session ends, otherwise the next person to sign in here would get this person's messages. */
+async function signOutCleanly() {
+  await unregisterPush();
+  await useAuthStore.getState().signOut();
+}
+
 export default function You() {
   const user = useAuthStore((s) => s.user);
   const hubs = useHubsStore((s) => s.hubs);
@@ -47,7 +64,7 @@ export default function You() {
   const bio = user?.bio ?? "";
   const status = user?.status ?? null;
   const { colors, preference, setPreference } = useTheme();
-  const [notifications, setNotifications] = useState(true);
+  const pushToken = usePushStore((s) => s.token);
   const [haptics, setHaptics] = useState(true);
 
   const name = user?.displayName ?? "You";
@@ -134,7 +151,7 @@ export default function You() {
 
           <SectionLabel>Preferences</SectionLabel>
           <SettingGroup>
-            <SettingRow icon="notifications-outline" title="Notifications" toggle={{ value: notifications, onChange: setNotifications }} />
+            <SettingRow icon="notifications-outline" title="Notifications" toggle={{ value: pushToken !== null, onChange: (on) => void changePush(on) }} />
             <SettingRow icon="phone-portrait-outline" title="Haptic feedback" toggle={{ value: haptics, onChange: setHaptics }} />
             <SettingRow icon="moon-outline" title="Quiet hours" value="Off" onPress={() => soon("Quiet hours")} last />
           </SettingGroup>
@@ -147,7 +164,7 @@ export default function You() {
           </SettingGroup>
 
           <View className="mt-8">
-            <Button label="Sign out" variant="ghost" className="border border-line" onPress={() => void useAuthStore.getState().signOut()} />
+            <Button label="Sign out" variant="ghost" className="border border-line" onPress={() => void signOutCleanly()} />
             <Text className="mt-4 text-center text-xs text-muted">Ricochet {Constants.expoConfig?.version ?? ""}</Text>
           </View>
         </View>
