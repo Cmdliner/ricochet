@@ -16,10 +16,13 @@ export class MailService {
     const user = config.get("SMTP_USER", { infer: true });
     const pass = config.get("SMTP_PASS", { infer: true });
     this.from = config.get("MAIL_FROM", { infer: true });
+    const secure = config.get("SMTP_SECURE", { infer: true });
     this.transport = nodemailer.createTransport({
       host: config.get("SMTP_HOST", { infer: true }),
       port: config.get("SMTP_PORT", { infer: true }),
-      secure: config.get("SMTP_SECURE", { infer: true }),
+      secure,
+      // On port 587 the connection starts plain and is then upgraded. In production refuse to send if it is not, because the email carries a sign-in code.
+      requireTLS: !secure && config.get("NODE_ENV", { infer: true }) === "production",
       auth: user && pass ? { user, pass } : undefined,
     });
   }
