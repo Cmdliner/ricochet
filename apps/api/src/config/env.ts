@@ -3,6 +3,8 @@ import { z } from "zod";
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3001),
+  /** How many reverse proxies sit in front of the API (Caddy is one). 0 when clients connect directly. */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
 

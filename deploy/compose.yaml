@@ -1,0 +1,103 @@
+# Ricochet on one server. Run these commands from this folder (docker compose reads this file and .env here).
+#
+#   docker compose up -d --build      start or update everything
+#   docker compose logs -f api        watch the API
+#   docker compose ps                 see what is running
+#
+# Only Caddy is reachable from the internet (ports 80 and 443). Postgres and Redis live on a private network.
+
+name: ricochet
+
+x-api: &api
+  build:
+    context: ..
+    dockerfile: apps/api/Dockerfile
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    PORT: "3001"
+    DATABASE_URL: postgres://ricochet:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}@postgres:5432/ricochet
+    REDIS_URL: redis://redis:6379
+    MEDIA_LOCAL_DIR: /data/media
+    # Caddy is the one proxy in front of the API, so the rate limits can see each caller's real address.
+    TRUST_PROXY_HOPS: "1"
+  volumes:
+    - media:/data/media
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
+  api:
+    <<: *api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Runs once per deploy, before the API starts, then exits.
+  migrate:
+    <<: *api
+    command: ["node", "dist/migrate.js"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ricochet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ricochet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ricochet"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Append-only, so queued background jobs survive a restart. Background jobs also need Redis never to evict keys.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
+  media:
+  caddy-data:
+  caddy-config:

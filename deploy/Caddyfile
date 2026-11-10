@@ -1,0 +1,6 @@
+# Caddy gets and renews the https certificate by itself. It needs API_DOMAIN to point at this server
+# and ports 80 and 443 open. Live sockets pass through without any extra setting.
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:3001
+}
