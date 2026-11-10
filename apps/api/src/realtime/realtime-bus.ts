@@ -12,7 +12,9 @@ export type AccessChange = { userId: string } | { conversationId: string };
 /** The part of a socket we use. With the Redis adapter it may live on another server, which is why it is a thin handle. */
 export type RoomSocket = { data: { userId?: string }; rooms: Set<string>; join(room: string): Promise<void> | void; leave(room: string): Promise<void> | void };
 
-type Broadcaster = { to(room: string): { emit(event: string, payload: unknown): unknown } };
+type Broadcaster = {
+  to(room: string): { except(rooms: string[]): { emit(event: string, payload: unknown): unknown }; emit(event: string, payload: unknown): unknown };
+};
 
 /** Lets services talk to the realtime layer without depending on it, since the gateway depends on them. */
 @Injectable()
@@ -39,6 +41,12 @@ export class RealtimeBus {
 
   toConversation(conversationId: string, event: string, payload: unknown) {
     this.out.to(rooms.conversation(conversationId)).emit(event, payload);
+  }
+
+  /** Everyone with the conversation open, except these people. Used so someone who blocked the sender never receives the message live. */
+  toConversationExcept(conversationId: string, event: string, payload: unknown, exceptUserIds: string[]) {
+    const room = this.out.to(rooms.conversation(conversationId));
+    (exceptUserIds.length > 0 ? room.except(exceptUserIds.map((id) => rooms.user(id))) : room).emit(event, payload);
   }
 
   toHub(hubId: string, event: string, payload: unknown) {

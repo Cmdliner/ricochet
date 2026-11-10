@@ -13,6 +13,7 @@ import { PodsModule } from "./pods/pods.module.js";
 import { JobsModule } from "./jobs/jobs.module.js";
 import { PushModule } from "./push/push.module.js";
 import { RealtimeModule } from "./realtime/realtime.module.js";
+import { SafetyModule } from "./safety/safety.module.js";
 import { UsersModule } from "./users/users.module.js";
 
 @Module({
@@ -30,6 +31,7 @@ import { UsersModule } from "./users/users.module.js";
     MessagesModule,
     JobsModule,
     RealtimeModule,
+    SafetyModule,
   ],
   controllers: [HealthController],
 })

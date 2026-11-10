@@ -25,6 +25,7 @@ export function unreadCounts(filter: Filter): SQL {
       select count(*)::int from messages m
       where m.conversation_id = v.conversation_id
         and m.sender_id <> v.user_id
+        and not exists (select 1 from blocks bl where bl.blocker_id = v.user_id and bl.blocked_id = m.sender_id)
         and (case when v.last_read_id is not null then m.id > v.last_read_id else m.created_at >= v.since end)
     ) as unread
     from (

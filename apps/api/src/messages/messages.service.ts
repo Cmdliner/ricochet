@@ -1,6 +1,6 @@
 import { InjectQueue } from "@nestjs/bullmq";
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { attachments, messages, reactions } from "@ricochet/db";
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { attachments, messages, participants, reactions } from "@ricochet/db";
 import {
   EVENTS,
   MEDIA_JOBS,
@@ -14,7 +14,7 @@ import {
   type SendMessageInput,
 } from "@ricochet/shared";
 import type { Queue } from "bullmq";
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, lt, ne, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { ActivityService } from "../activity/activity.service.js";
 import { ChatsService } from "../chats/chats.service.js";
@@ -22,6 +22,7 @@ import { DRIZZLE, type Database } from "../db/db.module.js";
 import { MediaService } from "../media/media.service.js";
 import { PushService } from "../push/push.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
+import { hasBlocked, usersWhoBlocked } from "../safety/blocks.js";
 import { ConversationAccessService } from "./conversation-access.service.js";
 import { mediaPrefix, VIDEO_RULE, VOICE_RULE } from "./media-rules.js";
 import { MessageViewService } from "./message-view.service.js";
@@ -49,7 +50,12 @@ export class MessagesService {
       .select()
       .from(messages)
       .where(
-        and(eq(messages.conversationId, conversationId), query.before ? lt(messages.id, query.before) : undefined),
+        and(
+          eq(messages.conversationId, conversationId),
+          query.before ? lt(messages.id, query.before) : undefined,
+          // Whatever people you blocked wrote stays hidden from you.
+          sql`not exists (select 1 from blocks b where b.blocker_id = ${userId} and b.blocked_id = ${messages.senderId})`,
+        ),
       )
       .orderBy(desc(messages.id))
       .limit(query.limit + 1);
@@ -81,6 +87,18 @@ export class MessagesService {
     await this.media.verifyUpload(mediaKey, kind === "voice" ? VOICE_RULE : VIDEO_RULE);
   }
 
+  /** Someone you blocked cannot be written to. The reverse is silent: if they blocked you, the message is saved and simply never reaches them. */
+  private async requireNotBlockedByMe(userId: string, conversationId: string): Promise<void> {
+    const [other] = await this.db
+      .select({ userId: participants.userId })
+      .from(participants)
+      .where(and(eq(participants.conversationId, conversationId), ne(participants.userId, userId)))
+      .limit(1);
+    if (other && (await hasBlocked(this.db, userId, other.userId))) {
+      throw new ForbiddenException("Unblock this person to message them.");
+    }
+  }
+
   /** A reply can only quote a message in the same conversation, so nobody can pull text out of a room they were never in. */
   private async requireReplyTarget(conversationId: string, messageId: string): Promise<void> {
     const [parent] = await this.db
@@ -101,6 +119,7 @@ export class MessagesService {
     if (recording && (!recording.key || !recording.durationMs)) throw new BadRequestException("Upload the recording first.");
     if (recording?.key) await this.checkRecording(userId, recording.kind, recording.key);
     if (input.replyToId) await this.requireReplyTarget(input.conversationId, input.replyToId);
+    if (conversation.type === "direct") await this.requireNotBlockedByMe(userId, conversation.id);
 
     const inserted = await this.db.transaction(async (tx) => {
       const [row] = await tx
@@ -134,7 +153,7 @@ export class MessagesService {
       if (input.type === "video") {
         await this.mediaQueue.add(MEDIA_JOBS.processVideo, { messageId: inserted.id }, { attempts: 2, backoff: { type: "fixed", delay: 3000 } });
       }
-      this.bus.toConversation(message.conversationId, EVENTS.messageNew, message);
+      this.bus.toConversationExcept(message.conversationId, EVENTS.messageNew, message, await usersWhoBlocked(this.db, userId));
       this.readState.announceInBackground(conversation.id, userId);
       this.activity.inBackground(this.activity.recordForMessage(conversation, message, userId));
       this.activity.inBackground(this.activity.recordReply(conversation, message, userId));
