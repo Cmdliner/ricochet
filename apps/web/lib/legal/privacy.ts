@@ -4,7 +4,7 @@ import type { LegalContent } from "./types";
 export const privacy: LegalContent = {
   title: "Privacy Policy",
   description: "How Ricochet collects, uses and protects your personal information.",
-  updated: "November 2, 2026",
+  updated: "November 10, 2026",
   intro:
     "This Privacy Policy explains what personal information Ricochet (\"we\", \"us\") collects when you visit our website, join our waitlist or use our apps, how we use it, and the choices you have. We aim to collect only what we need to run Ricochet well.",
   sections: [
@@ -13,10 +13,11 @@ export const privacy: LegalContent = {
       paragraphs: ["Depending on how you use Ricochet, we may collect:"],
       list: [
         "Waitlist information: your email address when you ask to be notified about launch.",
-        "Account information: your name or username, email address or phone number, profile picture and password (stored in hashed form) once accounts are available.",
-        "Content you send: messages, voice messages, video notes, images and files, plus the details needed to deliver them, such as who they are sent to, timestamps and read states.",
+        "Account information: your email address, display name and handle, and optionally a profile picture, a short bio and a status. If you choose to set a password it is stored only as a salted hash; signing in with an emailed code needs no password.",
+        "Content you send: messages, reactions, voice notes and video notes, plus the details needed to deliver them, such as who they are sent to, timestamps and read states.",
         "Hub and pod information: the hubs and pods you create or join, and your role in them.",
-        "Device and usage information: device type, operating system, app version, language, IP address, crash reports and basic usage events, used to keep the Service running and secure.",
+        "Device and usage information: device type, operating system, app version, IP address and technical logs, used to keep the Service running and secure. If you turn on notifications we also keep a push notification token for your device. The Ricochet app does not contain advertising or third-party analytics tools.",
+        "Safety information: the people you block, and reports you send. A report keeps a copy of the reported message text so it can be reviewed even if the message is later removed. The person you block or report is not told.",
         "Support information: anything you tell us when you contact us.",
       ],
     },
