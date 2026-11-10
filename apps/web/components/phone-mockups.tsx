@@ -218,7 +218,7 @@ export const ChatPhone = PodScreen;
 
 export function PhoneMockups() {
   return (
-    <div className="flex h-[500px] items-start justify-center gap-6 overflow-hidden px-5 sm:h-[580px] lg:gap-8">
+    <div className="flex h-[360px] items-start justify-center gap-6 overflow-hidden px-5 sm:h-[580px] lg:gap-8">
       <HubsScreen />
       <PodScreen />
       <PrivateScreen />

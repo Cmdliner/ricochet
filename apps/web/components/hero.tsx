@@ -22,7 +22,7 @@ function Spark({ className }: { className?: string }) {
 export function Hero() {
   return (
     <section className="relative z-0 overflow-hidden bg-canvas">
-      <div className="relative mx-auto max-w-6xl px-5 pt-8 text-center sm:px-8 sm:pt-14">
+      <div className="relative mx-auto max-w-6xl px-5 pt-6 text-center sm:px-8 sm:pt-14">
         <Tile className="top-10 left-2 -rotate-[8deg] lg:left-10" delay="0s">
           <div className="rounded-3xl bg-raised p-2 shadow-2xl shadow-black/50">
             <Avatar letter="M" color="#f3a5a5" size="lg" square />
@@ -55,7 +55,7 @@ export function Hero() {
           </div>
         </Tile>
 
-        <div aria-hidden="true" className="mb-6 flex items-center justify-center gap-3 md:hidden">
+        <div aria-hidden="true" className="mb-4 flex items-center justify-center gap-3 md:hidden">
           <div className="-rotate-[8deg] rounded-2xl bg-raised p-1.5 shadow-xl shadow-black/50">
             <Avatar letter="M" color="#f3a5a5" size="md" square />
           </div>
@@ -77,14 +77,14 @@ export function Hero() {
           </div>
         </div>
 
-        <h1 className="relative font-display text-[3.5rem] leading-[0.95] font-semibold tracking-[-0.045em] sm:text-[6rem] lg:text-[8rem]">
+        <h1 className="relative font-display text-[3rem] leading-[0.95] font-semibold tracking-[-0.045em] sm:text-[6rem] lg:text-[8rem]">
           Chat that
           <br />
           <span className="text-accent">bounces back.</span>
           <Spark className="absolute -top-2 -right-1 hidden size-10 text-accent md:block lg:-right-6 lg:size-12" />
         </h1>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:mt-10 sm:gap-3">
           <Link href="/#waitlist" className={`${buttonClass({ size: "lg" })} sheen`}>
             Join the waitlist
           </Link>
@@ -92,8 +92,6 @@ export function Hero() {
             Get the app
           </Link>
         </div>
-
-        <p className="mt-6 text-sm text-muted lg:hidden">Hubs, pods, voice and video notes.</p>
 
         <p
           aria-hidden="true"
@@ -108,7 +106,7 @@ export function Hero() {
         </p>
       </div>
 
-      <div className="relative mt-10 sm:mt-14">
+      <div className="relative mt-8 sm:mt-14">
         <div aria-hidden="true" className="pointer-events-none absolute top-24 left-1/2 aspect-square w-[150vw] max-w-[1180px] -translate-x-1/2 sm:top-20">
           <span className="absolute inset-0 rounded-full bg-surface" />
           <span className="absolute -inset-[7%] rounded-full border border-line" />

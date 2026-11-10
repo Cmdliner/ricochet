@@ -26,7 +26,7 @@ export function MobileMenu({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Menu"
-      className="menu-in pattern-dark fixed inset-0 z-50 flex flex-col overflow-y-auto bg-canvas md:hidden"
+      className="menu-in fixed inset-0 z-50 flex flex-col overflow-y-auto bg-canvas md:hidden"
     >
       <div className="flex h-16 shrink-0 items-center justify-between px-5 sm:px-8">
         <Link href="/" aria-label="Ricochet home" onClick={onClose}>
