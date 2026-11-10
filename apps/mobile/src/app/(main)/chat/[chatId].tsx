@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,6 +13,7 @@ import { Composer } from "@/features/hubs/components/composer";
 import { DaySeparator } from "@/features/hubs/components/day-separator";
 import { MessageItem } from "@/features/hubs/components/message-item";
 import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
+import { retryScrollToIndex, useScrollToQuoted } from "@/features/hubs/reply";
 import { useConversation } from "@/features/hubs/hooks";
 import { useHubsStore } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
@@ -42,6 +43,8 @@ export default function ChatScreen() {
 
   const { loaded, hasOlder, loadOlder, signalTyping } = useConversation(chatId);
   const items = useMemo(() => buildChatItems(messages ?? [], ME_ID), [messages]);
+  const listRef = useRef<FlatList<ChatItem>>(null);
+  useScrollToQuoted(chatId, listRef, items);
 
   useEffect(() => {
     if (chatId) markPodRead(chatId);
@@ -82,7 +85,9 @@ export default function ChatScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <FlatList
+          ref={listRef}
           inverted
+          onScrollToIndexFailed={retryScrollToIndex(listRef)}
           data={items}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
@@ -101,6 +106,7 @@ export default function ChatScreen() {
         />
 
         <Composer
+          conversationId={chat.id}
           placeholder={`Message ${first}`}
           onSendText={(text) => sendMessage(chat.id, { kind: "text", text })}
           onSendVoice={(note) => sendMessage(chat.id, { kind: "voice", ...note })}

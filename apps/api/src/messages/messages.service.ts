@@ -81,6 +81,16 @@ export class MessagesService {
     await this.media.verifyUpload(mediaKey, kind === "voice" ? VOICE_RULE : VIDEO_RULE);
   }
 
+  /** A reply can only quote a message in the same conversation, so nobody can pull text out of a room they were never in. */
+  private async requireReplyTarget(conversationId: string, messageId: string): Promise<void> {
+    const [parent] = await this.db
+      .select({ id: messages.id })
+      .from(messages)
+      .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)))
+      .limit(1);
+    if (!parent) throw new BadRequestException("The message you are replying to is not in this conversation.");
+  }
+
   async send(userId: string, input: SendMessageInput): Promise<{ message: MessageView; created: boolean }> {
     const conversation = await this.access.require(userId, input.conversationId);
     // The schema already insists on these for recordings. Repeating it here is what lets the compiler know.
@@ -90,6 +100,7 @@ export class MessagesService {
         : { kind: input.type, key: input.mediaKey, durationMs: input.durationMs, waveform: input.waveform ?? null };
     if (recording && (!recording.key || !recording.durationMs)) throw new BadRequestException("Upload the recording first.");
     if (recording?.key) await this.checkRecording(userId, recording.kind, recording.key);
+    if (input.replyToId) await this.requireReplyTarget(input.conversationId, input.replyToId);
 
     const inserted = await this.db.transaction(async (tx) => {
       const [row] = await tx
@@ -100,6 +111,7 @@ export class MessagesService {
           type: input.type,
           body: input.type === "text" ? input.body : null,
           clientId: input.clientId,
+          replyToId: input.replyToId ?? null,
         })
         .onConflictDoNothing({ target: [messages.senderId, messages.clientId] })
         .returning();
@@ -125,6 +137,7 @@ export class MessagesService {
       this.bus.toConversation(message.conversationId, EVENTS.messageNew, message);
       this.readState.announceInBackground(conversation.id, userId);
       this.activity.inBackground(this.activity.recordForMessage(conversation, message, userId));
+      this.activity.inBackground(this.activity.recordReply(conversation, message, userId));
       this.chats.announceInBackground(conversation, inserted);
       this.push.inBackground(this.push.notifyMessage(conversation, message, userId));
       return { message, created: true };

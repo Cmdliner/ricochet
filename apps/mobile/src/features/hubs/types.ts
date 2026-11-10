@@ -45,11 +45,22 @@ export type Chat = {
 
 export type Reaction = { emoji: string; userIds: string[] };
 
+/** The message a reply answers, with just enough to draw the quote. */
+export type ReplyRef = {
+  id: string;
+  authorId: string;
+  authorName: string;
+  kind: "text" | "voice" | "video";
+  /** Only for text. Recordings are labelled by their kind. */
+  text: string | null;
+};
+
 type MessageBase = {
   id: string;
   podId: string;
   sentAt: number;
   reactions: Reaction[];
+  reply?: ReplyRef;
   /** Set on messages this phone sent. The server echoes it back, which is how a draft is matched to its saved copy. */
   clientId?: string;
   /** Only while the message has not been saved yet. */

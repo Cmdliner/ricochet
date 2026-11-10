@@ -170,6 +170,33 @@ export class ActivityService {
     );
   }
 
+  /** Tells the author of the quoted message, in pods. In a private chat the other person already gets the message itself. */
+  async recordReply(conversation: ConversationAccess, message: MessageRef & { replyTo: { senderId: string } | null }, senderId: string): Promise<void> {
+    const parentAuthor = message.replyTo?.senderId;
+    if (conversation.type !== "pod" || !conversation.hubId || !parentAuthor || parentAuthor === senderId) return;
+
+    const [author] = await this.db
+      .select({ userId: users.id, handle: users.handle })
+      .from(hubMembers)
+      .innerJoin(users, eq(users.id, hubMembers.userId))
+      .leftJoin(participants, and(eq(participants.conversationId, conversation.id), eq(participants.userId, users.id)))
+      .where(
+        and(
+          eq(hubMembers.hubId, conversation.hubId),
+          eq(users.id, parentAuthor),
+          conversation.isPrivate ? or(isNotNull(participants.userId), eq(hubMembers.role, "owner")) : undefined,
+        ),
+      )
+      .limit(1);
+    // Someone who is also @mentioned already has a notification for this message.
+    if (!author || extractMentions(message.body ?? "").includes(author.handle)) return;
+
+    await this.insertAndAnnounce(
+      [{ userId: author.userId, kind: "reply", actorId: senderId, messageId: message.id, conversationId: conversation.id, hubId: conversation.hubId }],
+      { preview: previewOf(message.body), podName: conversation.name, emoji: null },
+    );
+  }
+
   async recordReaction(conversation: ConversationAccess, message: MessageRef & { senderId: string }, reactorId: string, emoji: string): Promise<void> {
     if (message.senderId === reactorId) return;
     await this.insertAndAnnounce(

@@ -20,6 +20,8 @@ export const sendMessageSchema = z
     mediaKey: z.string().min(1).optional(),
     durationMs: z.number().int().positive().optional(),
     waveform: z.array(z.number().min(0).max(100)).max(128).optional(),
+    /** The message being answered. It has to be in the same conversation. */
+    replyToId: z.uuid().optional(),
   })
   .superRefine((msg, ctx) => {
     if (msg.type === "text") {
@@ -71,6 +73,16 @@ export const reactionEmojiSchema = z.string().min(1).max(16);
 export const reactionSchema = z.object({ emoji: z.string(), userIds: z.array(z.uuid()) });
 export type ReactionView = z.infer<typeof reactionSchema>;
 
+/** Just enough of the quoted message to draw it above a reply. The text is cut short; a recording has no text. */
+export const replyPreviewSchema = z.object({
+  id: z.string(),
+  senderId: z.uuid(),
+  senderName: z.string(),
+  type: messageTypeSchema,
+  body: z.string().nullable(),
+});
+export type ReplyPreview = z.infer<typeof replyPreviewSchema>;
+
 export const messageSchema = z.object({
   id: z.string(),
   conversationId: z.uuid(),
@@ -81,6 +93,7 @@ export const messageSchema = z.object({
   createdAt: z.string(),
   reactions: z.array(reactionSchema),
   media: mediaViewSchema.nullable(),
+  replyTo: replyPreviewSchema.nullable(),
 });
 export type MessageView = z.infer<typeof messageSchema>;
 

@@ -9,7 +9,7 @@ import {
 } from "expo-audio";
 import { Camera, CameraView } from "expo-camera";
 import * as Haptics from "expo-haptics";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from "react";
 import { PanResponder, Pressable, TextInput, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import Animated, {
@@ -27,6 +27,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { useTheme } from "@/theme/theme-provider";
 import { formatDuration } from "../format";
+import { replyRefFor } from "../adapters";
+import { useReplyDraft } from "../reply";
+import { useHubsStore } from "../store";
+import { quoteAuthor, quoteLabel } from "./reply-quote";
 
 type Kind = "voice" | "video";
 type Recording = { kind: Kind; elapsedMs: number; dx: number };
@@ -35,6 +39,8 @@ const CANCEL_DISTANCE = 90;
 const BAR_COUNT = 28;
 
 type ComposerProps = {
+  /** The pod or chat this composer writes to. A reply in progress belongs to it. */
+  conversationId: string;
   placeholder: string;
   onSendText: (text: string) => void;
   onSendVoice: (note: { uri: string; durationMs: number; waveform: number[] }) => void;
@@ -141,11 +147,21 @@ function Viewfinder({
   );
 }
 
-export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, onTyping }: ComposerProps) {
+export function Composer({ conversationId, placeholder, onSendText, onSendVoice, onSendVideo, onTyping }: ComposerProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const keyboardOpen = useKeyboardState((s) => s.isVisible);
   const [text, setText] = useState("");
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const replyId = useReplyDraft((s) => s.targets[conversationId]);
+  const clearReply = useReplyDraft((s) => s.clear);
+  const quoted = useHubsStore((s) => (replyId ? s.messages[conversationId]?.find((m) => m.id === replyId) : undefined));
+  const members = useHubsStore((s) => s.members);
+  const replyRef = replyRefFor(quoted, members);
+
+  useEffect(() => {
+    if (replyId) inputRef.current?.focus();
+  }, [replyId]);
   const [mode, setMode] = useState<Kind>("voice");
   const [recording, setRecording] = useState<Recording | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -334,6 +350,29 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, on
       ) : null}
       {recording?.kind === "video" ? <Viewfinder elapsedMs={recording.elapsedMs} cancelling={cancelling} cameraRef={cameraRef} onReady={beginVideo} /> : null}
 
+      {replyRef ? (
+        <View className="mb-2 flex-row items-center gap-3 rounded-2xl bg-raised py-2 pr-1.5 pl-3">
+          <View className="h-9 w-1 rounded-full bg-accent" />
+          <View className="flex-1">
+            <Text className="text-xs font-sans-semibold text-ink" numberOfLines={1}>
+              Replying to {quoteAuthor(replyRef) === "You" ? "yourself" : quoteAuthor(replyRef)}
+            </Text>
+            <Text className="text-sm text-muted" numberOfLines={1}>
+              {quoteLabel(replyRef)}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cancel reply"
+            hitSlop={8}
+            onPress={() => clearReply(conversationId)}
+            className="size-9 items-center justify-center rounded-full active:bg-line"
+          >
+            <Ionicons name="close" size={20} color={colors.muted} />
+          </Pressable>
+        </View>
+      ) : null}
+
       <View className="flex-row items-end gap-2">
         {recording ? (
           <View className="h-12 flex-1 flex-row items-center gap-3 rounded-full bg-raised px-4">
@@ -351,6 +390,7 @@ export function Composer({ placeholder, onSendText, onSendVoice, onSendVideo, on
         ) : (
           <View className="min-h-12 flex-1 flex-row items-end rounded-3xl bg-raised pr-1.5 pl-4">
             <TextInput
+              ref={inputRef}
               accessibilityLabel={placeholder}
               value={text}
               onChangeText={(value) => {

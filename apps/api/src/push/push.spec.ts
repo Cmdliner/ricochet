@@ -16,6 +16,12 @@ describe("describeMessagePush", () => {
     );
   });
 
+  it("says so when someone answered a message of yours, even if it also mentions you", () => {
+    expect(
+      describeMessagePush({ sender: "Ada", type: "text", body: "yes please", pod: "general", hub: "Crit Club", mentioned: true, replied: true }).body,
+    ).toBe("Ada replied to you: yes please");
+  });
+
   it("leads with the person in a chat, and names recordings instead of showing nothing", () => {
     expect(describeMessagePush({ sender: "Ada", type: "voice", body: null, pod: null, hub: null, mentioned: false })).toEqual({
       title: "Ada",

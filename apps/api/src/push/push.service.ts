@@ -68,6 +68,9 @@ export class PushService {
         .where(and(inArray(users.handle, handles), inArray(users.id, audience.map((row) => row.userId))));
       for (const row of rows) mentioned.add(row.id);
     }
+    // Answering someone counts as mentioning them, so a mentions-only pod still tells them.
+    const repliedTo = message.replyTo?.senderId;
+    if (repliedTo && audience.some((row) => row.userId === repliedTo)) mentioned.add(repliedTo);
 
     const viewing = new Set((await this.bus.socketsIn(rooms.conversation(conversation.id))).map((socket) => socket.data.userId));
     const targets = audience.filter(
@@ -93,6 +96,7 @@ export class PushService {
         pod: conversation.type === "pod" ? conversation.name : null,
         hub,
         mentioned: mentioned.has(userId),
+        replied: userId === repliedTo,
       }),
     }));
     await this.deliver(messages);
