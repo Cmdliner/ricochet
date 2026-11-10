@@ -7,4 +7,5 @@ export * from "./schemas/chat";
 export * from "./schemas/hub";
 export * from "./schemas/pod";
 export * from "./schemas/message";
+export * from "./schemas/safety";
 export * from "./tokens";

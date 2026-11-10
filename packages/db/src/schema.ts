@@ -21,6 +21,8 @@ export const mediaStatus = pgEnum("media_status", ["uploading", "processing", "r
 export const hubRole = pgEnum("hub_role", ["owner", "admin", "member"]);
 export const activityKind = pgEnum("activity_kind", ["mention", "reply", "reaction", "invite", "announcement"]);
 export const devicePlatform = pgEnum("device_platform", ["ios", "android"]);
+export const reportReason = pgEnum("report_reason", ["spam", "harassment", "inappropriate", "impersonation", "other"]);
+export const reportStatus = pgEnum("report_status", ["open", "actioned", "dismissed"]);
 export const avatarColor = pgEnum("avatar_color", ["coral", "sky", "mint", "amber"]);
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -175,6 +177,40 @@ export const reactions = pgTable(
     emoji: text("emoji").notNull(),
   },
   (t) => [primaryKey({ columns: [t.messageId, t.userId, t.emoji] })],
+);
+
+/** Someone you blocked cannot reach you: their messages are hidden, and nothing they do notifies you. They are never told. */
+export const blocks = pgTable(
+  "blocks",
+  {
+    blockerId: uuid("blocker_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    blockedId: uuid("blocked_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.blockerId, t.blockedId] }),
+    // "Who has blocked this sender" is asked on every message, so it needs its own way in.
+    index("blocks_by_blocked").on(t.blockedId),
+  ],
+);
+
+export const reports = pgTable(
+  "reports",
+  {
+    id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+    reporterId: uuid("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    reportedUserId: uuid("reported_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    /** Set null if the message is ever removed. The text it said is kept in `messageBody`. */
+    messageId: uuid("message_id").references(() => messages.id, { onDelete: "set null" }),
+    conversationId: uuid("conversation_id").references(() => conversations.id, { onDelete: "set null" }),
+    /** What the message said when it was reported, so editing or removing it cannot erase the evidence. */
+    messageBody: text("message_body"),
+    reason: reportReason("reason").notNull(),
+    details: text("details").notNull().default(""),
+    status: reportStatus("status").notNull().default("open"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("reports_by_status").on(t.status, t.id), index("reports_by_reporter").on(t.reporterId, t.id)],
 );
 
 export const activity = pgTable(
