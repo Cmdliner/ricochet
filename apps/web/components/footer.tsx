@@ -8,7 +8,7 @@ import { FOOTER_COLUMNS, SITE } from "@/lib/constants";
 export function Footer() {
   return (
     <footer className="pattern-dark relative z-40 -mt-12 rounded-t-[3rem] bg-canvas">
-      <Container className="grid gap-12 pt-20 pb-14 lg:grid-cols-[1.6fr_1fr_1fr] lg:gap-10">
+      <Container className="grid gap-8 pt-12 pb-10 sm:gap-12 sm:pt-20 sm:pb-14 lg:grid-cols-[1.6fr_1fr_1fr] lg:gap-10">
         <div className="max-w-sm">
           <Link href="/" aria-label="Ricochet home" className="inline-block">
             <Logo />
@@ -23,6 +23,7 @@ export function Footer() {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-6 sm:contents">
         {FOOTER_COLUMNS.map((column) => (
           <nav key={column.title} aria-label={column.title}>
             <h2 className="text-sm font-semibold">{column.title}</h2>
@@ -37,10 +38,11 @@ export function Footer() {
             </ul>
           </nav>
         ))}
+        </div>
       </Container>
 
       <div className="border-t border-white/10">
-        <Container className="grid gap-3 py-6 text-center text-sm text-muted sm:grid-cols-3 sm:items-center">
+        <Container className="grid gap-2 py-4 text-center text-sm text-muted sm:grid-cols-3 sm:items-center sm:gap-3 sm:py-6">
           <p className="sm:text-left">
             © {SITE.year} {SITE.name}. All rights reserved.
           </p>

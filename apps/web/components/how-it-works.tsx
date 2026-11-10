@@ -1,13 +1,44 @@
 import { Avatar } from "@/components/avatar";
 import { Container } from "@/components/container";
-import { PlusIcon } from "@/components/icons";
+import { PlayIcon } from "@/components/icons";
+import { LogoMark } from "@/components/logo";
 import { Reveal } from "@/components/reveal";
 import { Waveform } from "@/components/waveform";
 import { AVATAR_COLORS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-function CreateHubArt() {
+const steps = [
+  { title: "Start a hub", body: "Name it, pick a colour and invite your people." },
+  { title: "Add pods", body: "A room for every topic, open to all or kept private." },
+  { title: "Take it one to one", body: "Voice notes and video notes, just between the two of you." },
+];
+
+function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex w-full max-w-[15rem] flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+    <div className="flex items-center gap-3 text-[0.7rem] font-medium tracking-wider text-muted uppercase">
+      <span className="h-px flex-1 bg-line" />
+      {children}
+      <span className="h-px flex-1 bg-line" />
+    </div>
+  );
+}
+
+function Bot({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-end gap-2.5">
+      <LogoMark className="size-8 shrink-0" />
+      <div className="flex min-w-0 flex-col gap-2">{children}</div>
+    </div>
+  );
+}
+
+function Bubble({ children }: { children: React.ReactNode }) {
+  return <p className="w-fit max-w-full rounded-2xl rounded-bl-md bg-raised px-3.5 py-2 text-sm leading-relaxed">{children}</p>;
+}
+
+function CreateHubCard() {
+  return (
+    <div className="w-full max-w-[17rem] rounded-2xl border border-line bg-canvas p-3">
       <div className="flex items-center gap-3">
         <Avatar letter="S" color={AVATAR_COLORS.coral} size="md" square />
         <div className="flex h-10 flex-1 items-center rounded-xl bg-raised px-3 text-sm">
@@ -15,145 +46,132 @@ function CreateHubArt() {
           <span className="ml-0.5 h-4 w-px bg-accent" />
         </div>
       </div>
-      <div className="flex items-center gap-1.5">
-        <Avatar letter="M" color={AVATAR_COLORS.mint} />
-        <Avatar letter="J" color={AVATAR_COLORS.sky} />
-        <Avatar letter="D" color={AVATAR_COLORS.amber} />
-        <span className="grid size-8 place-items-center rounded-full border border-dashed border-line text-muted">
-          <PlusIcon className="size-4" />
-        </span>
-        <span className="ml-auto rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-ink">
-          Create
-        </span>
+      <div className="mt-3 flex items-center gap-2">
+        {[AVATAR_COLORS.coral, AVATAR_COLORS.sky, AVATAR_COLORS.mint, AVATAR_COLORS.amber].map((color, i) => (
+          <span key={color} className={cn("size-6 rounded-full", i === 0 && "ring-2 ring-ink ring-offset-2 ring-offset-canvas")} style={{ background: color }} />
+        ))}
+        <span className="ml-auto rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-ink">Create hub</span>
       </div>
     </div>
   );
 }
 
-function PodsArt() {
+function PodList() {
   const pods = [
     { name: "announcements", unread: 0 },
     { name: "design-crits", unread: 3 },
     { name: "launch", unread: 12 },
-    { name: "off-topic", unread: 0 },
   ];
   return (
-    <ul className="w-full max-w-[15rem] rounded-2xl border border-line bg-surface p-2 text-sm">
+    <ul className="w-full max-w-[17rem] rounded-2xl border border-line bg-canvas p-2 text-sm">
       {pods.map((pod, i) => (
-        <li
-          key={pod.name}
-          className={`flex items-center justify-between rounded-xl px-3 py-2 ${i === 2 ? "bg-raised" : ""}`}
-        >
+        <li key={pod.name} className={cn("flex items-center justify-between rounded-lg px-2.5 py-1.5", i === 2 && "bg-raised")}>
           <span>
-            <span className="mr-2 text-muted">#</span>
+            <span className="mr-1.5 text-muted">#</span>
             {pod.name}
           </span>
-          {pod.unread > 0 && (
-            <span className="rounded-full bg-accent px-1.5 text-[0.65rem] font-semibold text-accent-ink">
-              {pod.unread}
-            </span>
-          )}
+          {pod.unread > 0 && <span className="rounded-full bg-accent px-1.5 py-px text-[0.65rem] font-semibold text-accent-ink">{pod.unread}</span>}
         </li>
       ))}
+      <li className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-muted">
+        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="9" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        </svg>
+        core-team
+      </li>
     </ul>
   );
 }
 
-function PrivateArt() {
+function Thread() {
   return (
-    <div className="flex w-full max-w-[15rem] flex-col gap-3 text-sm">
-      <div className="flex items-center gap-2.5">
-        <Avatar letter="M" color={AVATAR_COLORS.coral} />
-        <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-raised px-3 py-2">
-          <span className="grid size-7 place-items-center rounded-full bg-accent text-accent-ink">
-            <svg viewBox="0 0 24 24" className="size-3 translate-x-px" fill="currentColor" aria-hidden="true">
-              <path d="M8 5.2v13.6a.6.6 0 0 0 .9.5l11-6.8a.6.6 0 0 0 0-1l-11-6.8a.6.6 0 0 0-.9.5Z" />
-            </svg>
+    <div aria-hidden="true" className="overflow-hidden rounded-3xl border border-line bg-surface">
+      <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+        <LogoMark className="size-7" />
+        <div className="leading-tight">
+          <p className="text-sm font-semibold"># welcome</p>
+          <p className="text-[0.7rem] text-muted">Ricochet · 3 steps</p>
+        </div>
+        <span className="ml-auto flex items-center gap-1.5 text-[0.7rem] text-muted">
+          <span className="size-2 rounded-full bg-[#5dd39e]" />
+          live
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
+        <Chip>Step 1 · Start a hub</Chip>
+        <Bot>
+          <Bubble>Name it, pick a colour and invite your people.</Bubble>
+          <CreateHubCard />
+        </Bot>
+
+        <Chip>Step 2 · Add pods</Chip>
+        <Bot>
+          <Bubble>A room for every topic. Keep some private.</Bubble>
+          <PodList />
+        </Bot>
+
+        <Chip>Step 3 · Go private</Chip>
+        <div className="flex items-end gap-2">
+          <Avatar letter="M" color={AVATAR_COLORS.coral} />
+          <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-raised px-3 py-2">
+            <span className="grid size-7 place-items-center rounded-full bg-accent text-accent-ink">
+              <PlayIcon className="size-3 translate-x-px" />
+            </span>
+            <Waveform progress={45} count={14} />
+            <span className="text-[0.7rem] text-muted tabular-nums">0:23</span>
+          </div>
+        </div>
+        <p className="w-fit self-end rounded-2xl rounded-br-md bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink">loved it, sending one back</p>
+        <div className="flex items-end gap-2">
+          <Avatar letter="M" color={AVATAR_COLORS.coral} />
+          <span className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-raised px-3.5 py-3">
+            <span className="typing-dot size-1.5 rounded-full bg-muted" />
+            <span className="typing-dot size-1.5 rounded-full bg-muted [animation-delay:150ms]" />
+            <span className="typing-dot size-1.5 rounded-full bg-muted [animation-delay:300ms]" />
           </span>
-          <Waveform progress={45} count={12} />
         </div>
       </div>
-      <p className="self-end rounded-2xl rounded-br-md bg-accent px-3.5 py-2 font-medium text-accent-ink">
-        loved it, sending one back
-      </p>
     </div>
   );
 }
-
-const steps = [
-  {
-    title: "Start a hub",
-    body: "Name it, invite your people and set the tone for your community.",
-    Art: CreateHubArt,
-  },
-  {
-    title: "Organise with pods",
-    body: "Give every topic its own pod, from announcements to off-topic banter.",
-    Art: PodsArt,
-  },
-  {
-    title: "Go private when it matters",
-    body: "Take a conversation one to one with voice messages and video notes.",
-    Art: PrivateArt,
-  },
-];
 
 export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="pattern-dark relative z-20 -mt-12 rounded-t-[3rem] bg-canvas pt-24 pb-32 text-ink sm:pt-32 sm:pb-40"
+      className="bg-canvas pt-12 pb-16 text-ink sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32"
     >
-      <Container>
-        <Reveal className="mx-auto max-w-2xl text-center">
+      <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-20">
+        <Reveal className="lg:sticky lg:top-28">
           <p className="text-sm font-semibold text-accent">How it works</p>
-          <h2 className="mt-4 font-display text-4xl font-semibold tracking-[-0.03em] text-balance sm:text-5xl">
-            From first hub to private chat.
+          <h2 className="mt-2 font-display text-[1.85rem] leading-[1.08] font-semibold tracking-[-0.03em] text-balance sm:mt-3 sm:text-5xl">
+            Three bounces from hello to private chat.
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted">
-            Three steps, and a conversation that keeps bouncing along.
+          <p className="mt-3 max-w-md text-[0.95rem] leading-relaxed text-muted sm:text-lg">
+            No setup maze. Start a hub, split it into pods, and take any conversation one to one.
           </p>
-        </Reveal>
 
-        <div className="relative mt-16 sm:mt-20">
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 100 96"
-            preserveAspectRatio="none"
-            className="absolute inset-x-0 top-6 hidden h-24 w-full md:block"
-          >
-            <polyline
-              className="dash-march"
-              points="16.67,0 50,96 83.33,0"
-              fill="none"
-              stroke="#e9714e"
-              strokeWidth="2"
-              strokeDasharray="2 8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-
-          <ol className="relative grid gap-12 md:grid-cols-3 md:gap-8">
+          <ol className="relative mt-10 hidden flex-col gap-8 lg:flex">
+            <span aria-hidden="true" className="absolute top-8 bottom-8 left-5 border-l border-dashed border-accent/50" />
             {steps.map((step, index) => (
-              <li key={step.title} className={index === 1 ? "md:mt-24" : ""}>
-                <Reveal delay={index * 140} className="text-center">
-                <span className="relative mx-auto grid size-12 place-items-center rounded-full bg-accent font-display text-lg font-semibold text-accent-ink ring-8 ring-canvas">
+              <li key={step.title} className="relative flex items-start gap-5">
+                <span className="relative z-10 w-10 bg-canvas py-1 text-center font-display text-4xl leading-none font-semibold text-transparent [-webkit-text-stroke:1.5px_var(--accent)]">
                   {index + 1}
                 </span>
-                <div className="pattern-dark mt-6 grid h-52 place-items-center overflow-hidden rounded-3xl border border-line bg-black p-5">
-                  <step.Art />
+                <div>
+                  <h3 className="font-display text-xl font-semibold tracking-tight">{step.title}</h3>
+                  <p className="mt-1 max-w-xs text-muted">{step.body}</p>
                 </div>
-                <h3 className="mt-7 font-display text-xl font-semibold tracking-tight">
-                  {step.title}
-                </h3>
-                <p className="mx-auto mt-2 max-w-xs leading-relaxed text-muted">{step.body}</p>
-                </Reveal>
               </li>
             ))}
           </ol>
-        </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <Thread />
+        </Reveal>
       </Container>
     </section>
   );
