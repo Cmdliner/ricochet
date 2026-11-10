@@ -38,6 +38,10 @@ export const users = pgTable("users", {
   statusEmoji: text("status_emoji"),
   statusText: text("status_text"),
   profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
+  /** Optional. Signing in with an emailed code always works, so a forgotten password is never the end of an account. */
+  passwordHash: text("password_hash"),
+  passwordFailures: integer("password_failures").notNull().default(0),
+  passwordLockedUntil: timestamp("password_locked_until", { withTimezone: true }),
   createdAt: createdAt(),
 });
 
