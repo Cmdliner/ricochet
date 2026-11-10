@@ -412,6 +412,8 @@ unreadable on the phone, it is refused with "That file is not a valid recording"
   `pnpm --filter @ricochet/api start:worker` on a machine that has ffmpeg.
 - **Mobile.** Release builds go through EAS. The bundle id and Android package are `me.adeyemiabiade.ricochet`. The
   step-by-step guide, from a first APK to Google Play, is in [docs/releasing-android.md](./docs/releasing-android.md).
+- **Server.** `deploy/` runs the whole backend on one machine with Docker Compose (API, Postgres, Redis and Caddy for
+  https), with nightly backups. The step-by-step AWS guide is [docs/deploying-aws.md](./docs/deploying-aws.md).
 
 ## Status and what is not built yet
 
@@ -433,7 +435,6 @@ message text) for a moderator to read; there is no moderator screen yet.
 Not built yet:
 
 - **Account deletion** from inside the app, which Google Play requires before a public listing
-- The API deployed online over https (the Android build needs its address)
 - Apple App Store release (needs a paid Apple Developer account, which is not in place)
 
 Decisions so far: no group chats outside hubs (private chats are always one to one), email-code sign in, no end-to-end encryption in version 1, voice notes up to 10 minutes, video notes

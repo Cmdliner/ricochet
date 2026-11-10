@@ -1,0 +1,5 @@
+# Shell scripts and the deployment files run on Linux, so they must keep Unix line endings even when checked out on Windows.
+*.sh text eol=lf
+deploy/compose.yaml text eol=lf
+deploy/Caddyfile text eol=lf
+apps/api/Dockerfile text eol=lf
