@@ -167,6 +167,7 @@ push registration and everything else keeps working.
 | `pnpm typecheck` | TypeScript across all packages |
 | `pnpm lint` | lint across all packages |
 | `pnpm --filter @ricochet/api test` | the API's unit tests |
+| `pnpm --filter @ricochet/api test:e2e` | the API's end-to-end tests (needs `pnpm infra:up`) |
 | `pnpm db:generate` | writes a new SQL migration after you change `packages/db/src/schema.ts` |
 | `pnpm db:migrate` | applies pending migrations |
 | `pnpm infra:up` / `pnpm infra:down` | start or stop the Docker services |
@@ -334,11 +335,20 @@ The mobile app has one optional setting: `EXPO_PUBLIC_API_URL`.
 pnpm typecheck                       # TypeScript, all packages
 pnpm lint                            # lint
 pnpm --filter @ricochet/api test     # API unit tests
+pnpm --filter @ricochet/api test:e2e # API end-to-end tests, needs pnpm infra:up
 ```
 
 The API tests cover the pure rules: permissions, pagination, reaction grouping, mention parsing, typing expiry,
-presence timing, signed links, upload content checks, push rules and provider behaviour. Anything that talks to the
-database or sockets has been checked by running the real server, and there are no automated end-to-end tests yet.
+presence timing, signed links, upload content checks, push rules and provider behaviour.
+
+The end-to-end tests (`apps/api/test`) start the real API, with a real database, Redis and sockets, and act like the
+phone does: sign in with an emailed code, create hubs, join, send messages over a socket, check unread counts and
+the activity inbox. They build the API first, then run it against a throwaway database called `ricochet_test` (rebuilt
+on every run) and Redis database 15, so your development data is never touched. The only fake is the mail service,
+which hands the test the code instead of sending it.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the build, typecheck, lint, unit tests and end-to-end tests on every
+push and pull request.
 
 ## Developer tools
 
@@ -413,12 +423,10 @@ Not built yet:
 
 - **Replies** to a specific message
 - **Blocking and reporting** people
-- **Group chats** outside hubs
 - Optional PIN or password sign-in
-- Automated end-to-end tests and continuous integration
 - App store release setup (icons, store listings, a real support address)
 
-Decisions so far: email-code sign in, no end-to-end encryption in version 1, voice notes up to 10 minutes, video notes
+Decisions so far: no group chats outside hubs (private chats are always one to one), email-code sign in, no end-to-end encryption in version 1, voice notes up to 10 minutes, video notes
 up to 60 seconds, groups up to 40 people, no calls in version 1.
 
 ## License

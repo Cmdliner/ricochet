@@ -12,10 +12,12 @@
     "start:prod": "node dist/main",
     "start:worker": "node dist/worker",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "oxlint --type-aware src/",
+    "lint": "oxlint --type-aware src/ test/",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "nest build && vitest run --config vitest.e2e.config.ts",
+    "typecheck:e2e": "tsc --noEmit -p test/tsconfig.json"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1162.0",
