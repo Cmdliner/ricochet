@@ -46,6 +46,8 @@ export const chatSchema = z.object({
   person: personSchema,
   pinned: z.boolean(),
   muted: z.boolean(),
+  /** You have blocked this person. Their messages are hidden from you and you cannot write to them until you unblock. */
+  blocked: z.boolean(),
   unread: z.number().int().min(0),
   lastMessage: chatLastMessageSchema.nullable(),
   createdAt: z.string(),

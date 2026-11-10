@@ -15,6 +15,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { SettingGroup, SettingRow } from "@/components/ui/setting-row";
 import { Text } from "@/components/ui/text";
 import { useHubsStore } from "@/features/hubs/store";
+import { useSafetyStore } from "@/features/safety/store";
 import { mediaUrl } from "@/lib/media";
 import { registerForPush, unregisterPush, usePushStore } from "@/lib/push";
 import { useAuthStore } from "@/stores/auth-store";
@@ -62,6 +63,7 @@ export default function You() {
   const hubs = useHubsStore((s) => s.hubs);
   const pods = useHubsStore((s) => s.pods);
   const chats = useHubsStore((s) => s.chats);
+  const blockedCount = useSafetyStore((s) => s.blocked.length);
   const bio = user?.bio ?? "";
   const status = user?.status ?? null;
   const { colors, preference, setPreference } = useTheme();
@@ -160,6 +162,7 @@ export default function You() {
           <SectionLabel>Account</SectionLabel>
           <SettingGroup>
             <SettingRow icon="mail-outline" title="Email" value={user?.email} />
+            <SettingRow icon="ban-outline" title="Blocked people" value={blockedCount > 0 ? String(blockedCount) : undefined} onPress={() => router.push("/blocked")} />
             <SettingRow icon="lock-closed-outline" title="Privacy" onPress={() => soon("Privacy")} />
             <SettingRow icon="help-circle-outline" title="Help and feedback" onPress={() => soon("Help and feedback")} last />
           </SettingGroup>

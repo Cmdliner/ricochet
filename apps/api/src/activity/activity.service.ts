@@ -10,6 +10,7 @@ import { takePage } from "../messages/pagination.js";
 import { MediaService } from "../media/media.service.js";
 import { PushService } from "../push/push.service.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
+import { hasBlocked, usersWhoBlocked } from "../safety/blocks.js";
 import { extractMentions, previewOf } from "./mentions.js";
 
 const ANNOUNCEMENT_POD = "announcements";
@@ -206,9 +207,13 @@ export class ActivityService {
   }
 
   private async insertAndAnnounce(
-    rows: { userId: string; kind: ActivityItem["kind"]; actorId: string; messageId?: string; conversationId?: string; hubId: string | null; emoji?: string }[],
+    allRows: { userId: string; kind: ActivityItem["kind"]; actorId: string; messageId?: string; conversationId?: string; hubId: string | null; emoji?: string }[],
     shared: { preview: string | null; podName: string | null; emoji: string | null },
   ): Promise<void> {
+    const actorId = allRows[0]?.actorId;
+    if (!actorId) return;
+    const blockers = new Set(await usersWhoBlocked(this.db, actorId));
+    const rows = allRows.filter((row) => !blockers.has(row.userId));
     if (rows.length === 0) return;
     const inserted = await this.db.insert(activity).values(rows).onConflictDoNothing().returning();
     if (inserted.length === 0) return;
@@ -253,7 +258,9 @@ export class ActivityService {
       .from(users)
       .where(and(eq(users.id, targetId), isNotNull(users.profileCompletedAt)))
       .limit(1);
-    if (!target) throw new NotFoundException("Person not found.");
+    if (!target || (await hasBlocked(this.db, targetId, actorId)) || (await hasBlocked(this.db, actorId, targetId))) {
+      throw new NotFoundException("Person not found.");
+    }
 
     const [waiting] = await this.db
       .select({ id: activity.id })

@@ -43,11 +43,13 @@ export class PushService {
       join hub_members hm on hm.hub_id = c.hub_id
       left join participants p on p.conversation_id = c.id and p.user_id = hm.user_id
       where c.id = ${conversationId} and c.type = 'pod' and (not c.is_private or p.user_id is not null) and hm.user_id <> ${senderId}
+        and not exists (select 1 from blocks bl where bl.blocker_id = hm.user_id and bl.blocked_id = ${senderId})
       union all
       select p.user_id, p.muted, p.mentions_only
       from conversations c
       join participants p on p.conversation_id = c.id
-      where c.id = ${conversationId} and c.type <> 'pod' and p.user_id <> ${senderId}`);
+      where c.id = ${conversationId} and c.type <> 'pod' and p.user_id <> ${senderId}
+        and not exists (select 1 from blocks bl where bl.blocker_id = p.user_id and bl.blocked_id = ${senderId})`);
     return result.rows;
   }
 

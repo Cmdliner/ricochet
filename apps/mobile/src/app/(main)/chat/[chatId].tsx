@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -14,9 +14,12 @@ import { DaySeparator } from "@/features/hubs/components/day-separator";
 import { MessageItem } from "@/features/hubs/components/message-item";
 import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
 import { retryScrollToIndex, useScrollToQuoted } from "@/features/hubs/reply";
+import { Button } from "@/components/ui/button";
 import { useConversation } from "@/features/hubs/hooks";
 import { useHubsStore } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
+import { confirmUnblock, showPersonActions } from "@/features/safety/actions";
+import { useIsBlocked } from "@/features/safety/store";
 
 function ChatIntro({ name, handle, color, avatarUrl }: { name: string; handle: string; color: Parameters<typeof Avatar>[0]["color"]; avatarUrl: string | null }) {
   return (
@@ -34,6 +37,7 @@ function ChatIntro({ name, handle, color, avatarUrl }: { name: string; handle: s
 export default function ChatScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const chat = useHubsStore((s) => s.chats.find((c) => c.id === chatId));
+  const iBlocked = useIsBlocked(chat?.personId);
   const person = useHubsStore((s) => (chat ? s.members[chat.personId] : undefined));
   const messages = useHubsStore((s) => s.messages[chatId ?? ""]);
   const typing = useHubsStore((s) => s.typing[chatId ?? ""]);
@@ -74,12 +78,15 @@ export default function ChatScreen() {
           </View>
         }
         actions={
-          <IconButton
-            icon={chat.muted ? "notifications-off-outline" : "notifications-outline"}
-            label={chat.muted ? "Unmute this chat" : "Mute this chat"}
-            variant="plain"
-            onPress={() => toggleChatMute(chat.id)}
-          />
+          <>
+            <IconButton
+              icon={chat.muted ? "notifications-off-outline" : "notifications-outline"}
+              label={chat.muted ? "Unmute this chat" : "Mute this chat"}
+              variant="plain"
+              onPress={() => toggleChatMute(chat.id)}
+            />
+            <IconButton icon="ellipsis-horizontal" label={`More about ${person.name}`} variant="plain" onPress={() => showPersonActions(person, () => router.back())} />
+          </>
         }
       />
 
@@ -105,6 +112,12 @@ export default function ChatScreen() {
           windowSize={9}
         />
 
+        {iBlocked ? (
+          <View className="gap-3 border-t border-line bg-canvas px-4 py-4">
+            <Text className="text-center text-muted">You blocked {person.name}. Unblock them to send messages.</Text>
+            <Button label="Unblock" onPress={() => confirmUnblock(person)} />
+          </View>
+        ) : (
         <Composer
           conversationId={chat.id}
           placeholder={`Message ${first}`}
@@ -113,6 +126,7 @@ export default function ChatScreen() {
           onSendVideo={(note) => sendMessage(chat.id, { kind: "video", ...note })}
           onTyping={signalTyping}
         />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

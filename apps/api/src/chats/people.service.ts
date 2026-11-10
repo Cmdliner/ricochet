@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { hubMembers, users } from "@ricochet/db";
 import type { PersonResult } from "@ricochet/shared";
-import { and, asc, eq, ilike, inArray, isNotNull, ne, or } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, isNotNull, ne, or, sql } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { MediaService } from "../media/media.service.js";
 import { escapeLike } from "./like-pattern.js";
@@ -15,6 +15,10 @@ const columns = {
   avatarColor: users.avatarColor,
   avatarKey: users.avatarKey,
 };
+
+/** True when neither person has blocked the other. */
+const noBlockBetween = (userId: string) =>
+  sql`not exists (select 1 from blocks bl where (bl.blocker_id = ${userId} and bl.blocked_id = ${users.id}) or (bl.blocker_id = ${users.id} and bl.blocked_id = ${userId}))`;
 
 @Injectable()
 export class PeopleService {
@@ -44,6 +48,7 @@ export class PeopleService {
           inArray(hubMembers.hubId, myHubs),
           ne(users.id, userId),
           isNotNull(users.profileCompletedAt),
+          noBlockBetween(userId),
           or(ilike(users.displayName, `%${pattern}%`), ilike(users.handle, `${pattern}%`)),
         ),
       )
@@ -58,7 +63,7 @@ export class PeopleService {
       const [stranger] = await this.db
         .select(columns)
         .from(users)
-        .where(and(eq(users.handle, exact), ne(users.id, userId), isNotNull(users.profileCompletedAt)))
+        .where(and(eq(users.handle, exact), ne(users.id, userId), isNotNull(users.profileCompletedAt), noBlockBetween(userId)))
         .limit(1);
       if (stranger) results.unshift(this.toResult(stranger, "handle"));
     }

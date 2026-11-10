@@ -6,6 +6,7 @@ import { DRIZZLE, type Database } from "../db/db.module.js";
 import type { ConversationAccess } from "../messages/conversation-access.service.js";
 import { unreadCounts, type UnreadRow } from "../messages/unread-sql.js";
 import { MediaService } from "../media/media.service.js";
+import { hasBlocked, usersWhoBlocked } from "../safety/blocks.js";
 import { RealtimeBus } from "../realtime/realtime-bus.js";
 import { dmKeyFor } from "./dm-key.js";
 
@@ -14,6 +15,7 @@ type ChatRow = {
   created_at: Date;
   pinned: boolean;
   muted: boolean;
+  blocked: boolean;
   person_id: string;
   display_name: string;
   handle: string;
@@ -44,7 +46,8 @@ export class ChatsService {
       .from(users)
       .where(and(eq(users.id, targetId), isNotNull(users.profileCompletedAt)))
       .limit(1);
-    if (!target) throw new NotFoundException("Person not found.");
+    // Someone who blocked you looks the same as someone who does not exist.
+    if (!target || (await hasBlocked(this.db, targetId, userId))) throw new NotFoundException("Person not found.");
 
     const dmKey = dmKeyFor(userId, targetId);
     const chatId = await this.db.transaction(async (tx) => {
@@ -75,9 +78,9 @@ export class ChatsService {
     return chat;
   }
 
-  /** Chats appear here once someone has written in them. Pinned first, then most recent. */
+  /** Chats appear here once someone has written in them. Pinned first, then most recent. A chat with someone you blocked is tucked away until you unblock them. */
   async list(userId: string): Promise<ChatView[]> {
-    const chats = (await this.query(userId)).filter((chat) => chat.lastMessage !== null);
+    const chats = (await this.query(userId)).filter((chat) => chat.lastMessage !== null && !chat.blocked);
     return chats.sort(
       (a, b) =>
         Number(b.pinned) - Number(a.pinned) ||
@@ -124,12 +127,14 @@ export class ChatsService {
         createdAt: message.createdAt.toISOString(),
       },
     };
-    for (const member of members) this.bus.toUser(member.userId, EVENTS.chatUpdated, payload);
+    const blockers = new Set(await usersWhoBlocked(this.db, message.senderId));
+    for (const member of members) if (!blockers.has(member.userId)) this.bus.toUser(member.userId, EVENTS.chatUpdated, payload);
   }
 
   private async query(userId: string, chatId?: string): Promise<ChatView[]> {
     const result = await this.db.execute<ChatRow>(sql`
       select c.id, c.created_at, p.pinned, p.muted,
+        exists (select 1 from blocks bl where bl.blocker_id = p.user_id and bl.blocked_id = u.id) as blocked,
         u.id as person_id, u.display_name, u.handle, u.avatar_color, u.avatar_key,
         lm.id as last_id, lm.type as last_type, lm.body as last_body, lm.sender_id as last_sender, lm.created_at as last_at
       from participants p
@@ -138,7 +143,9 @@ export class ChatsService {
       join users u on u.id = other.user_id
       left join lateral (
         select m.id, m.type, m.body, m.sender_id, m.created_at from messages m
-        where m.conversation_id = c.id order by m.id desc limit 1
+        where m.conversation_id = c.id
+          and not exists (select 1 from blocks bl where bl.blocker_id = p.user_id and bl.blocked_id = m.sender_id)
+        order by m.id desc limit 1
       ) lm on true
       where p.user_id = ${userId} ${chatId ? sql`and c.id = ${chatId}` : sql``}`);
 
@@ -156,6 +163,7 @@ export class ChatsService {
       },
       pinned: row.pinned,
       muted: row.muted,
+      blocked: row.blocked,
       unread: unread.get(row.id) ?? 0,
       lastMessage:
         row.last_id && row.last_sender && row.last_at
