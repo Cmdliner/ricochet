@@ -1,6 +1,6 @@
 import type { ChatLastMessage, ChatView, HubMember, HubView, MessageView, Person, PodView } from "@ricochet/shared";
 import { mediaUrl } from "@/lib/media";
-import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod } from "./types";
+import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type ReplyRef } from "./types";
 
 /**
  * Screens compare ids with ME_ID to decide what is "mine", so the signed-in person is called "me" inside the
@@ -48,7 +48,7 @@ export function toChat(view: ChatView, myId: string | undefined): Chat {
   return { id: view.id, personId: asLocalId(view.person.id, myId), pinned: view.pinned, muted: view.muted };
 }
 
-type MessageLike = Pick<MessageView, "id" | "type" | "body" | "senderId" | "createdAt"> & Partial<Pick<MessageView, "clientId" | "reactions" | "media">>;
+type MessageLike = Pick<MessageView, "id" | "type" | "body" | "senderId" | "createdAt"> & Partial<Pick<MessageView, "clientId" | "reactions" | "media" | "replyTo">>;
 
 export function toMessage(view: MessageLike, conversationId: string, myId: string | undefined): Message {
   const base = {
@@ -57,6 +57,7 @@ export function toMessage(view: MessageLike, conversationId: string, myId: strin
     sentAt: Date.parse(view.createdAt),
     clientId: view.clientId,
     reactions: (view.reactions ?? []).map((r) => ({ emoji: r.emoji, userIds: r.userIds.map((id) => asLocalId(id, myId)) })),
+    reply: toReplyRef(view.replyTo, myId),
   };
   if (view.type === "text") return { ...base, kind: "text", authorId: asLocalId(view.senderId, myId), text: view.body ?? "" };
   if (view.type === "system") return { ...base, kind: "system", text: view.body ?? "" };
@@ -74,6 +75,23 @@ export function toMessage(view: MessageLike, conversationId: string, myId: strin
       : { ...recording, kind: "video", posterUrl: mediaUrl(media?.posterUrl) };
   }
   return { ...base, kind: "system", text: view.body ?? "" };
+}
+
+function toReplyRef(quoted: MessageView["replyTo"] | undefined, myId: string | undefined): ReplyRef | undefined {
+  if (!quoted || quoted.type === "system") return undefined;
+  return { id: quoted.id, authorId: asLocalId(quoted.senderId, myId), authorName: quoted.senderName, kind: quoted.type, text: quoted.body };
+}
+
+/** The quote shown on a reply this phone has just made, before the server has answered. */
+export function replyRefFor(target: Message | undefined, members: Record<string, Member>): ReplyRef | undefined {
+  if (!target || target.kind === "system") return undefined;
+  return {
+    id: target.id,
+    authorId: target.authorId,
+    authorName: members[target.authorId]?.name ?? "Someone",
+    kind: target.kind,
+    text: target.kind === "text" ? target.text.slice(0, 140) : null,
+  };
 }
 
 export const toLastMessage = (last: ChatLastMessage, conversationId: string, myId: string | undefined) =>

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/theme/theme-provider";
 import { useMessageMenu } from "../message-menu";
+import { useReplyDraft } from "../reply";
 import { useHubsStore } from "../store";
 import { ME_ID } from "../types";
 
@@ -76,6 +77,19 @@ function Panel({ podId, messageId }: { podId: string; messageId: string }) {
             );
           })}
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            void Haptics.selectionAsync().catch(() => undefined);
+            useReplyDraft.getState().start(podId, messageId);
+            dismiss();
+          }}
+          className="h-14 flex-row items-center gap-3 rounded-2xl px-3 active:bg-raised"
+        >
+          <Ionicons name="arrow-undo-outline" size={22} color={colors.ink} />
+          <Text className="text-base font-sans-medium text-ink">Reply</Text>
+        </Pressable>
 
         {text ? (
           <Pressable

@@ -12,6 +12,7 @@ import { useMessageMenu } from "../message-menu";
 import { useHubsStore } from "../store";
 import type { ChatItem } from "../types";
 import { ReactionRow } from "./reaction-row";
+import { ReplyQuote } from "./reply-quote";
 import { VideoNoteCircle } from "./video-note-circle";
 import { VoiceContent } from "./voice-content";
 
@@ -71,16 +72,18 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
             <Text className="mb-1 ml-3 text-xs font-sans-semibold text-muted">{author.name}</Text>
           ) : null}
 
+          {isVideo && message.reply ? <ReplyQuote reply={message.reply} podId={message.podId} bubble="none" /> : null}
           {isVideo ? (
             <VideoNoteCircle message={message} fresh={!mine} onLongPress={openMenu} />
           ) : (
             <Pressable
-              accessibilityHint={message.status ? undefined : "Hold for reactions"}
+              accessibilityHint={message.status ? undefined : "Hold to react or reply"}
               onLongPress={openMenu}
               delayLongPress={350}
               style={shape}
               className={`px-3.5 py-2.5 ${mine ? "bg-accent" : "bg-raised"}`}
             >
+              {message.reply ? <ReplyQuote reply={message.reply} podId={message.podId} bubble={mine ? "mine" : "theirs"} /> : null}
               {message.kind === "text" ? (
                 <Text className={`text-[16px] leading-[22px] ${mine ? "text-accent-ink" : "text-ink"}`}>
                   {message.text}

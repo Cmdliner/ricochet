@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Text } from "@/components/ui/text";
@@ -12,6 +12,7 @@ import { Composer } from "@/features/hubs/components/composer";
 import { DaySeparator } from "@/features/hubs/components/day-separator";
 import { MessageItem } from "@/features/hubs/components/message-item";
 import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
+import { retryScrollToIndex, useScrollToQuoted } from "@/features/hubs/reply";
 import { useConversation, useHubStats } from "@/features/hubs/hooks";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
@@ -43,6 +44,8 @@ export default function PodScreen() {
 
   const { loaded, hasOlder, loadOlder, signalTyping } = useConversation(podId);
   const items = useMemo(() => buildChatItems(messages ?? [], ME_ID), [messages]);
+  const listRef = useRef<FlatList<ChatItem>>(null);
+  useScrollToQuoted(podId, listRef, items);
 
   // Being in the pod means you have read it, including anything that arrives while you watch.
   useEffect(() => {
@@ -86,7 +89,9 @@ export default function PodScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         {/* Inverted: the newest message sits at the bottom, and the header slot is the bottom edge. */}
         <FlatList
+          ref={listRef}
           inverted
+          onScrollToIndexFailed={retryScrollToIndex(listRef)}
           data={items}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
@@ -103,6 +108,7 @@ export default function PodScreen() {
         />
 
         <Composer
+          conversationId={pod.id}
           placeholder={`Message #${pod.name}`}
           onSendText={(text) => sendMessage(pod.id, { kind: "text", text })}
           onSendVoice={(note) => sendMessage(pod.id, { kind: "voice", ...note })}

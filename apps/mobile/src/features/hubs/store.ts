@@ -28,7 +28,8 @@ import { uuid } from "@/lib/uuid";
 import { showError } from "@/lib/notify";
 import { useAuthStore } from "@/stores/auth-store";
 import { sendRecording } from "./media";
-import { asLocalId, mergeMessages, toChat, toHub, toLastMessage, toMember, toMessage, toPod } from "./adapters";
+import { asLocalId, mergeMessages, replyRefFor, toChat, toHub, toLastMessage, toMember, toMessage, toPod } from "./adapters";
+import { useReplyDraft } from "./reply";
 import { ME_ID, type Chat, type Hub, type Member, type Message, type Pod, type Role } from "./types";
 
 type SendPayload =
@@ -188,17 +189,17 @@ export const useHubsStore = create<HubsState>((set, get) => {
     }
   }
 
-  async function postRecording(id: string, clientId: string, kind: "voice" | "video", uri: string, durationMs: number, waveform?: number[]) {
+  async function postRecording(id: string, clientId: string, kind: "voice" | "video", uri: string, durationMs: number, waveform?: number[], replyToId?: string) {
     try {
-      get().receiveMessage(await sendRecording({ conversationId: id, clientId, kind, uri, durationMs, waveform }));
+      get().receiveMessage(await sendRecording({ conversationId: id, clientId, kind, uri, durationMs, waveform, replyToId }));
     } catch {
       setStatus(id, clientId, "failed");
     }
   }
 
-  async function postText(id: string, clientId: string, text: string) {
+  async function postText(id: string, clientId: string, text: string, replyToId?: string) {
     try {
-      const saved = await api("/messages", { ...auth, method: "POST", body: { conversationId: id, type: "text", body: text, clientId }, schema: messageSchema });
+      const saved = await api("/messages", { ...auth, method: "POST", body: { conversationId: id, type: "text", body: text, clientId, replyToId }, schema: messageSchema });
       get().receiveMessage(saved);
     } catch {
       setStatus(id, clientId, "failed");
@@ -354,8 +355,8 @@ export const useHubsStore = create<HubsState>((set, get) => {
       const draft = get().messages[id]?.find((m) => m.clientId === clientId);
       if (!draft || draft.kind === "system") return;
       setStatus(id, clientId, "sending");
-      if (draft.kind === "text") await postText(id, clientId, draft.text);
-      else if (draft.localUri) await postRecording(id, clientId, draft.kind, draft.localUri, draft.durationMs, draft.kind === "voice" ? draft.waveform : undefined);
+      if (draft.kind === "text") await postText(id, clientId, draft.text, draft.reply?.id);
+      else if (draft.localUri) await postRecording(id, clientId, draft.kind, draft.localUri, draft.durationMs, draft.kind === "voice" ? draft.waveform : undefined, draft.reply?.id);
       else setStatus(id, clientId, "failed");
     },
 
@@ -505,16 +506,21 @@ export const useHubsStore = create<HubsState>((set, get) => {
 
     sendMessage(podId, payload) {
       const clientId = uuid();
+      // Whatever was being answered goes out with this message, and the composer goes back to a normal message.
+      const drafts = useReplyDraft.getState();
+      const replyToId = drafts.targets[podId];
+      const reply = replyToId ? replyRefFor(get().messages[podId]?.find((m) => m.id === replyToId), get().members) : undefined;
+      if (replyToId) drafts.clear(podId);
       if (payload.kind !== "text") {
-        const base = { id: clientId, clientId, podId, authorId: ME_ID, sentAt: Date.now(), reactions: [], status: "sending" as const, localUri: payload.uri, mediaStatus: "ready" as const, durationMs: payload.durationMs };
+        const base = { id: clientId, clientId, podId, authorId: ME_ID, reply, sentAt: Date.now(), reactions: [], status: "sending" as const, localUri: payload.uri, mediaStatus: "ready" as const, durationMs: payload.durationMs };
         const draft: Message = payload.kind === "voice" ? { ...base, kind: "voice", waveform: payload.waveform } : { ...base, kind: "video" };
         set((state) => ({ messages: { ...state.messages, [podId]: mergeMessages(state.messages[podId] ?? [], [draft]) } }));
-        void postRecording(podId, clientId, payload.kind, payload.uri, payload.durationMs, payload.kind === "voice" ? payload.waveform : undefined);
+        void postRecording(podId, clientId, payload.kind, payload.uri, payload.durationMs, payload.kind === "voice" ? payload.waveform : undefined, reply?.id);
         return;
       }
-      const draft: Message = { id: clientId, clientId, podId, kind: "text", authorId: ME_ID, text: payload.text, sentAt: Date.now(), reactions: [], status: "sending" };
+      const draft: Message = { id: clientId, clientId, podId, kind: "text", authorId: ME_ID, text: payload.text, reply, sentAt: Date.now(), reactions: [], status: "sending" };
       set((state) => ({ messages: { ...state.messages, [podId]: mergeMessages(state.messages[podId] ?? [], [draft]) } }));
-      void postText(podId, clientId, payload.text);
+      void postText(podId, clientId, payload.text, reply?.id);
     },
 
     async toggleReaction(podId, messageId, emoji) {

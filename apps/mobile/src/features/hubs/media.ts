@@ -10,6 +10,7 @@ type Recording = {
   uri: string;
   durationMs: number;
   waveform?: number[];
+  replyToId?: string;
 };
 
 const BY_EXTENSION: Record<string, string> = {
@@ -49,6 +50,7 @@ export async function sendRecording(recording: Recording): Promise<MessageView> 
       mediaKey: key,
       durationMs: recording.durationMs,
       waveform: recording.waveform,
+      replyToId: recording.replyToId,
     },
     schema: messageSchema,
   });
