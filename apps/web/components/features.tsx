@@ -22,7 +22,7 @@ export function Features() {
   return (
     <section
       id="features"
-      className="relative z-10 -mt-8 rounded-t-[2rem] bg-cream pt-12 pb-16 text-cream-ink sm:-mt-12 sm:rounded-t-[3rem] sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32"
+      className="bg-cream pt-12 pb-16 text-cream-ink sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32"
     >
       <Container>
         <Reveal>

@@ -141,7 +141,7 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative z-20 -mt-8 rounded-t-[2rem] bg-canvas pt-12 pb-16 text-ink sm:-mt-12 sm:rounded-t-[3rem] sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32"
+      className="bg-canvas pt-12 pb-16 text-ink sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32"
     >
       <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-20">
         <Reveal className="lg:sticky lg:top-28">
