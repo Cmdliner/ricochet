@@ -30,6 +30,9 @@ import { formatDuration } from "../format";
 import { replyRefFor } from "../adapters";
 import { useReplyDraft } from "../reply";
 import { useHubsStore } from "../store";
+import { activeMention, insertMention, suggestMembers } from "../mentions";
+import type { Member } from "../types";
+import { MentionSuggestions } from "./mention-suggestions";
 import { quoteAuthor, quoteLabel } from "./reply-quote";
 
 type Kind = "voice" | "video";
@@ -42,6 +45,8 @@ type ComposerProps = {
   /** The pod or chat this composer writes to. A reply in progress belongs to it. */
   conversationId: string;
   placeholder: string;
+  /** The people who can be tagged here. Leave empty where tagging makes no sense, such as a private chat. */
+  mentionables?: Member[];
   onSendText: (text: string) => void;
   onSendVoice: (note: { uri: string; durationMs: number; waveform: number[] }) => void;
   onSendVideo: (note: { uri: string; durationMs: number }) => void;
@@ -147,7 +152,7 @@ function Viewfinder({
   );
 }
 
-export function Composer({ conversationId, placeholder, onSendText, onSendVoice, onSendVideo, onTyping }: ComposerProps) {
+export function Composer({ conversationId, placeholder, mentionables, onSendText, onSendVoice, onSendVideo, onTyping }: ComposerProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const keyboardOpen = useKeyboardState((s) => s.isVisible);
@@ -158,6 +163,23 @@ export function Composer({ conversationId, placeholder, onSendText, onSendVoice,
   const quoted = useHubsStore((s) => (replyId ? s.messages[conversationId]?.find((m) => m.id === replyId) : undefined));
   const members = useHubsStore((s) => s.members);
   const replyRef = replyRefFor(quoted, members);
+
+  // The cursor decides whether a tag is being typed: "hi @mi|" offers people, "hi @mira |" does not.
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const [forcedSelection, setForcedSelection] = useState<{ start: number; end: number } | undefined>();
+  const mention = mentionables && mentionables.length > 0 && selection.start === selection.end ? activeMention(text, selection.start) : null;
+  const suggestions = mention ? suggestMembers(mentionables ?? [], mention.query) : [];
+
+  function pickMention(member: Member) {
+    if (!mention) return;
+    const next = insertMention(text, selection.start, mention.start, member.handle);
+    setText(next.text);
+    // Tapping a suggestion takes focus away from the input on the web, so give it back, or the next keys go nowhere.
+    setSelection({ start: next.cursor, end: next.cursor });
+    setForcedSelection({ start: next.cursor, end: next.cursor });
+    inputRef.current?.focus();
+    onTyping?.(true);
+  }
 
   useEffect(() => {
     if (replyId) inputRef.current?.focus();
@@ -350,6 +372,8 @@ export function Composer({ conversationId, placeholder, onSendText, onSendVoice,
       ) : null}
       {recording?.kind === "video" ? <Viewfinder elapsedMs={recording.elapsedMs} cancelling={cancelling} cameraRef={cameraRef} onReady={beginVideo} /> : null}
 
+      <MentionSuggestions people={recording ? [] : suggestions} onPick={pickMention} />
+
       {replyRef ? (
         <View className="mb-2 flex-row items-center gap-3 rounded-2xl bg-raised py-2 pr-1.5 pl-3">
           <View className="h-9 w-1 rounded-full bg-accent" />
@@ -393,8 +417,15 @@ export function Composer({ conversationId, placeholder, onSendText, onSendVoice,
               ref={inputRef}
               accessibilityLabel={placeholder}
               value={text}
+              selection={forcedSelection}
+              onSelectionChange={(event) => {
+                const next = event.nativeEvent.selection;
+                setSelection(next);
+                if (forcedSelection && next.start === forcedSelection.start) setForcedSelection(undefined);
+              }}
               onChangeText={(value) => {
                 setText(value);
+                setForcedSelection(undefined);
                 onTyping?.(value.trim().length > 0);
               }}
               placeholder={placeholder}

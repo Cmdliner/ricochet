@@ -5,6 +5,7 @@ import { MessageMenuHost } from "@/features/hubs/components/message-menu";
 import { usePush } from "@/features/push/use-push";
 import { startRealtime, stopRealtime } from "@/features/hubs/realtime-handlers";
 import { useHubsStore } from "@/features/hubs/store";
+import { useSafetyStore } from "@/features/safety/store";
 import { useTheme } from "@/theme/theme-provider";
 
 /** Sheets draw their own backdrop and slide themselves in, so the route must be see-through and unanimated. */
@@ -22,11 +23,13 @@ export default function MainLayout() {
   useEffect(() => {
     void useHubsStore.getState().load();
     void useActivityStore.getState().load();
+    useSafetyStore.getState().load().catch(() => undefined);
     startRealtime();
     return () => {
       stopRealtime();
       useHubsStore.getState().reset();
       useActivityStore.getState().reset();
+      useSafetyStore.getState().reset();
     };
   }, []);
 
@@ -39,6 +42,8 @@ export default function MainLayout() {
         <Stack.Screen name="hubs/join" options={sheet} />
         <Stack.Screen name="hub/[hubId]/members" options={sheet} />
         <Stack.Screen name="hub/[hubId]/new-pod" options={sheet} />
+        <Stack.Screen name="report" options={sheet} />
+        <Stack.Screen name="blocked" options={sheet} />
       </Stack>
       <MessageMenuHost />
     </>

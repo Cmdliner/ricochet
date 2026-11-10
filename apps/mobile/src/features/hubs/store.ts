@@ -87,6 +87,8 @@ type HubsState = {
   createHub: (input: CreateHubInput) => Promise<string>;
   joinHub: (code: string) => Promise<Hub>;
   forgetHub: (hubId: string) => void;
+  /** Drops what a person wrote from every conversation on screen. Used right after blocking them. */
+  hideFrom: (personId: string) => void;
 };
 
 const myId = () => useAuthStore.getState().user?.id;
@@ -245,6 +247,14 @@ export const useHubsStore = create<HubsState>((set, get) => {
     },
 
     reset: () => set({ ...EMPTY }),
+
+    hideFrom(personId) {
+      set((state) => ({
+        messages: Object.fromEntries(
+          Object.entries(state.messages).map(([id, list]) => [id, list.filter((m) => m.kind === "system" || m.authorId !== personId)]),
+        ),
+      }));
+    },
 
     refreshSelf: () => set((state) => ({ members: { ...state.members, [ME_ID]: selfMember() } })),
 

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/theme/theme-provider";
 import { useMessageMenu } from "../message-menu";
+import { confirmBlock, openReport } from "@/features/safety/actions";
 import { useReplyDraft } from "../reply";
 import { useHubsStore } from "../store";
 import { ME_ID } from "../types";
@@ -22,6 +23,7 @@ function Panel({ podId, messageId }: { podId: string; messageId: string }) {
   const close = useMessageMenu((s) => s.close);
   const toggleReaction = useHubsStore((s) => s.toggleReaction);
   const message = useHubsStore((s) => s.messages[podId]?.find((m) => m.id === messageId));
+  const author = useHubsStore((s) => (message && message.kind !== "system" ? s.members[message.authorId] : undefined));
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -104,6 +106,33 @@ function Panel({ podId, messageId }: { podId: string; messageId: string }) {
             <Ionicons name="copy-outline" size={22} color={colors.ink} />
             <Text className="text-base font-sans-medium text-ink">Copy text</Text>
           </Pressable>
+        ) : null}
+
+        {author && author.id !== ME_ID ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                dismiss();
+                openReport({ member: author, messageId });
+              }}
+              className="h-14 flex-row items-center gap-3 rounded-2xl px-3 active:bg-raised"
+            >
+              <Ionicons name="flag-outline" size={22} color={colors.ink} />
+              <Text className="text-base font-sans-medium text-ink">Report message</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                dismiss();
+                confirmBlock(author);
+              }}
+              className="h-14 flex-row items-center gap-3 rounded-2xl px-3 active:bg-raised"
+            >
+              <Ionicons name="ban-outline" size={22} color={colors.danger} />
+              <Text className="text-base font-sans-medium text-danger">Block {author.name}</Text>
+            </Pressable>
+          </>
         ) : null}
       </Animated.View>
     </View>

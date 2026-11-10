@@ -417,12 +417,15 @@ unreadable on the phone, it is refused with "That file is not a valid recording"
 
 Built: sign-in with email codes, hubs, pods (open and private), roles and invites, messages with history, reactions,
 typing, presence, read state and unread counts, the activity inbox, one-to-one chats and people search, voice and
-video notes, profile photos, push notifications, and the marketing site.
+video notes, profile photos, push notifications, replies, @tagging with suggestions, blocking and reporting, and the
+marketing site.
+
+Blocking is silent: the person is never told, their messages are hidden from you and never notify you, and you cannot
+write to someone you blocked until you unblock them. Reports are saved in the `reports` table (with a copy of the
+message text) for a moderator to read; there is no moderator screen yet.
 
 Not built yet:
 
-- **Replies** to a specific message
-- **Blocking and reporting** people
 - Optional PIN or password sign-in
 - App store release setup (icons, store listings, a real support address)
 

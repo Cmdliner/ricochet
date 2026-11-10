@@ -11,6 +11,7 @@ import { formatClock } from "../format";
 import { useMessageMenu } from "../message-menu";
 import { useHubsStore } from "../store";
 import type { ChatItem } from "../types";
+import { MessageText } from "./message-text";
 import { ReactionRow } from "./reaction-row";
 import { ReplyQuote } from "./reply-quote";
 import { VideoNoteCircle } from "./video-note-circle";
@@ -85,9 +86,7 @@ export const MessageItem = memo(function MessageItem({ item, direct = false }: {
             >
               {message.reply ? <ReplyQuote reply={message.reply} podId={message.podId} bubble={mine ? "mine" : "theirs"} /> : null}
               {message.kind === "text" ? (
-                <Text className={`text-[16px] leading-[22px] ${mine ? "text-accent-ink" : "text-ink"}`}>
-                  {message.text}
-                </Text>
+                <MessageText text={message.text} mine={mine} className={`text-[16px] leading-[22px] ${mine ? "text-accent-ink" : "text-ink"}`} />
               ) : (
                 <VoiceContent message={message} mine={mine} onLongPress={openMenu} />
               )}

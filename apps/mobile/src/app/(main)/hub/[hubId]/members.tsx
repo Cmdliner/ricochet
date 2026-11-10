@@ -1,12 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Avatar } from "@/components/ui/avatar";
 import { Sheet } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { pluralize } from "@/features/hubs/format";
 import { useHub, useHubsStore } from "@/features/hubs/store";
 import { ME_ID, type Role } from "@/features/hubs/types";
+import { showPersonActions } from "@/features/safety/actions";
 
 const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, member: 2 };
 
@@ -32,7 +33,14 @@ export default function MembersSheet() {
     <Sheet title={hub ? `${hub.name} · ${pluralize(rows.length, "member")}` : "Members"}>
       <View className="gap-1 pb-2">
         {rows.map(({ member, role }) => (
-          <View key={member.id} className="flex-row items-center gap-4 rounded-2xl py-2.5">
+          <Pressable
+            key={member.id}
+            disabled={member.id === ME_ID}
+            accessibilityRole="button"
+            accessibilityLabel={member.id === ME_ID ? "You" : `${member.name}. Report or block`}
+            onPress={() => showPersonActions(member)}
+            className="flex-row items-center gap-4 rounded-2xl py-2.5 active:bg-raised"
+          >
             <View>
               <Avatar name={member.name} color={member.color} uri={member.avatarUrl} size={48} />
               {member.online ? (
@@ -52,7 +60,7 @@ export default function MembersSheet() {
                 <Text className="text-xs font-sans-semibold text-muted capitalize">{role}</Text>
               </View>
             ) : null}
-          </View>
+          </Pressable>
         ))}
       </View>
     </Sheet>

@@ -14,6 +14,7 @@ import { MessageItem } from "@/features/hubs/components/message-item";
 import { TypingIndicator } from "@/features/hubs/components/typing-indicator";
 import { retryScrollToIndex, useScrollToQuoted } from "@/features/hubs/reply";
 import { useConversation, useHubStats } from "@/features/hubs/hooks";
+import { useMentionables } from "@/features/hubs/mentions";
 import { useHub, useHubsStore, usePod } from "@/features/hubs/store";
 import { ME_ID, type ChatItem } from "@/features/hubs/types";
 
@@ -43,6 +44,7 @@ export default function PodScreen() {
   const togglePodMute = useHubsStore((s) => s.togglePodMute);
 
   const { loaded, hasOlder, loadOlder, signalTyping } = useConversation(podId);
+  const mentionables = useMentionables(podId);
   const items = useMemo(() => buildChatItems(messages ?? [], ME_ID), [messages]);
   const listRef = useRef<FlatList<ChatItem>>(null);
   useScrollToQuoted(podId, listRef, items);
@@ -110,6 +112,7 @@ export default function PodScreen() {
         <Composer
           conversationId={pod.id}
           placeholder={`Message #${pod.name}`}
+          mentionables={mentionables}
           onSendText={(text) => sendMessage(pod.id, { kind: "text", text })}
           onSendVoice={(note) => sendMessage(pod.id, { kind: "voice", ...note })}
           onSendVideo={(note) => sendMessage(pod.id, { kind: "video", ...note })}
