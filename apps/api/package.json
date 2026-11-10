@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
+  "files": ["dist"],
   "type": "module",
   "scripts": {
     "build": "nest build",
@@ -14,6 +15,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "oxlint --type-aware src/ test/",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "migrate": "node dist/migrate.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "nest build && vitest run --config vitest.e2e.config.ts",
