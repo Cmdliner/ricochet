@@ -46,3 +46,4 @@ apps/mobile/android/
 
 # local media storage (development)
 .media/
+.media-e2e/
