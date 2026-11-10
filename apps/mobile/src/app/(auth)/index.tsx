@@ -56,6 +56,7 @@ export default function SignIn() {
         onSubmitEditing={submit}
       />
       <Button label="Continue" onPress={submit} loading={busy} />
+      <Button label="Use a password instead" variant="ghost" onPress={() => router.push({ pathname: "/password-sign-in", params: { email } })} />
     </AuthScreen>
   );
 }

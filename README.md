@@ -420,13 +420,18 @@ typing, presence, read state and unread counts, the activity inbox, one-to-one c
 video notes, profile photos, push notifications, replies, @tagging with suggestions, blocking and reporting, and the
 marketing site.
 
+Signing in with a password is optional (Profile, Password). Emailed codes always work, so there is no password reset to build.
+Passwords are hashed with scrypt, five wrong tries lock the account for 15 minutes, and every failure gives the same
+message so it cannot be used to find out who has an account. Changing a password needs the old one and signs the other
+devices out. There is no numeric PIN sign-in: a short PIN is too easy to guess over a network. A PIN as a local app lock
+on the phone would be a separate feature.
+
 Blocking is silent: the person is never told, their messages are hidden from you and never notify you, and you cannot
 write to someone you blocked until you unblock them. Reports are saved in the `reports` table (with a copy of the
 message text) for a moderator to read; there is no moderator screen yet.
 
 Not built yet:
 
-- Optional PIN or password sign-in
 - App store release setup (icons, store listings, a real support address)
 
 Decisions so far: no group chats outside hubs (private chats are always one to one), email-code sign in, no end-to-end encryption in version 1, voice notes up to 10 minutes, video notes

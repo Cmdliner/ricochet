@@ -162,6 +162,7 @@ export default function You() {
           <SectionLabel>Account</SectionLabel>
           <SettingGroup>
             <SettingRow icon="mail-outline" title="Email" value={user?.email} />
+            <SettingRow icon="key-outline" title="Password" value={user?.hasPassword ? "On" : "Off"} onPress={() => router.push("/password")} />
             <SettingRow icon="ban-outline" title="Blocked people" value={blockedCount > 0 ? String(blockedCount) : undefined} onPress={() => router.push("/blocked")} />
             <SettingRow icon="lock-closed-outline" title="Privacy" onPress={() => soon("Privacy")} />
             <SettingRow icon="help-circle-outline" title="Help and feedback" onPress={() => soon("Help and feedback")} last />
