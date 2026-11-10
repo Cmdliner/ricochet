@@ -44,6 +44,7 @@ export default function MainLayout() {
         <Stack.Screen name="hub/[hubId]/new-pod" options={sheet} />
         <Stack.Screen name="report" options={sheet} />
         <Stack.Screen name="blocked" options={sheet} />
+        <Stack.Screen name="password" options={sheet} />
       </Stack>
       <MessageMenuHost />
     </>

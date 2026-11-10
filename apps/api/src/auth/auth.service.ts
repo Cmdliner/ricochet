@@ -1,9 +1,9 @@
-import { HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { sessions, users, loginCodes, type User } from "@ricochet/db";
-import { LIMITS, type AuthResponse, type AuthUser } from "@ricochet/shared";
-import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { LIMITS, type AuthResponse, type AuthUser, type SetPasswordInput } from "@ricochet/shared";
+import { and, desc, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import type { Env } from "../config/env.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { MailService } from "../mail/mail.service.js";
@@ -17,10 +17,13 @@ import {
   safeEqualHex,
   sha256Hex,
 } from "./crypto.js";
+import { hashPassword, verifyPassword } from "./password.js";
 
 type Executor = Pick<Database, "select" | "insert" | "update">;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_PASSWORD_FAILURES = 5;
+const PASSWORD_LOCK_MS = 15 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 
 export function toAuthUser(user: User, avatarUrl: string | null): AuthUser {
@@ -35,6 +38,7 @@ export function toAuthUser(user: User, avatarUrl: string | null): AuthUser {
     status: user.statusEmoji ? { emoji: user.statusEmoji, text: user.statusText ?? "" } : null,
     joinedAt: user.createdAt.toISOString(),
     profileComplete: user.profileCompletedAt !== null,
+    hasPassword: user.passwordHash !== null,
   };
 }
 
@@ -125,6 +129,100 @@ export class AuthService {
 
       return { ...(await this.issueSession(tx, user)), isNewUser };
     });
+  }
+
+  /**
+   * Every failure looks the same, whether the email has no account, the account has no password, the password is
+   * wrong, or the account is locked, so this cannot be used to find out who has an account. The password check
+   * always runs, so even the timing does not say.
+   */
+  async loginWithPassword(rawEmail: string, password: string): Promise<AuthResponse> {
+    const email = normalizeEmail(rawEmail);
+    const rejected = () =>
+      new UnauthorizedException("That email and password do not match, or there were too many tries. Wait a little, or ask for an emailed code instead.");
+
+    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    const matches = await verifyPassword(password, user?.passwordHash ?? null);
+    if (!user?.passwordHash || this.isLocked(user)) throw rejected();
+    if (!matches) {
+      await this.recordPasswordFailure(user.id);
+      throw rejected();
+    }
+
+    if (user.passwordFailures > 0 || user.passwordLockedUntil) {
+      await this.db.update(users).set({ passwordFailures: 0, passwordLockedUntil: null }).where(eq(users.id, user.id));
+    }
+    return this.issueSession(this.db, user);
+  }
+
+  private isLocked(user: User): boolean {
+    return user.passwordLockedUntil !== null && user.passwordLockedUntil.getTime() > Date.now();
+  }
+
+  private async recordPasswordFailure(userId: string): Promise<void> {
+    const [row] = await this.db
+      .update(users)
+      .set({ passwordFailures: sql`${users.passwordFailures} + 1` })
+      .where(eq(users.id, userId))
+      .returning({ failures: users.passwordFailures });
+    if (row && row.failures >= MAX_PASSWORD_FAILURES) {
+      this.log.warn(`password locked for user ${userId} after ${row.failures} wrong tries`);
+      await this.db
+        .update(users)
+        .set({ passwordFailures: 0, passwordLockedUntil: new Date(Date.now() + PASSWORD_LOCK_MS) })
+        .where(eq(users.id, userId));
+    }
+  }
+
+  /** Changing or removing a password means proving the old one, and wrong guesses here count toward the same lockout. */
+  private async requireCurrentPassword(user: User, password: string | undefined): Promise<void> {
+    const matches = await verifyPassword(password ?? "", user.passwordHash);
+    if (this.isLocked(user)) throw new ForbiddenException("Too many wrong tries. Wait a little, or sign in again with an emailed code.");
+    if (!password || !matches) {
+      await this.recordPasswordFailure(user.id);
+      throw new ForbiddenException("Your current password is not right.");
+    }
+  }
+
+  private async requireUser(userId: string): Promise<User> {
+    const [user] = await this.db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) throw new UnauthorizedException("Please sign in again.");
+    return user;
+  }
+
+  /** The first password needs only a signed-in session. Changing one needs the old password, and signs every other device out. */
+  async setPassword(userId: string, sessionId: string, input: SetPasswordInput): Promise<AuthUser> {
+    const user = await this.requireUser(userId);
+    if (user.passwordHash) await this.requireCurrentPassword(user, input.currentPassword);
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ passwordHash: await hashPassword(input.password), passwordFailures: 0, passwordLockedUntil: null })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!updated) throw new Error("Could not save the password.");
+
+    if (user.passwordHash) {
+      await this.db
+        .update(sessions)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(sessions.userId, userId), ne(sessions.id, sessionId), isNull(sessions.revokedAt)));
+    }
+    return toAuthUser(updated, this.media.publicUrl(updated.avatarKey));
+  }
+
+  async removePassword(userId: string, password: string): Promise<AuthUser> {
+    const user = await this.requireUser(userId);
+    if (!user.passwordHash) return toAuthUser(user, this.media.publicUrl(user.avatarKey));
+    await this.requireCurrentPassword(user, password);
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ passwordHash: null, passwordFailures: 0, passwordLockedUntil: null })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!updated) throw new Error("Could not remove the password.");
+    return toAuthUser(updated, this.media.publicUrl(updated.avatarKey));
   }
 
   private async createUser(db: Executor, email: string): Promise<User> {
