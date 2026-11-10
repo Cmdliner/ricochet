@@ -71,6 +71,17 @@ summary {
   outline-offset: 3px;
 }
 
+/* Chat-doodle wallpaper tiles (see /public/patterns). */
+.pattern-light {
+  background-image: url("/patterns/doodle-light.svg");
+  background-size: 300px;
+}
+
+.pattern-dark {
+  background-image: url("/patterns/doodle-dark.svg");
+  background-size: 300px;
+}
+
 /* A light reflection that periodically sweeps across a button. */
 .sheen {
   position: relative;

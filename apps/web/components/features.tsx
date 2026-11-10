@@ -20,10 +20,14 @@ function Tile({ className, children }: { className?: string; children: React.Rea
 
 export function Features() {
   return (
-    <section id="features" className="border-t border-line bg-canvas py-14 sm:py-20 lg:py-28">
+    <section
+      id="features"
+      className="relative z-10 -mt-8 rounded-t-[2rem] bg-cream pt-12 pb-16 text-cream-ink sm:-mt-12 sm:rounded-t-[3rem] sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32"
+    >
       <Container>
         <Reveal>
           <SectionHeading
+            tone="light"
             eyebrow="What is inside"
             title="Built for the crowd and the close circle."
             body="Communities with rooms for every topic, and private chats for everything else. Voice and video included."
@@ -40,22 +44,22 @@ export function Features() {
             "lg:mx-0 lg:grid lg:snap-none lg:grid-cols-6 lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0",
           )}
         >
-          <Tile className="border border-line bg-surface lg:col-span-3 lg:min-h-[21rem]">
+          <Tile className="border border-line bg-surface text-ink lg:col-span-3 lg:min-h-[21rem]">
             <HubsTile />
           </Tile>
           <Tile className="bg-accent text-accent-ink lg:col-span-3 lg:min-h-[21rem]">
             <VoiceTile />
           </Tile>
-          <Tile className="border border-line bg-raised lg:col-span-2 lg:min-h-[19rem]">
+          <Tile className="border border-line bg-raised text-ink lg:col-span-2 lg:min-h-[19rem]">
             <VideoTile />
           </Tile>
-          <Tile className="bg-cream-card text-cream-ink lg:col-span-2 lg:min-h-[19rem]">
+          <Tile className="border border-cream-line bg-cream-card text-cream-ink lg:col-span-2 lg:min-h-[19rem]">
             <ChatsTile />
           </Tile>
-          <Tile className="border border-line bg-surface lg:col-span-2 lg:min-h-[19rem]">
+          <Tile className="border border-line bg-surface text-ink lg:col-span-2 lg:min-h-[19rem]">
             <LiveTile />
           </Tile>
-          <Tile className="border border-line bg-raised lg:col-span-6">
+          <Tile className="border border-line bg-raised text-ink lg:col-span-6">
             <ActivityTile />
           </Tile>
         </div>

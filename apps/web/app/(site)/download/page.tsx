@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function Download() {
   return (
-    <section className="relative overflow-hidden pt-12 pb-16 sm:pt-28 sm:pb-24">
+    <section className="pattern-dark relative overflow-hidden pt-20 pb-24 sm:pt-28">
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         <div className="text-center lg:text-left">
           <p className="inline-flex rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-ink">

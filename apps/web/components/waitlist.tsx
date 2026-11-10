@@ -28,7 +28,7 @@ export function Waitlist() {
   return (
     <section
       id="waitlist"
-      className="relative overflow-hidden bg-accent py-14 text-center text-accent-ink sm:py-24 lg:py-28"
+      className="pattern-light relative z-30 -mt-12 overflow-hidden rounded-t-[3rem] bg-accent pt-14 pb-20 text-center text-accent-ink sm:pt-32 sm:pb-40"
     >
       <VoiceSticker className="absolute top-32 left-[6%] hidden -rotate-6 items-center gap-3 rounded-2xl bg-cream-card px-4 py-3 shadow-xl shadow-black/15 lg:flex" />
       <div
@@ -40,11 +40,11 @@ export function Waitlist() {
 
       <Container className="relative">
         <Reveal>
-          <LogoMark inverse className="mx-auto size-10 sm:size-14" />
-          <h2 className="mx-auto mt-5 max-w-2xl font-display text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.03em] text-balance sm:mt-8 sm:text-6xl">
+          <LogoMark inverse className="mx-auto size-11 sm:size-14" />
+          <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl font-semibold tracking-[-0.03em] text-balance sm:mt-8 sm:text-6xl">
             Be first through the door.
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[0.95rem] leading-relaxed text-accent-ink/80 sm:mt-5 sm:text-lg">
+          <p className="mx-auto mt-3 max-w-md text-base leading-relaxed text-accent-ink/80 sm:mt-5 sm:text-lg">
             Leave your email and we will let you know the moment Ricochet is ready.
           </p>
 
@@ -59,7 +59,7 @@ export function Waitlist() {
             <form
               onSubmit={onSubmit}
               noValidate
-              className="mx-auto mt-6 flex w-full max-w-md flex-col gap-2.5 sm:mt-10 sm:flex-row sm:gap-3"
+              className="mx-auto mt-6 flex w-full max-w-md flex-col gap-3 sm:mt-10 sm:flex-row"
             >
               <label htmlFor="email" className="sr-only">
                 Email address
