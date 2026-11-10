@@ -20,6 +20,22 @@ export const verifyLoginCodeSchema = z.object({
 });
 export type VerifyLoginCodeInput = z.infer<typeof verifyLoginCodeSchema>;
 
+/** Optional. Signing in with an emailed code always works, so there is no reset flow to build. */
+export const passwordSchema = z.string().min(8, "Use at least 8 characters.").max(128, "Keep it under 128 characters.");
+
+export const passwordLoginSchema = z.object({
+  email,
+  password: z.string().min(1, "Enter your password.").max(128),
+});
+export type PasswordLoginInput = z.infer<typeof passwordLoginSchema>;
+
+/** `currentPassword` is required when changing an existing password, and ignored when setting the first one. */
+export const setPasswordSchema = z.object({ password: passwordSchema, currentPassword: z.string().max(128).optional() });
+export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
+
+export const removePasswordSchema = z.object({ password: z.string().min(1, "Enter your password.").max(128) });
+export type RemovePasswordInput = z.infer<typeof removePasswordSchema>;
+
 export const waitlistSchema = z.object({ email });
 export type WaitlistInput = z.infer<typeof waitlistSchema>;
 
@@ -80,6 +96,7 @@ export const authUserSchema = z.object({
   status: profileStatusSchema.nullable(),
   joinedAt: z.string(),
   profileComplete: z.boolean(),
+  hasPassword: z.boolean(),
 });
 export type AuthUser = z.infer<typeof authUserSchema>;
 

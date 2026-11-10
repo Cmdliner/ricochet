@@ -1,14 +1,21 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, HttpCode, HttpStatus, Post, Put, UseGuards } from "@nestjs/common";
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
 import {
+  passwordLoginSchema,
   refreshSessionSchema,
+  removePasswordSchema,
   requestLoginCodeSchema,
+  setPasswordSchema,
   verifyLoginCodeSchema,
+  type PasswordLoginInput,
   type RefreshSessionInput,
+  type RemovePasswordInput,
   type RequestLoginCodeInput,
+  type SetPasswordInput,
   type VerifyLoginCodeInput,
 } from "@ricochet/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
+import { Auth, AuthGuard, type AuthContext } from "./auth.guard.js";
 import { AuthService } from "./auth.service.js";
 
 /** Rate limits here are per IP. The service adds per-email limits on top. */
@@ -30,6 +37,27 @@ export class AuthController {
   @Throttle({ default: { limit: 15, ttl: 60_000 } })
   verify(@Body(new ZodValidationPipe(verifyLoginCodeSchema)) body: VerifyLoginCodeInput) {
     return this.auth.verifyCode(body.email, body.code);
+  }
+
+  @Post("password-login")
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  passwordLogin(@Body(new ZodValidationPipe(passwordLoginSchema)) body: PasswordLoginInput) {
+    return this.auth.loginWithPassword(body.email, body.password);
+  }
+
+  @Put("password")
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  setPassword(@Auth() auth: AuthContext, @Body(new ZodValidationPipe(setPasswordSchema)) body: SetPasswordInput) {
+    return this.auth.setPassword(auth.userId, auth.sessionId, body);
+  }
+
+  @Delete("password")
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  removePassword(@Auth() auth: AuthContext, @Body(new ZodValidationPipe(removePasswordSchema)) body: RemovePasswordInput) {
+    return this.auth.removePassword(auth.userId, body.password);
   }
 
   @Post("refresh")
