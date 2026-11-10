@@ -4,8 +4,8 @@ export const SITE = {
   description:
     "Ricochet is real-time messaging with hubs for your communities and private chats with voice messages and video notes.",
   year: 2026,
-  // TODO: replace with the real support address before launch.
-  contactEmail: "support@ricochet.app",
+  // The same address as SUPPORT_EMAIL in packages/shared. Not imported, so the shared package stays out of the website bundle.
+  contactEmail: "research@adeyemiabiade.me",
 } as const;
 
 export const THEME_COLOR = "#100e0d";

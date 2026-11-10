@@ -1,3 +1,4 @@
+export * from "./contact";
 export * from "./limits";
 export * from "./events";
 export * from "./queues";

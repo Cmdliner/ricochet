@@ -2,7 +2,8 @@ import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { router } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { SUPPORT_EMAIL } from "@ricochet/shared";
+import { Linking, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandBar } from "@/components/brand-bar";
@@ -165,7 +166,7 @@ export default function You() {
             <SettingRow icon="key-outline" title="Password" value={user?.hasPassword ? "On" : "Off"} onPress={() => router.push("/password")} />
             <SettingRow icon="ban-outline" title="Blocked people" value={blockedCount > 0 ? String(blockedCount) : undefined} onPress={() => router.push("/blocked")} />
             <SettingRow icon="lock-closed-outline" title="Privacy" onPress={() => soon("Privacy")} />
-            <SettingRow icon="help-circle-outline" title="Help and feedback" onPress={() => soon("Help and feedback")} last />
+            <SettingRow icon="help-circle-outline" title="Help and feedback" value={SUPPORT_EMAIL} onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Ricochet feedback")}`)} last />
           </SettingGroup>
 
           <View className="mt-8">
