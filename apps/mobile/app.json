@@ -9,11 +9,18 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#e9714e",
     "ios": {
-      "bundleIdentifier": "app.ricochet.mobile",
+      "bundleIdentifier": "me.adeyemiabiade.ricochet",
       "supportsTablet": false
     },
     "android": {
-      "package": "app.ricochet.mobile",
+      "package": "me.adeyemiabiade.ricochet",
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#e9714e",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -45,7 +52,9 @@
       ],
       [
         "expo-audio",
-        { "microphonePermission": "Ricochet uses the microphone to record voice notes." }
+        {
+          "microphonePermission": "Ricochet uses the microphone to record voice notes."
+        }
       ],
       [
         "expo-camera",
@@ -56,7 +65,14 @@
         }
       ],
       "expo-video",
-      ["expo-notifications", { "color": "#e9714e" }]
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#e9714e"
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

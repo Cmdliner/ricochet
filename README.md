@@ -410,8 +410,8 @@ unreadable on the phone, it is refused with "That file is not a valid recording"
   `pnpm db:migrate` against the production database before starting a new version.
 - **Worker.** Video processing runs inside the API process by default. To run it separately, start
   `pnpm --filter @ricochet/api start:worker` on a machine that has ffmpeg.
-- **Mobile.** Release builds go through EAS (`eas build`). The bundle id and Android package are `app.ricochet.mobile`.
-  Push notifications need the Expo project id from `eas init`, and Apple and Google credentials configured in EAS.
+- **Mobile.** Release builds go through EAS. The bundle id and Android package are `me.adeyemiabiade.ricochet`. The
+  step-by-step guide, from a first APK to Google Play, is in [docs/releasing-android.md](./docs/releasing-android.md).
 
 ## Status and what is not built yet
 
@@ -432,7 +432,9 @@ message text) for a moderator to read; there is no moderator screen yet.
 
 Not built yet:
 
-- App store release setup (icons, store listings, a real support address)
+- **Account deletion** from inside the app, which Google Play requires before a public listing
+- The API deployed online over https (the Android build needs its address)
+- Apple App Store release (needs a paid Apple Developer account, which is not in place)
 
 Decisions so far: no group chats outside hubs (private chats are always one to one), email-code sign in, no end-to-end encryption in version 1, voice notes up to 10 minutes, video notes
 up to 60 seconds, groups up to 40 people, no calls in version 1.
