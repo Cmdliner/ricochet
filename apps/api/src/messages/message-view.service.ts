@@ -1,7 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { attachments, messages, reactions, type Attachment, type Message } from "@ricochet/db";
-import type { MediaView, MessageView } from "@ricochet/shared";
+import { attachments, messages, reactions, users, type Attachment, type Message } from "@ricochet/db";
+import type { MediaView, MessageView, ReplyPreview } from "@ricochet/shared";
 import { eq, inArray } from "drizzle-orm";
+import { previewOf } from "../activity/mentions.js";
 import { DRIZZLE, type Database } from "../db/db.module.js";
 import { MediaService } from "../media/media.service.js";
 import { groupReactions } from "./reactions.js";
@@ -25,12 +26,25 @@ export class MessageViewService {
     };
   }
 
+  /** The quoted messages for a batch, in one query. */
+  private async replyPreviews(rows: Message[]): Promise<Map<string, ReplyPreview>> {
+    const parentIds = [...new Set(rows.flatMap((row) => (row.replyToId ? [row.replyToId] : [])))];
+    if (parentIds.length === 0) return new Map();
+    const parents = await this.db
+      .select({ id: messages.id, senderId: messages.senderId, type: messages.type, body: messages.body, senderName: users.displayName })
+      .from(messages)
+      .innerJoin(users, eq(users.id, messages.senderId))
+      .where(inArray(messages.id, parentIds));
+    return new Map(parents.map((p) => [p.id, { ...p, body: previewOf(p.body) }]));
+  }
+
   async views(rows: Message[]): Promise<MessageView[]> {
     if (rows.length === 0) return [];
     const ids = rows.map((row) => row.id);
-    const [reactionRows, attachmentRows] = await Promise.all([
+    const [reactionRows, attachmentRows, previews] = await Promise.all([
       this.db.select().from(reactions).where(inArray(reactions.messageId, ids)),
       this.db.select().from(attachments).where(inArray(attachments.messageId, ids)),
+      this.replyPreviews(rows),
     ]);
     const grouped = groupReactions(reactionRows);
     const mediaById = new Map(await Promise.all(attachmentRows.map(async (row) => [row.messageId, await this.mediaView(row)] as const)));
@@ -45,6 +59,7 @@ export class MessageViewService {
       createdAt: row.createdAt.toISOString(),
       reactions: grouped.get(row.id) ?? [],
       media: mediaById.get(row.id) ?? null,
+      replyTo: (row.replyToId && previews.get(row.replyToId)) || null,
     }));
   }
 

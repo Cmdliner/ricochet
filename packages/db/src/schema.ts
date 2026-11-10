@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -144,6 +145,8 @@ export const messages = pgTable(
     type: messageType("type").notNull(),
     body: text("body"),
     clientId: uuid("client_id").notNull(),
+    // Set null, not cascade: if a quoted message is ever removed, the reply stays and just loses its quote.
+    replyToId: uuid("reply_to_id").references((): AnyPgColumn => messages.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [

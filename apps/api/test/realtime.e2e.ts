@@ -41,8 +41,8 @@ async function socketFor(person: Person) {
   return socket;
 }
 
-const sendText = (socket: Socket, conversationId: string, body: string, clientId: string = randomUUID()) =>
-  emit<SendAck>(socket, EVENTS.messageSend, { clientId, conversationId, type: "text", body });
+const sendText = (socket: Socket, conversationId: string, body: string, clientId: string = randomUUID(), replyToId?: string) =>
+  emit<SendAck>(socket, EVENTS.messageSend, { clientId, conversationId, type: "text", body, replyToId });
 
 beforeAll(async () => {
   app = await startApp();
@@ -257,5 +257,79 @@ describe("private chats", () => {
     const stranger = await socketFor(outsider);
     expect((await emit<{ ok: boolean }>(stranger, EVENTS.conversationOpen, { conversationId: chat.id })).ok).toBe(false);
     expect((await request(app, "GET", `/conversations/${chat.id}/messages`, { token: outsider.token })).status).toBe(404);
+  });
+});
+
+describe("replies", () => {
+  const sent = async (socket: Socket, conversationId: string, body: string, replyToId?: string) => {
+    const ack = await sendText(socket, conversationId, body, randomUUID(), replyToId);
+    if (!ack.ok) throw new Error(`send failed: ${JSON.stringify(ack.error)}`);
+    return ack.message;
+  };
+
+  it("carries a preview of the quoted message, live and in history", async () => {
+    const [a, b] = [await socketFor(ada), await socketFor(ben)];
+    await emit(b, EVENTS.conversationOpen, { conversationId: podId });
+    const original = await sent(a, podId, "what time is the crit?");
+
+    const arrived = nextEvent<MessageView>(b, EVENTS.messageNew, (m) => m.body === "four o'clock");
+    const reply = await sent(b, podId, "four o'clock", original.id);
+    expect(reply.replyTo).toEqual({ id: original.id, senderId: ada.user.id, senderName: ada.user.displayName, type: "text", body: "what time is the crit?" });
+    expect((await arrived).replyTo?.id).toBe(original.id);
+
+    const history = await request<MessagePage>(app, "GET", `/conversations/${podId}/messages?limit=5`, { token: ada.token });
+    expect(history.body.items.find((m) => m.id === reply.id)?.replyTo?.body).toBe("what time is the crit?");
+    expect(history.body.items.find((m) => m.id === original.id)?.replyTo).toBeNull();
+  });
+
+  it("cuts a long quote short", async () => {
+    const a = await socketFor(ada);
+    const original = await sent(a, podId, "x".repeat(400));
+    const reply = await sent(a, podId, "ok", original.id);
+    expect(reply.replyTo?.body?.length).toBeLessThanOrEqual(140);
+    expect(reply.replyTo?.body?.endsWith("…")).toBe(true);
+  });
+
+  it("refuses to quote a message from another conversation, or one that does not exist", async () => {
+    const a = await socketFor(ada);
+    const hub = await createHub(app, ada, "Elsewhere Hub");
+    const elsewhere = (await listPods(app, ada, hub.id))[0]!;
+    const original = await sent(a, elsewhere.id, "private to that pod");
+
+    const crossed = await sendText(a, podId, "sneaky", randomUUID(), original.id);
+    expect(crossed.ok).toBe(false);
+    const missing = await sendText(a, podId, "ghost", randomUUID(), randomUUID());
+    expect(missing.ok).toBe(false);
+  });
+
+  it("tells the author of the quoted message, once, and never about their own replies", async () => {
+    const [a, b] = [await socketFor(ada), await socketFor(ben)];
+    const original = await sent(a, podId, "who wants to review?");
+
+    const note = nextEvent<ActivityNew>(a, EVENTS.activityNew, (n) => n.item.kind === "reply");
+    const reply = await sent(b, podId, "I will", original.id);
+    const { item } = await note;
+    expect(item.actor?.id).toBe(ben.user.id);
+    expect(item.messageId).toBe(reply.id);
+
+    const before = (await request<UnreadSummary>(app, "GET", "/unread", { token: ada.token })).body.activity;
+    await sent(a, podId, "thanks", original.id);
+    const mine = (await request<UnreadSummary>(app, "GET", "/unread", { token: ada.token })).body.activity;
+    expect(mine).toBe(before);
+
+    // Mentioning the author in the reply is one notification, and it is the mention.
+    const second = await sent(a, podId, "anyone else?");
+    await sent(b, podId, `@${ada.user.handle} me again`, second.id);
+    const inbox = await request<ActivityPage>(app, "GET", "/activity?limit=20", { token: ada.token });
+    expect(inbox.body.items.filter((i) => i.messageId && i.preview?.includes("me again"))).toHaveLength(1);
+    expect(inbox.body.items.find((i) => i.preview?.includes("me again"))?.kind).toBe("mention");
+  });
+
+  it("works in a private chat too", async () => {
+    const chat = (await request<ChatView>(app, "POST", "/chats", { token: ada.token, body: { userId: ben.user.id } })).body;
+    const [a, b] = [await socketFor(ada), await socketFor(ben)];
+    const original = await sent(a, chat.id, "psst, you there?");
+    const reply = await sent(b, chat.id, "yes", original.id);
+    expect(reply.replyTo?.body).toBe("psst, you there?");
   });
 });
