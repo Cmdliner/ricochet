@@ -14,8 +14,10 @@ Two things must be true before a build is useful:
 1. **The API is online at an https address.** The app on someone's phone cannot reach your laptop. Android also refuses
    plain `http://` in release builds, so the server needs a certificate (for example Caddy, or an AWS load balancer with a
    free AWS certificate, on a subdomain you own such as `api.<your domain>`).
-2. **The app knows that address.** Put it in `apps/mobile/eas.json` (`EXPO_PUBLIC_API_URL`, in both profiles). The build
-   refuses to start while it is still the placeholder, so you cannot ship an app that points at nothing.
+2. **The app knows that address.** It is set once in `apps/mobile/eas.json` (`EXPO_PUBLIC_API_URL`, in the `base` profile
+   that both builds share). It is already set to `https://api.ricochet.adeyemiabiade.me`, so if you create the API's DNS
+   record with exactly that name there is nothing to change. If you use another name, edit that one line. The build
+   refuses to start if the address is missing or not https.
 
 ## The package ID is permanent
 

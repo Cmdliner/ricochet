@@ -4,16 +4,26 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "base": {
+      "node": "22.14.0",
+      "corepack": true,
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.ricochet.adeyemiabiade.me" }
+    },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "autoIncrement": true,
-      "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-API-URL" }
+      "android": { "buildType": "apk" }
     },
     "production": {
+      "extends": "base",
       "autoIncrement": true,
-      "android": { "buildType": "app-bundle" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-API-URL" }
+      "android": { "buildType": "app-bundle" }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": { "track": "internal" }
     }
   }
 }

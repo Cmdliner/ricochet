@@ -144,7 +144,8 @@ a minute. If it does not work, see Troubleshooting.
 
 ## 8. Point the app at it
 
-In `apps/mobile/eas.json`, set `EXPO_PUBLIC_API_URL` to `https://api.yourdomain` in both profiles, then follow
+`apps/mobile/eas.json` already points at `https://api.ricochet.adeyemiabiade.me`. If that is the name you used in step 3,
+nothing to change. Otherwise edit the one `EXPO_PUBLIC_API_URL` line in its `base` profile. Then follow
 `docs/releasing-android.md` to build the APK.
 
 Test on a phone: sign in with an emailed code, make a hub, send a message, record a voice note.
