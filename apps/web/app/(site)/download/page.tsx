@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { ChatPhone } from "@/components/phone-mockups";
@@ -12,8 +13,10 @@ export const metadata: Metadata = {
 
 export default function Download() {
   return (
-    <section className="pattern-dark relative overflow-hidden pt-20 pb-24 sm:pt-28">
-      <Container className="grid items-center gap-16 lg:grid-cols-2">
+    <section className="relative overflow-hidden pt-20 pb-24 sm:pt-28">
+      <Image src="/photos/bg-couch.webp" alt="" fill sizes="100vw" className="object-cover opacity-25" />
+      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-canvas via-canvas/70 to-canvas" />
+      <Container className="relative grid items-center gap-16 lg:grid-cols-2">
         <div className="text-center lg:text-left">
           <p className="inline-flex rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-ink">
             Coming soon

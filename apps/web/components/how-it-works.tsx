@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Avatar } from "@/components/avatar";
 import { Container } from "@/components/container";
 import { PlayIcon } from "@/components/icons";
@@ -40,7 +41,7 @@ function CreateHubCard() {
   return (
     <div className="w-full max-w-[17rem] rounded-2xl border border-line bg-canvas p-3">
       <div className="flex items-center gap-3">
-        <Avatar letter="S" color={AVATAR_COLORS.coral} size="md" square />
+        <Avatar letter="S" color={AVATAR_COLORS.coral} size="md" square hub />
         <div className="flex h-10 flex-1 items-center rounded-xl bg-raised px-3 text-sm">
           Ship It
           <span className="ml-0.5 h-4 w-px bg-accent" />
@@ -167,6 +168,10 @@ export function HowItWorks() {
               </li>
             ))}
           </ol>
+
+          <div aria-hidden="true" className="mt-12 hidden w-56 -rotate-2 rounded-2xl bg-raised p-2 shadow-xl shadow-black/40 lg:block">
+            <Image src="/photos/card-hug.webp" alt="" width={720} height={1080} className="aspect-[4/5] w-full rounded-xl object-cover" />
+          </div>
         </Reveal>
 
         <Reveal delay={100}>

@@ -112,7 +112,7 @@ function HubsScreen() {
             key={hub.name}
             className={cn("flex items-center gap-3 rounded-2xl px-2 py-2.5", i === 0 && "bg-raised")}
           >
-            <Avatar letter={hub.letter} color={hub.color} size="md" square />
+            <Avatar letter={hub.letter} color={hub.color} size="md" square hub />
             <div className="flex-1">
               <p className="text-sm font-medium">{hub.name}</p>
               <p className="text-xs text-muted">{hub.meta}</p>
@@ -169,7 +169,7 @@ function PodScreen() {
         </div>
         <div className="flex items-end gap-2.5">
           <Avatar letter="D" color={AVATAR_COLORS.amber} />
-          <VideoNote duration="0:08" size={104} />
+          <VideoNote duration="0:08" photo="/photos/note-b.webp" size={104} />
         </div>
         <div className="mt-auto flex justify-end">
           <Bubble mine>on my way 🚀</Bubble>
@@ -205,7 +205,7 @@ function PrivateScreen() {
           <Bubble mine>ha, you&apos;re kidding</Bubble>
         </div>
         <div className="flex justify-end">
-          <VideoNote duration="0:11" size={116} />
+          <VideoNote duration="0:11" photo="/photos/note-c.webp" size={116} />
         </div>
         <p className="text-right text-[0.7rem] text-muted">Seen 9:41</p>
       </div>
