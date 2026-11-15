@@ -4,7 +4,7 @@ This puts the whole backend on one small server you control: the API, the databa
 all in Docker. It is the cheapest setup that is still reasonable for a beta, and because it is plain Docker it also runs
 on any other host, so you are not locked into AWS.
 
-**Cost, roughly:** about $18 to $22 a month after credits (the server about $12 to $14, its disk about $3, its public IP
+**Cost, roughly:** about $18 to $22 a month after credits (email is free at first, see section 6) (the server about $12 to $14, its disk about $3, its public IP
 address about $4). These are estimates, so check the AWS Pricing Calculator. The free plan's credits cover the first
 months.
 
@@ -90,16 +90,40 @@ safe (a password manager): losing `JWT_SECRET` signs everyone out, losing `POSTG
 
 ## 6. Email
 
-People sign in with an emailed code, so the server must be able to send mail. Pick one:
+People sign in with an emailed code, so email must work before anyone else tries. Start with **Resend**. At the time of
+writing its free plan is 3,000 emails a month, at most 100 a day, with one domain (check resend.com/pricing for the
+current limits). Every sign-in, and every "send the code again", is one email.
 
-- **Resend or Brevo** (simplest to start): create an account, add your sending domain, copy the SMTP details into `.env`.
-  Both have free tiers with a daily limit. Check the current limit, since it caps how many people can sign in per day.
-- **Amazon SES** (stays in AWS, very cheap): verify your domain, create SMTP credentials, and **request production
-  access**. New SES accounts are in a sandbox (about 200 emails a day, only to addresses you verified), which is too
-  restrictive for real users. Approval is usually quick but not guaranteed.
+1. Create a Resend account. **Domains, Add domain.** Use a subdomain just for sending, for example `mail.yourdomain`,
+   so mail reputation never touches your main domain.
+2. Resend shows DNS records (SPF, DKIM, and one for bounces). Add them where your DNS is managed, then click **Verify**.
+   This can take from minutes to a few hours. Without it, sign-in emails land in spam or are refused.
+3. **API Keys, Create API key**, with sending access for that domain only. Copy it once, it is not shown again.
+4. In `deploy/.env` set:
 
-Whichever you choose, add the **SPF and DKIM** records the provider gives you at your domain's DNS. Without them, sign-in
-emails land in spam. `MAIL_FROM` must be an address on that domain.
+   ```
+   SMTP_HOST=smtp.resend.com
+   SMTP_PORT=465
+   SMTP_SECURE=true
+   SMTP_USER=resend
+   SMTP_PASS=<the API key>
+   MAIL_FROM=Ricochet <no-reply@mail.yourdomain>
+   ```
+
+5. After step 7 starts the server, **send a test email** before you trust it:
+
+   ```bash
+   docker compose exec api node dist/send-test-mail.js you@gmail.com
+   ```
+
+   It says whether it connected, signed in and sent. Check the inbox and the spam folder.
+
+**When you reach the daily limit,** sign-in codes stop arriving until the limit resets (Resend counts days in UTC) and
+people see an error. Watch for this as the beta grows. Your options then are Resend's paid plan, or **Brevo**: its free
+plan allows about 300 emails a day over SMTP, though Brevo approves your account before you can send. Its settings are in
+`deploy/.env.example`. Moving between providers is only a change to those `SMTP_` lines, then
+`docker compose up -d`. Amazon SES is a third option, but new SES accounts start in a sandbox (about 200 emails a day,
+only to addresses you have verified) until AWS approves production access.
 
 ## 7. Start it
 
