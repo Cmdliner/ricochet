@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Container } from "@/components/container";
 import { LogoMark } from "@/components/logo";
@@ -28,8 +29,16 @@ export function Waitlist() {
   return (
     <section
       id="waitlist"
-      className="pattern-light relative z-30 -mt-12 overflow-hidden rounded-t-[3rem] bg-accent pt-14 pb-20 text-center text-accent-ink sm:pt-32 sm:pb-40"
+      className="relative z-30 -mt-12 overflow-hidden rounded-t-[3rem] bg-accent pt-14 pb-20 text-center text-accent-ink sm:pt-32 sm:pb-40"
     >
+      <Image
+        src="/photos/bg-friends.webp"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover object-[50%_25%] opacity-50 mix-blend-multiply grayscale"
+      />
+      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--accent)_25%,transparent_80%)]" />
       <VoiceSticker className="absolute top-32 left-[6%] hidden -rotate-6 items-center gap-3 rounded-2xl bg-cream-card px-4 py-3 shadow-xl shadow-black/15 lg:flex" />
       <div
         aria-hidden="true"

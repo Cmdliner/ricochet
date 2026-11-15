@@ -60,11 +60,11 @@ export function HubsTile() {
       <div className="mt-5 flex min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-canvas">
         <div className="flex w-12 shrink-0 flex-col items-center gap-2.5 border-r border-line py-3 sm:w-14">
           <span className="rounded-xl ring-2 ring-accent ring-offset-2 ring-offset-canvas">
-            <Avatar letter="S" color={AVATAR_COLORS.coral} square />
+            <Avatar letter="S" color={AVATAR_COLORS.coral} square hub />
           </span>
-          <Avatar letter="D" color={AVATAR_COLORS.sky} square />
-          <Avatar letter="W" color={AVATAR_COLORS.mint} square />
-          <Avatar letter="B" color={AVATAR_COLORS.amber} square />
+          <Avatar letter="D" color={AVATAR_COLORS.sky} square hub />
+          <Avatar letter="W" color={AVATAR_COLORS.mint} square hub />
+          <Avatar letter="B" color={AVATAR_COLORS.amber} square hub />
         </div>
         <div className="flex-1 p-2.5 text-sm">
           <p className="px-2 pt-1 pb-2 text-[0.7rem] font-medium tracking-wider text-muted uppercase">Ship It</p>
@@ -149,7 +149,7 @@ export function VideoTile() {
             />
           </svg>
           <div className="absolute inset-0 grid place-items-center">
-            <VideoNote duration="0:23" size={size - 12} />
+            <VideoNote duration="0:23" photo="/photos/note-a.webp" size={size - 12} />
           </div>
         </div>
       </div>
