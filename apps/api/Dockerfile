@@ -21,8 +21,10 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lo
 COPY packages packages
 COPY apps/api apps/api
 RUN pnpm --filter @ricochet/shared build && pnpm --filter @ricochet/db build && pnpm --filter @ricochet/api build
-# A self-contained copy of the API with only its production dependencies.
-RUN pnpm --filter @ricochet/api deploy --legacy --prod /out
+# A self-contained copy of the API with only its production dependencies. Injecting the workspace packages copies
+# @ricochet/db and @ricochet/shared (with their own dependencies) into the result. Without it they stay symlinks to /repo,
+# which does not exist in the runtime image.
+RUN pnpm --config.inject-workspace-packages=true --filter @ricochet/api deploy --prod /out
 
 FROM node:22-bookworm-slim AS runtime
 # ffmpeg makes the poster frame for video notes and checks their real length.

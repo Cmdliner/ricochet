@@ -87,8 +87,12 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
+          load: true
+          tags: ricochet-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Image can load its workspace packages
+        run: docker run --rm ricochet-api:ci node --input-type=module -e "await import('@ricochet/db'); await import('@ricochet/shared')"
 
   build:
     runs-on: ubuntu-latest
